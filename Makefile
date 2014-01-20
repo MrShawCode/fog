@@ -1,8 +1,7 @@
 # path definition
 OBJECT_DIR = obj
-CONVERT_PATH = convert
-FOGLIB_PATH = foglib
-BINARY_PATH = bin
+FOGLIB_DIR = foglib
+BINARY_DIR = bin
 HEADERS_PATH = headers
 
 #compile options
@@ -14,15 +13,15 @@ CXXFLAGS+= -Wfatal-errors
 # make selections
 CONVERT_SRC = main.o read_lines.o
 CONVERT_OBJS= $(addprefix $(OBJECT_DIR)/, $(CONVERT_SRC))
-CONVERT_TARGET=$(BINARY_PATH)/convert
+CONVERT_TARGET=$(BINARY_DIR)/convert
 
 TEST_SRC = convert.o
 TEST_OBJS= $(addprefix $(OBJECT_DIR)/, $(TEST_SRC))
-TEST_TARGET=$(BINARY_PATH)/test
+TEST_TARGET=$(BINARY_DIR)/test
 
 FOGLIB_SRC = program.o
 FOGLIB_OBJS= $(addprefix $(OBJECT_DIR)/, $(FOGLIB_SRC))
-FOGLIB_TARGET= $(FOGLIB_PATH)/libfog.a
+FOGLIB_TARGET= $(FOGLIB_DIR)/libfog.a
 
 all: $(CONVERT_TARGET) $(FOGLIB_TARGET) $(TEST_TARGET)
 
@@ -33,36 +32,52 @@ $(OBJECT_DIR)/main.o:convert/main.cpp
 $(OBJECT_DIR)/read_lines.o:convert/read_lines.cpp 
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(BINARY_PATH)/convert: $(CONVERT_OBJS)
+$(BINARY_DIR)/convert: $(CONVERT_OBJS)
 	$(CXX) -o $@ $(CONVERT_OBJS) $(SYSLIBS)
+
+$(CONVERT_OBJS): |$(OBJECT_DIR)
+$(CONVERT_TARGET): |$(BINARY_DIR)
 
 #following lines defined for testing
 $(OBJECT_DIR)/convert.o:convert/convert.cpp 
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(BINARY_PATH)/test: $(TEST_OBJS)
+$(BINARY_DIR)/test: $(TEST_OBJS)
 	$(CXX) -o $@ $(TEST_OBJS) $(SYSLIBS)
 
 #following lines defined for the library
 $(OBJECT_DIR)/program.o:fogsrc/program.cpp 
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(FOGLIB_PATH)/libfog.a: $(FOGLIB_OBJS)
+$(FOGLIB_DIR)/libfog.a: $(FOGLIB_OBJS)
 	ar rcs $@ $(FOGLIB_OBJS)
+
+$(FOGLIB_OBJS): |$(FOGLIB_DIR)
 
 #following lines defined for applications
 PAGERANK_SRC = pagerank.o
 PAGERANK_OBJS= $(addprefix $(OBJECT_DIR)/, $(PAGERANK_SRC))
-PAGERANK_TARGET= $(BINARY_PATH)/pagerank
+PAGERANK_TARGET= $(BINARY_DIR)/pagerank
 
 $(OBJECT_DIR)/pagerank.o:application/pagerank.cpp 
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(BINARY_PATH)/pagerank: $(PAGERANK_OBJS)
-	$(CXX) -o $@ $(PAGERANK_OBJS) $(SYSLIBS) -lfog -L./$(FOGLIB_PATH)
+$(BINARY_DIR)/pagerank: $(PAGERANK_OBJS)
+	$(CXX) -o $@ $(PAGERANK_OBJS) $(SYSLIBS) -lfog -L./$(FOGLIB_DIR)
 
 
-.PHONY: convert
+.PHONY: createdir
+
+createdir: $(OBJECT_DIR) $(BINARY_DIR) $(FOGLIB_DIR)
+
+$(OBJECT_DIR):
+	mkdir -p $(OBJECT_DIR)
+
+$(BINARY_DIR):
+	mkdir -p $(BINARY_DIR)
+
+$(FOGLIB_DIR):
+	mkdir -p $(FOGLIB_DIR)
 
 convert: $(CONVERT_TARGET)
 
