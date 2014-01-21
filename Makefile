@@ -15,7 +15,7 @@ CONVERT_SRC = main.o read_lines.o
 CONVERT_OBJS= $(addprefix $(OBJECT_DIR)/, $(CONVERT_SRC))
 CONVERT_TARGET=$(BINARY_DIR)/convert
 
-TEST_SRC = convert.o
+TEST_SRC = test.o
 TEST_OBJS= $(addprefix $(OBJECT_DIR)/, $(TEST_SRC))
 TEST_TARGET=$(BINARY_DIR)/test
 
@@ -24,6 +24,11 @@ FOGLIB_OBJS= $(addprefix $(OBJECT_DIR)/, $(FOGLIB_SRC))
 FOGLIB_TARGET= $(FOGLIB_DIR)/libfog.a
 
 all: $(CONVERT_TARGET) $(FOGLIB_TARGET) $(TEST_TARGET)
+
+# create dirs before building
+$(CONVERT_OBJS): |$(OBJECT_DIR)
+$(CONVERT_TARGET): |$(BINARY_DIR)
+$(FOGLIB_OBJS): |$(FOGLIB_DIR)
 
 #following lines defined for convert
 $(OBJECT_DIR)/main.o:convert/main.cpp 
@@ -35,11 +40,8 @@ $(OBJECT_DIR)/read_lines.o:convert/read_lines.cpp
 $(BINARY_DIR)/convert: $(CONVERT_OBJS)
 	$(CXX) -o $@ $(CONVERT_OBJS) $(SYSLIBS)
 
-$(CONVERT_OBJS): |$(OBJECT_DIR)
-$(CONVERT_TARGET): |$(BINARY_DIR)
-
 #following lines defined for testing
-$(OBJECT_DIR)/convert.o:convert/convert.cpp 
+$(OBJECT_DIR)/test.o:convert/test.cpp 
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(BINARY_DIR)/test: $(TEST_OBJS)
@@ -52,8 +54,6 @@ $(OBJECT_DIR)/program.o:fogsrc/program.cpp
 $(FOGLIB_DIR)/libfog.a: $(FOGLIB_OBJS)
 	ar rcs $@ $(FOGLIB_OBJS)
 
-$(FOGLIB_OBJS): |$(FOGLIB_DIR)
-
 #following lines defined for applications
 PAGERANK_SRC = pagerank.o
 PAGERANK_OBJS= $(addprefix $(OBJECT_DIR)/, $(PAGERANK_SRC))
@@ -65,19 +65,7 @@ $(OBJECT_DIR)/pagerank.o:application/pagerank.cpp
 $(BINARY_DIR)/pagerank: $(PAGERANK_OBJS)
 	$(CXX) -o $@ $(PAGERANK_OBJS) $(SYSLIBS) -lfog -L./$(FOGLIB_DIR)
 
-
-.PHONY: createdir
-
-createdir: $(OBJECT_DIR) $(BINARY_DIR) $(FOGLIB_DIR)
-
-$(OBJECT_DIR):
-	mkdir -p $(OBJECT_DIR)
-
-$(BINARY_DIR):
-	mkdir -p $(BINARY_DIR)
-
-$(FOGLIB_DIR):
-	mkdir -p $(FOGLIB_DIR)
+.PHONY:
 
 convert: $(CONVERT_TARGET)
 
@@ -97,7 +85,6 @@ cscope:
 	cscope -bqk
 
 clean: 
-	rm -f cscope.*
 	rm -f $(CONVERT_TARGET) $(CONVERT_OBJS)
 	rm -f $(TEST_TARGET) $(TEST_OBJS)
 	rm -f $(FOGLIB_TARGET) $(FOGLIB_OBJS)
