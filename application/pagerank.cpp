@@ -1,4 +1,5 @@
 #include "program.hpp"
+#include "engine.hpp"
 
 class pagerank_prog: public program{
 
@@ -15,8 +16,11 @@ class pagerank_prog: public program{
 main()
 {
 	class pagerank_prog prog;
+	class fog_engine fogeng;
 
-	prog.init();
+	fogeng.init( );
+//	prog.init();
+	fogeng.run( &prog );
 
 }
 

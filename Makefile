@@ -5,7 +5,7 @@ BINARY_DIR = bin
 HEADERS_PATH = headers
 
 #compile options
-SYSLIBS = -L/usr/local/lib -lboost_system -lboost_program_options -lboost_thread -lz -lrt
+SYSLIBS = -L/usr/lib -lboost_system -lboost_program_options -lboost_thread -lz -lrt -lboost_thread-mt
 CXX?= g++
 CXXFLAGS?= -O3 -DNDEBUG -Wall -Wno-unused-function -I./$(HEADERS_PATH)
 CXXFLAGS+= -Wfatal-errors
@@ -19,16 +19,12 @@ TEST_SRC = test.o
 TEST_OBJS= $(addprefix $(OBJECT_DIR)/, $(TEST_SRC))
 TEST_TARGET=$(BINARY_DIR)/test
 
-FOGLIB_SRC = program.o
-FOGLIB_OBJS= $(addprefix $(OBJECT_DIR)/, $(FOGLIB_SRC))
-FOGLIB_TARGET= $(FOGLIB_DIR)/libfog.a
+FOG_SRC = program.o fogengine.o thread.o sssp.o
+FOG_OBJS= $(addprefix $(OBJECT_DIR)/, $(FOG_SRC))
+FOG_TARGET = $(BINARY_DIR)/sssp
 
-all: $(CONVERT_TARGET) $(FOGLIB_TARGET) $(TEST_TARGET)
-
-# create dirs before building
-$(CONVERT_OBJS): |$(OBJECT_DIR)
-$(CONVERT_TARGET): |$(BINARY_DIR)
-$(FOGLIB_OBJS): |$(FOGLIB_DIR)
+all: $(FOG_TARGET)
+#all: $(CONVERT_TARGET) $(FOG_TARGET) $(TEST_TARGET)
 
 #following lines defined for convert
 $(OBJECT_DIR)/main.o:convert/main.cpp 
@@ -40,6 +36,9 @@ $(OBJECT_DIR)/read_lines.o:convert/read_lines.cpp
 $(BINARY_DIR)/convert: $(CONVERT_OBJS)
 	$(CXX) -o $@ $(CONVERT_OBJS) $(SYSLIBS)
 
+$(CONVERT_OBJS): |$(OBJECT_DIR)
+$(CONVERT_TARGET): |$(BINARY_DIR)
+
 #following lines defined for testing
 $(OBJECT_DIR)/test.o:convert/test.cpp 
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
@@ -47,34 +46,29 @@ $(OBJECT_DIR)/test.o:convert/test.cpp
 $(BINARY_DIR)/test: $(TEST_OBJS)
 	$(CXX) -o $@ $(TEST_OBJS) $(SYSLIBS)
 
-#following lines defined for the library
+#following lines defined for final program
 $(OBJECT_DIR)/program.o:fogsrc/program.cpp 
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(FOGLIB_DIR)/libfog.a: $(FOGLIB_OBJS)
-	ar rcs $@ $(FOGLIB_OBJS)
-
-#following lines defined for applications
-PAGERANK_SRC = pagerank.o
-PAGERANK_OBJS= $(addprefix $(OBJECT_DIR)/, $(PAGERANK_SRC))
-PAGERANK_TARGET= $(BINARY_DIR)/pagerank
-
-$(OBJECT_DIR)/pagerank.o:application/pagerank.cpp 
+$(OBJECT_DIR)/fogengine.o:fogsrc/fogengine.cpp 
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(BINARY_DIR)/pagerank: $(PAGERANK_OBJS)
-	$(CXX) -o $@ $(PAGERANK_OBJS) $(SYSLIBS) -lfog -L./$(FOGLIB_DIR)
+$(OBJECT_DIR)/thread.o:fogsrc/thread.cpp 
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(OBJECT_DIR)/sssp.o:application/sssp.cpp 
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(BINARY_DIR)/sssp: $(FOG_OBJS)
+	$(CXX) -o $@ $(FOG_OBJS) $(SYSLIBS)
 
 .PHONY:
 
 convert: $(CONVERT_TARGET)
 
-foglib: $(FOGLIB_TARGET)
-
 test: $(TEST_TARGET)
 
-# applications
-pagerank: $(PAGERANK_TARGET)
+sssp: $(FOG_TARGET)
 
 # utilities
 cscope:
@@ -87,5 +81,6 @@ cscope:
 clean: 
 	rm -f $(CONVERT_TARGET) $(CONVERT_OBJS)
 	rm -f $(TEST_TARGET) $(TEST_OBJS)
-	rm -f $(FOGLIB_TARGET) $(FOGLIB_OBJS)
+	rm -f $(FOG_TARGET) $(FOG_OBJS)
+	rm -f $(BINARY_DIR)/*
 

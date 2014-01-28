@@ -1,14 +1,13 @@
 #include "program.hpp"
 
-#include <iostream>
-
-program::program()
+void program::init()
 {
-	std::cout << "in program constructor\n";
+	std::cout << "in program virtual init()\n";
 }
 
-program::~program()
+void program::update()
 {
-	std::cout << "in program distructor\n";
+	std::cout << "in program virtual update()\n";
 }
+
 
