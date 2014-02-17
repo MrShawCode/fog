@@ -1,10 +1,9 @@
-# path definition
+# paths
 OBJECT_DIR = obj
-FOGLIB_DIR = foglib
 BINARY_DIR = bin
 HEADERS_PATH = headers
 
-#compile options
+#compile/link options
 SYSLIBS = -L/usr/local/lib -lboost_system -lboost_program_options -lboost_thread -lz -lrt -lboost_thread-mt
 CXX?= g++
 CXXFLAGS?= -O3 -DNDEBUG -Wall -Wno-unused-function -I./$(HEADERS_PATH)
@@ -19,12 +18,19 @@ TEST_SRC = test.o
 TEST_OBJS= $(addprefix $(OBJECT_DIR)/, $(TEST_SRC))
 TEST_TARGET=$(BINARY_DIR)/test
 
-FOG_SRC = program.o fogengine.o thread.o sssp.o
+FOG_SRC = program.o fogengine.o thread.o
 FOG_OBJS= $(addprefix $(OBJECT_DIR)/, $(FOG_SRC))
-FOG_TARGET = $(BINARY_DIR)/sssp
+FOG_TARGET = $(BINARY_DIR)/fog
 
 all: $(FOG_TARGET)
 #all: $(CONVERT_TARGET) $(FOG_TARGET) $(TEST_TARGET)
+
+#dependencies
+$(OBJECT_DIR):
+	mkdir ./obj
+
+$(BINARY_DIR):
+	mkdir ./bin
 
 #following lines defined for convert
 $(OBJECT_DIR)/convert.o:convert/convert.cpp 
@@ -46,8 +52,11 @@ $(CONVERT_TARGET): |$(BINARY_DIR)
 $(OBJECT_DIR)/test.o:convert/test.cpp 
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(BINARY_DIR)/test: $(TEST_OBJS) headers/types.h
+$(BINARY_DIR)/test: $(TEST_OBJS)
 	$(CXX) -o $@ $(TEST_OBJS) $(SYSLIBS)
+
+$(TEST_OBJS): |$(OBJECT_DIR)
+$(TEST_TARGET): |$(BINARY_DIR)
 
 #following lines defined for final program
 $(OBJECT_DIR)/program.o:fogsrc/program.cpp 
@@ -59,11 +68,11 @@ $(OBJECT_DIR)/fogengine.o:fogsrc/fogengine.cpp
 $(OBJECT_DIR)/thread.o:fogsrc/thread.cpp 
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(OBJECT_DIR)/sssp.o:application/sssp.cpp 
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-
-$(BINARY_DIR)/sssp: $(FOG_OBJS)
+$(BINARY_DIR)/fog: $(FOG_OBJS)
 	$(CXX) -o $@ $(FOG_OBJS) $(SYSLIBS)
+
+$(FOG_OBJS): |$(OBJECT_DIR)
+$(FOG_TARGET): |$(BINARY_DIR)
 
 .PHONY:
 
@@ -71,7 +80,7 @@ convert: $(CONVERT_TARGET)
 
 test: $(TEST_TARGET)
 
-sssp: $(FOG_TARGET)
+fog: $(FOG_TARGET)
 
 # utilities
 cscope:
@@ -86,4 +95,5 @@ clean:
 	rm -f $(TEST_TARGET) $(TEST_OBJS)
 	rm -f $(FOG_TARGET) $(FOG_OBJS)
 	rm -f $(BINARY_DIR)/*
+	rm -f cscope.*
 
