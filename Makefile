@@ -5,13 +5,13 @@ BINARY_DIR = bin
 HEADERS_PATH = headers
 
 #compile options
-SYSLIBS = -L/usr/lib -lboost_system -lboost_program_options -lboost_thread -lz -lrt -lboost_thread-mt
+SYSLIBS = -L/usr/local/lib -lboost_system -lboost_program_options -lboost_thread -lz -lrt -lboost_thread-mt
 CXX?= g++
 CXXFLAGS?= -O3 -DNDEBUG -Wall -Wno-unused-function -I./$(HEADERS_PATH)
 CXXFLAGS+= -Wfatal-errors
 
 # make selections
-CONVERT_SRC = main.o read_lines.o
+CONVERT_SRC = convert.o process_edgelist.o process_adjlist.o
 CONVERT_OBJS= $(addprefix $(OBJECT_DIR)/, $(CONVERT_SRC))
 CONVERT_TARGET=$(BINARY_DIR)/convert
 
@@ -27,10 +27,13 @@ all: $(FOG_TARGET)
 #all: $(CONVERT_TARGET) $(FOG_TARGET) $(TEST_TARGET)
 
 #following lines defined for convert
-$(OBJECT_DIR)/main.o:convert/main.cpp 
+$(OBJECT_DIR)/convert.o:convert/convert.cpp 
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(OBJECT_DIR)/read_lines.o:convert/read_lines.cpp 
+$(OBJECT_DIR)/process_edgelist.o:convert/process_edgelist.cpp 
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(OBJECT_DIR)/process_adjlist.o:convert/process_adjlist.cpp 
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(BINARY_DIR)/convert: $(CONVERT_OBJS)
@@ -43,7 +46,7 @@ $(CONVERT_TARGET): |$(BINARY_DIR)
 $(OBJECT_DIR)/test.o:convert/test.cpp 
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(BINARY_DIR)/test: $(TEST_OBJS)
+$(BINARY_DIR)/test: $(TEST_OBJS) headers/types.h
 	$(CXX) -o $@ $(TEST_OBJS) $(SYSLIBS)
 
 #following lines defined for final program

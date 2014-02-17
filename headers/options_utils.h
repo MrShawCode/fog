@@ -8,12 +8,13 @@
 extern boost::program_options::options_description desc;
 extern boost::program_options::variables_map vm;
 
-static void setup_options(int argc, const char* argv[])
+static void setup_options_convert(int argc, const char* argv[])
 {
   desc.add_options()
 	( "help,h", "Produce help message")
-	( "graph,g", boost::program_options::value<std::string>()->required(), "Name of the graph in snap (edgelist) format")
-	( "destination,d",  boost::program_options::value<std::string>()->required(), "Destination folder that contains the type2 file and index file");
+	( "type,t", boost::program_options::value<std::string>()->required(), "Type of the snap file(edgelist or adjlist)")
+	( "graph,g", boost::program_options::value<std::string>()->required(), "Name of the graph in snap format")
+	( "destination,d",  boost::program_options::value<std::string>()->required(), "Destination folder that will contain the index and edge file");
     
   try {
     boost::program_options::store(boost::program_options::parse_command_line(argc,
