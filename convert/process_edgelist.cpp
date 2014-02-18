@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <time.h>
 
-#include "type.h"
+#include "type.hpp"
 #include "convert.h"
 
 #define LINE_FORMAT		"%d\t%d\n"

@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "type.h"
+#include "type.hpp"
 #include "convert.h"
 
 float produce_random_weight()
