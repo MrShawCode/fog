@@ -9,14 +9,15 @@ struct vert_att{
 };
 
 class sssp_program{
-	private:
 		unsigned int start_vid;
 		struct vert_att* vert_att_header;
-	pulbic:
-		sssp_program( unsigned int input_vid ):
-			start_vid(input_vid){
+
+	public:
+		sssp_program( unsigned int input_vid ){
+			start_vid = input_vid;
 			//create attribute file, need api from engine
-		};
+		}
+		~sssp_program(){}
 		//init the vid-th vertex
 		void init(unsigned int vid){
 			if ( vid == start_vid ){
@@ -33,12 +34,12 @@ class sssp_program{
 		//gather one update "u" from outside
 		void gather_one_update( unsigned int vid, struct update<vert_att>* u ){
 			//compare the value of u, if it is smaller, absorb the update
-			if( u.vert_attribute.value < vert_att_header[vid].value ){
-				vert_att_header[vid] = u.vert_attribute;
+			if( u->vert_attribute.value < vert_att_header[vid].value ){
+				vert_att_header[vid] = u->vert_attribute;
 				//should add schedule of vid, need api from engine
 			}
 		}
-}
+};
 
 #endif
 

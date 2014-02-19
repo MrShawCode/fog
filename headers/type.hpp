@@ -1,6 +1,9 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
+typedef unsigned int u32_t;
+typedef unsigned long long u64_t;
+
 struct edge{
     unsigned int dst_vert;                                         
     float edge_weight;

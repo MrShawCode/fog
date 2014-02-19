@@ -18,7 +18,7 @@ TEST_SRC = test.o
 TEST_OBJS= $(addprefix $(OBJECT_DIR)/, $(TEST_SRC))
 TEST_TARGET=$(BINARY_DIR)/test
 
-FOG_SRC = program.o fogengine.o thread.o
+FOG_SRC = main.o
 FOG_OBJS= $(addprefix $(OBJECT_DIR)/, $(FOG_SRC))
 FOG_TARGET = $(BINARY_DIR)/fog
 
@@ -58,14 +58,8 @@ $(BINARY_DIR)/test: $(TEST_OBJS)
 $(TEST_OBJS): |$(OBJECT_DIR)
 $(TEST_TARGET): |$(BINARY_DIR)
 
-#following lines defined for final program
-$(OBJECT_DIR)/program.o:fogsrc/program.cpp 
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-
-$(OBJECT_DIR)/fogengine.o:fogsrc/fogengine.cpp 
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-
-$(OBJECT_DIR)/thread.o:fogsrc/thread.cpp 
+#following lines defined for fog
+$(OBJECT_DIR)/main.o:fogsrc/main.cpp 
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(BINARY_DIR)/fog: $(FOG_OBJS)

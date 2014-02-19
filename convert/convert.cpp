@@ -89,7 +89,6 @@ int main( int argc, const char**argv)
 		exit( -1 );
 	}
 
-
 	//graph description
 	desc_file.open( out_desc_file_name.c_str() );
 	desc_file << "[description]\n";
