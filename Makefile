@@ -19,6 +19,8 @@ TEST_OBJS= $(addprefix $(OBJECT_DIR)/, $(TEST_SRC))
 TEST_TARGET=$(BINARY_DIR)/test
 
 FOG_SRC = main.o
+FOG_HEADERS = type.hpp config.hpp disk_thread.hpp cpu_thread.hpp index_vert_array.hpp fogengine.hpp options_utils.h config_parse.h
+FOG_REL_HEADERS = $(addprefix $(HEADERS_PATH)/, $(FOG_HEADERS))
 FOG_OBJS= $(addprefix $(OBJECT_DIR)/, $(FOG_SRC))
 FOG_TARGET = $(BINARY_DIR)/fog
 
@@ -59,8 +61,8 @@ $(TEST_OBJS): |$(OBJECT_DIR)
 $(TEST_TARGET): |$(BINARY_DIR)
 
 #following lines defined for fog
-$(OBJECT_DIR)/main.o:fogsrc/main.cpp 
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+$(OBJECT_DIR)/main.o:fogsrc/main.cpp $(FOG_REL_HEADERS)
+	$(CXX) $(CXXFLAGS) -c -o $@ fogsrc/main.cpp
 
 $(BINARY_DIR)/fog: $(FOG_OBJS)
 	$(CXX) -o $@ $(FOG_OBJS) $(SYSLIBS)

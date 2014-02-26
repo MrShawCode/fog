@@ -1,4 +1,4 @@
-//definition of vert_array, which is the object that manipulate the mmapped files
+//definition of index_vert_array, which is the object that manipulate the mmapped files
 #ifndef __VERT_ARRAY_H__
 #define __VERT_ARRAY_H__
 
@@ -11,9 +11,7 @@
 
 #include "config.hpp"
 
-extern class config sys_config;
-
-class vert_array{
+class index_vert_array{
 	private:
 		std::string mmapped_vert_file;
 		std::string mmapped_edge_file;
@@ -25,8 +23,8 @@ class vert_array{
 		edge* edge_array_header;
 	
 	public:
-		vert_array();
-		~vert_array();
+		index_vert_array();
+		~index_vert_array();
 		//return the number of out edges of vid
 		unsigned int num_out_edges( unsigned int vid);
 		//return the "which"-th out edge of vid
@@ -34,13 +32,13 @@ class vert_array{
 
 };
 
-vert_array::vert_array()
+index_vert_array::index_vert_array()
 {
 	struct stat st;
 	char * memblock;
 
-	mmapped_vert_file = sys_config.vertex_file_name;
-	mmapped_edge_file = sys_config.edge_file_name;
+	mmapped_vert_file = config::vertex_file_name;
+	mmapped_edge_file = config::edge_file_name;
 
 	vert_index_file_fd = open( mmapped_vert_file.c_str(), O_RDONLY );
 	if( vert_index_file_fd < 0 ){
@@ -81,29 +79,33 @@ vert_array::vert_array()
     edge_array_header = (struct edge *) memblock;
 }
 
-vert_array::~vert_array()
+index_vert_array::~index_vert_array()
 {
 	munmap( vertex_array_header, vert_index_file_length );
 	munmap( edge_array_header, edge_file_length );
 }
 
-unsigned int vert_array::num_out_edges( unsigned int vid )
+unsigned int index_vert_array::num_out_edges( unsigned int vid )
 {
-	unsigned long long start_edge, end_edge=0L;
+	unsigned long long start_edge=0L, end_edge=0L;
 	
 	start_edge = vertex_array_header[vid].offset;
+	printf( "start_edge = %lld\n", start_edge );
 	if ( start_edge == 0L ) return 0;
 
-    if ( vid == sys_config.max_vertex_id )
-        end_edge = sys_config.num_edges;
+	if ( vid > config::max_vertex_id ) return 0;
+
+    if ( vid == config::max_vertex_id )
+        end_edge = config::num_edges;
     else{
-        for( u32_t i=vid+1; i<=sys_config.max_vertex_id; i++ ){
+        for( u32_t i=vid+1; i<=config::max_vertex_id; i++ ){
             if( vertex_array_header[i].offset != 0L ){
                 end_edge = vertex_array_header[i].offset -1;
                 break;
             }
         }
     }
+	printf( "end_edge = %lld\n", end_edge );
 	if( end_edge < start_edge ){
 		printf( "edge disorder detected!\n" );
 		return 0;
@@ -111,10 +113,10 @@ unsigned int vert_array::num_out_edges( unsigned int vid )
 	return (end_edge - start_edge + 1);
 }
 
-edge* vert_array::out_edge( unsigned int vid, unsigned int which )
+edge* index_vert_array::out_edge( unsigned int vid, unsigned int which )
 {
 	edge* ret = new edge;
-	if( which > vert_array::num_out_edges( vid ) ) return NULL;
+	if( which > index_vert_array::num_out_edges( vid ) ) return NULL;
 
 	*ret = (edge)edge_array_header[ vertex_array_header[vid].offset + which ];
 
