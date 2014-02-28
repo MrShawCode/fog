@@ -37,8 +37,8 @@ index_vert_array::index_vert_array()
 	struct stat st;
 	char * memblock;
 
-	mmapped_vert_file = config::vertex_file_name;
-	mmapped_edge_file = config::edge_file_name;
+	mmapped_vert_file = gen_config.vertex_file_name;
+	mmapped_edge_file = gen_config.edge_file_name;
 
 	vert_index_file_fd = open( mmapped_vert_file.c_str(), O_RDONLY );
 	if( vert_index_file_fd < 0 ){
@@ -93,12 +93,12 @@ unsigned int index_vert_array::num_out_edges( unsigned int vid )
 	printf( "start_edge = %lld\n", start_edge );
 	if ( start_edge == 0L ) return 0;
 
-	if ( vid > config::max_vertex_id ) return 0;
+	if ( vid > gen_config.max_vertex_id ) return 0;
 
-    if ( vid == config::max_vertex_id )
-        end_edge = config::num_edges;
+    if ( vid == gen_config.max_vertex_id )
+        end_edge = gen_config.num_edges;
     else{
-        for( u32_t i=vid+1; i<=config::max_vertex_id; i++ ){
+        for( u32_t i=vid+1; i<=gen_config.max_vertex_id; i++ ){
             if( vertex_array_header[i].offset != 0L ){
                 end_edge = vertex_array_header[i].offset -1;
                 break;

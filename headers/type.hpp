@@ -13,11 +13,15 @@ struct vertex_index{
     unsigned long long  offset;                                    
 }__attribute__ ((aligned(8)));   
 
-template<typename T>
+template<typename VA>
 struct update{
 	unsigned int dst_vert;
-	T vert_attribute;
+	VA vert_attribute;
 }__attribute__ ((__packed__));
 
-#endif
+struct sched_task{
+	u32_t start;
+	u32_t term;
+};
 
+#endif

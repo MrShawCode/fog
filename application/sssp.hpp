@@ -2,7 +2,7 @@
 #define __SSSP_H__
 
 #include "type.hpp"
-#include "fogengine.hpp"
+#include "fog_engine.hpp"
 
 struct sssp_vert_attr{
 	unsigned int predecessor;
@@ -16,7 +16,7 @@ class sssp_program{
 		static void init(unsigned int vid, sssp_vert_attr* va){
 			if ( vid == start_vid ){
 				va->value = 0;
-				fogengine<sssp_program, sssp_vert_attr>::add_schedule( vid );
+				fog_engine<sssp_program, sssp_vert_attr>::add_schedule( vid );
 				//should add schedule of vid, need api from engine
 			}else
 				va->value = INFINITY;
@@ -32,7 +32,7 @@ class sssp_program{
 			//compare the value of u, if it is smaller, absorb the update
 			if( u->vert_attribute.value < va->value ){
 				*va = u->vert_attribute;
-				//should add schedule of vid, need api from engine
+				//should add schedule of {vid,0}, need api from engine
 			}
 		}
 };

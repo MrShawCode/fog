@@ -1,6 +1,8 @@
 #ifndef __CPU_THREAD_HPP__
 #define __CPU_THREAD_HPP__
 
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
+
 class cpu_thread;
 
 class barrier {
@@ -52,20 +54,32 @@ struct cpu_work{
 	}
 };
 
+template <typename A, typename VA>
 class cpu_thread {
 public:
-    static barrier *sync;
     const unsigned long processor_id; 
 	index_vert_array* vert_index;
+	//long vision is to merge these two buffers.
+	sched_task *sched_list_head;
+	boost::interprocess::interprocess_mutex sched_list_mutex;
+	bool sched_list_updated;	//is the list updated (e.g., a new task inserted)
+	u32_t sched_list_counter; 	//how many sched tasks are there?
+
+	update<VA> *update_buffer_start;
+
+	//following members will be shared among all cpu threads
+    static barrier *sync;
     static volatile bool terminate;
     static struct cpu_work * volatile work_to_do;
 
-    cpu_thread(u32_t processor_id_in, class index_vert_array * vert_index_in)
+    cpu_thread(u32_t processor_id_in, index_vert_array * vert_index_in, char* write_buffer_start )
     :processor_id(processor_id_in), vert_index( vert_index_in )
     {   
-        if(sync == NULL) { // First object
+        if(sync == NULL) { //as it is shared, be created for one time
 	        sync = new barrier(NUM_PROCESSORS);
         }
+		//compute my sched and update buffer according to the inputted parameters
+
     }   
 
     void operator() ()
