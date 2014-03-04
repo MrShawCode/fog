@@ -9,13 +9,11 @@
 
 #include "../application/sssp.hpp"
 
-boost::property_tree::ptree pt;
-boost::program_options::options_description desc;
-boost::program_options::variables_map vm; 
+//boost::property_tree::ptree pt;
+//boost::program_options::options_description desc;
+//boost::program_options::variables_map vm; 
 
 struct general_config gen_config;
-
-unsigned int sssp_program::start_vid = 0;
 
 int main( int argc, const char**argv)
 {

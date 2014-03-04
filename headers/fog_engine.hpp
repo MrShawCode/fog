@@ -11,29 +11,26 @@
 #include "disk_thread.hpp"
 #include "cpu_thread.hpp"
 
-enum fog_engine_state_enum{
-	INIT = 0,
-	RUN,
-	TERM
-};
-
 //A stands for the algorithm (i.e., ???_program)
 //VA stands for the vertex attribute
 template <typename A, typename VA>
 class fog_engine{
 		index_vert_array* vert_index;
-		VA* vert_attr_header;
-		char* buffer_for_write;
+
 		segment_config<VA> *seg_config;
 
-		static u32_t fog_engine_state;
+		//will shared among cpu_threads
+		u32_t fog_engine_state;
+		u32_t current_segment;
+		char* buffer_for_write;
 
+		cpu_thread<A,VA> ** pcpu_threads;
+		boost::thread ** boost_pcpu_threads;
+		
+		VA *vert_attr_head0, *vert_attr_head1;
 		disk_thread * attr_disk_thread;
 		boost::thread* boost_attr_disk_thread;
 
-		cpu_thread<A,VA> * pcpu_threads[NUM_PROCESSORS];
-		boost::thread * boost_pcpu_threads[NUM_PROCESSORS];
-		
 	public:
 		//this is a self-proving member function, just make sure vert_index is correctly set.
 		void verify_vertex_indexing()
@@ -89,38 +86,134 @@ class fog_engine{
 			//assume buffer_for_write is aligned, although it is possible that it is NOT! TODO
 
 			//create cpu threads
-			for( int i=0; i< NUM_PROCESSORS; i++ ){
+			pcpu_threads = new cpu_thread<A,VA> *[gen_config.num_processors];
+			boost_pcpu_threads = new boost::thread *[gen_config.num_processors];
+			for( u32_t i=0; i< gen_config.num_processors; i++ ){
 				pcpu_threads[i] = new cpu_thread<A,VA>(i, vert_index, buffer_for_write);
 				if( i>0 )	//Do not forget, "this->" is thread 0
 					boost_pcpu_threads[i] = new boost::thread( boost::ref(*pcpu_threads[i]) );
 			}
 
-			//set fog engine state
-			fog_engine_state = INIT;
+			//setup the dual vertex attribute buffer:
+			vert_attr_head0 = (VA*)((u64_t)buffer_for_write + gen_config.memory_size/2);
+			vert_attr_head1 = (VA*)((u64_t)vert_attr_head0 + gen_config.memory_size/4);
+
+			printf( "fog_engine: setup vertex attribute buffer at 0x%llx and 0x%llx.\n", 
+				(u64_t)vert_attr_head0, (u64_t)vert_attr_head1 );
 		}
 			
 		~fog_engine(){
-/*			//terminate the cpu threads
-			cpu_thread::terminate = true;
-			for(int i=1; i<NUM_PROCESSORS; i++) {
+			printf( "begin to reclaim everything\n" );
+			//terminate the cpu threads
+			pcpu_threads[0]->terminate = true;
+			pcpu_threads[0]->work_to_do = NULL;
+			(*pcpu_threads[0])();
+
+			for(int i=1; i<gen_config.num_processors; i++) {
 		        boost_pcpu_threads[i]->join();
 			}
-			for(i=0; i< NUM_PROCESSORS; i++)
+			for(int i=0; i< gen_config.num_processors; i++)
 				delete pcpu_threads[i];
-*/
+
 			//terminate the disk thread
 			attr_disk_thread->terminate = true;
+			attr_disk_thread->disk_tasks.post();
 			boost_attr_disk_thread->join();
 			delete attr_disk_thread;
 
 			//destroy the vertices mapping
 			delete vert_index;
+			printf( "fog_engine::everything clean\n" );
 		}
 
-		//add vertex id 
-		static void add_schedule( sched_task * task ){
+		void operator() ()
+		{
+			//initilization loop, loop for seg_config->num_segment times,
+			// each time, invoke cpu threads that called A::init to initialize
+			// the value in the attribute buffer, dump the content to file after done,
+			// then swap the attribute buffer (between 0 and 1)
+			cpu_work* new_cpu_work = NULL;
+			io_work* new_io_work = NULL;
+			char * buffer_to_dump = NULL;
+
+			printf( "fog engine operator is called, conduct init phase for %d times.\n", seg_config->num_segments );
+			current_segment = 0;
+			fog_engine_state = INIT;
+			for( u32_t i=0; i < seg_config->num_segments; i++ ){
+				//which attribute buffer I will write to?
+				if ( current_segment%2== 0 ) buffer_to_dump = (char*)vert_attr_head0;
+				else buffer_to_dump = (char*)vert_attr_head1;
+		
+				//create cpu threads
+				new_cpu_work = new cpu_work( INIT, 
+					buffer_to_dump, 
+					seg_config->segment_cap*sizeof(VA), 
+					seg_config->segment_cap*i );
+				pcpu_threads[0]->work_to_do = new_cpu_work;
+				(*pcpu_threads[0])();
+				//cpu threads finished init current attr buffer
+				delete new_cpu_work;
+				new_cpu_work = NULL;
+				
+				//dump current attr buffer to disk
+				if ( new_io_work != NULL ){
+					//keep waiting till previous disk work is finished
+					while( 1 ){
+						if( new_io_work->finished == true ) break;
+						//should measure the time spend on waiting! TODO
+					};
+					delete new_io_work;
+					new_io_work = NULL;
+				}
+
+				new_io_work = new io_work( FILE_WRITE, 
+					buffer_to_dump, 
+					seg_config->segment_cap*sizeof(VA) );
+
+				//activate the disk thread
+				attr_disk_thread->io_work_to_do = new_io_work;
+				attr_disk_thread->disk_task_sem.post();
+
+				current_segment++;
+				if(new_io_work->finished == false ) 
+					printf("the disk task is NOT finished!\n" );
+				else
+					printf("the disk task is FINISHED!\n" );
+			}
+			if(new_io_work->finished == false ) 
+				printf("the disk task is NOT finished!\n" );
+			else
+				printf("the disk task is FINISHED!\n" );
+	
+			//wait till the last write work is finished.
+			while( 1 ){
+				if( new_io_work->finished == true ) break;
+				//should measure the time spend on waiting! TODO
+			};
+			delete new_io_work;
+
+			printf( "fog engine finished initializing attribute files\n" );
+		}
+
+		//not finished yet.
+		void add_sched_task_to_processor( u32_t processor_id, sched_task *task )
+		{
+			u32_t position;
+
+//			position = pcpu_threads[partition_no]->sched_list_counter;
+//			*((sched_task*)(pcpu_threads[partition_no]->sched_list_head) + poistion) = *task;
+//			pcpu_threads[partition_no]->sched_list_counter ++;
+//			pcpu_threads[partition_no]->sched_list_updated = true;
+		}
+
+		//add vertex id (not finished yet)
+		static void add_schedule( sched_task * task )
+		{
+//			u32_t segment_offset, partition_no, position;
+
 			printf( "Will add schedule from %d to %d.\n", task->start, task->term );
-			//sanity check first
+			return;
+/*			//sanity check first
 			if( task->term != 0 )
 				if( (task->term <= task->start) || (task->term > gen_config.max_vertex_id) )
 					goto WRONG_TASK;
@@ -128,24 +221,16 @@ class fog_engine{
 			//find out which processor will have it.
 			if( task->term == 0 ){ //isolated task
 				if(task->start == 0 ) goto WRONG_TASK;
-				u32_t segment_offset = task->start % seg_config->segment_cap;
-				u32_t partition_no = segment_offset / seg_config->partition_cap;
+				segment_offset = task->start % seg_config->segment_cap;
+				partition_no = segment_offset / seg_config->partition_cap;
+				//add task to cpu_thread[partition_no]
+				add_sched_task_to_processor( partition_no, task );
 			}
 
 			return;
 WRONG_TASK:
 			printf( "Engine: add_schedule wrong with task: from %d to %d.\n", task->start, task->term );
-		}
-
-		void operator() ()
-		{
-			printf( "fog_engine: operator is called!\n" );
-			io_work* new_io_work;
-			new_io_work = new io_work( FILE_READ, buffer_for_write, 1024 );
-
-			//activate the disk thread
-			attr_disk_thread->io_work_to_do = new_io_work;
-			attr_disk_thread->disk_tasks.post();
+*/
 		}
 };
 

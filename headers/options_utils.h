@@ -2,11 +2,11 @@
 #ifndef _OPTIONS_UTILS_
 #define _OPTIONS_UTILS_
 
-#include<boost/program_options.hpp>
-#include<iostream>
+#include <boost/program_options.hpp>
+#include <iostream>
 
-extern boost::program_options::options_description desc;
-extern boost::program_options::variables_map vm;
+boost::program_options::options_description desc;
+boost::program_options::variables_map vm;
 
 static void setup_options_convert(int argc, const char* argv[])
 {

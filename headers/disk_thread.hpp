@@ -17,10 +17,10 @@ struct io_work{
 
     void operator() (unsigned int processor_id)
     {   
+		finished = true;
 		printf( "disk tasks is received by disk thread %d\n", processor_id );
 		printf( "the io work to do: operation:%d, size:%d, buffer:%llx\n", 
 			operation, size, (u64_t)buffer );
-		finished = true;
 	}
 
 	u32_t operation; //choose from enum
@@ -33,14 +33,14 @@ class disk_thread {
 public:
     const unsigned long processor_id; 
     struct io_work * volatile io_work_to_do;
-	boost::interprocess::interprocess_semaphore disk_tasks;
+	boost::interprocess::interprocess_semaphore disk_task_sem;
 	int attr_fd;
     bool terminate;
 
     disk_thread(unsigned long processor_id_in)
-    :processor_id(processor_id_in), disk_tasks(0), terminate(false)
+    :processor_id(processor_id_in), disk_task_sem(0), terminate(false)
     {
-		attr_fd = open( gen_config.attr_file_name.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH );
+		attr_fd = open( gen_config.attr_file_name.c_str(), O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH );
 		if( attr_fd < 0 ){
 			printf( "Cannot create attribute file for writing!\n");
 			exit( -1 );
@@ -54,14 +54,16 @@ public:
     void operator() ()
     {
         do{
-            disk_tasks.wait();
-            (*io_work_to_do)(processor_id);
+            disk_task_sem.wait();
+			printf( "signal received from another thread!\n" );
 
 			//TODO: problem on logic!
             if(terminate) {
 				printf( "disk thread terminating\n" );
  	        	break;
             }
+            (*io_work_to_do)(processor_id);
+
         }while(1);
     }
 };

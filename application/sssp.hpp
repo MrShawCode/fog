@@ -14,9 +14,11 @@ class sssp_program{
 		static unsigned int start_vid;
 		//init the vid-th vertex
 		static void init(unsigned int vid, sssp_vert_attr* va){
+			sched_task* t_task;
 			if ( vid == start_vid ){
 				va->value = 0;
-				fog_engine<sssp_program, sssp_vert_attr>::add_schedule( vid );
+				t_task = new sched_task;
+				fog_engine<sssp_program, sssp_vert_attr>::add_schedule( t_task );
 				//should add schedule of vid, need api from engine
 			}else
 				va->value = INFINITY;
@@ -36,5 +38,7 @@ class sssp_program{
 			}
 		}
 };
+
+unsigned int sssp_program::start_vid = 0;
 
 #endif

@@ -34,8 +34,8 @@ COMPACT  | <4 byte dst, 4bytes weight>
 
 #include "convert.h"
 
-boost::program_options::options_description desc;
-boost::program_options::variables_map vm;
+//boost::program_options::options_description desc;
+//boost::program_options::variables_map vm;
 
 //statistic data below
 unsigned int min_vertex_id=100000, max_vertex_id=0;
