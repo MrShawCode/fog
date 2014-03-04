@@ -82,7 +82,7 @@ class fog_engine{
 			// each time, invoke cpu threads that called A::init to initialize
 			// the value in the attribute buffer, dump the content to file after done,
 			// then swap the attribute buffer (between 0 and 1)
-			cpu_work* new_cpu_work = NULL;
+			cpu_work<A,VA>* new_cpu_work = NULL;
 			io_work* new_io_work = NULL;
 			char * buffer_to_dump = NULL;
 
@@ -95,10 +95,19 @@ class fog_engine{
 				else buffer_to_dump = (char*)vert_attr_head1;
 		
 				//create cpu threads
-				new_cpu_work = new cpu_work( INIT, 
-					buffer_to_dump, 
-					seg_config->segment_cap*sizeof(VA), 
-					seg_config->segment_cap*i );
+				if( i != (seg_config->num_segments-1) ){
+					new_cpu_work = new cpu_work<A,VA>( INIT, 
+						buffer_to_dump, 
+						seg_config->segment_cap*i,
+						seg_config->segment_cap, 
+						seg_config );
+				}else{	//the last segment, should be smaller than a full segment
+					new_cpu_work = new cpu_work<A,VA>( INIT, 
+						buffer_to_dump, 
+						seg_config->segment_cap*i,
+						gen_config.max_vertex_id%seg_config->segment_cap,
+						seg_config );
+				}
 				pcpu_threads[0]->work_to_do = new_cpu_work;
 				(*pcpu_threads[0])();
 				//cpu threads finished init current attr buffer
@@ -109,16 +118,22 @@ class fog_engine{
 				if ( new_io_work != NULL ){
 					//keep waiting till previous disk work is finished
 					while( 1 ){
-						if( new_io_work->finished == true ) break;
+						if( new_io_work->finished ) break;
 						//should measure the time spend on waiting! TODO
 					};
 					delete new_io_work;
 					new_io_work = NULL;
 				}
 
-				new_io_work = new io_work( FILE_WRITE, 
-					buffer_to_dump, 
-					seg_config->segment_cap*sizeof(VA) );
+				if( i != (seg_config->num_segments-1) ){
+					new_io_work = new io_work( FILE_WRITE, 
+						buffer_to_dump, 
+						seg_config->segment_cap*sizeof(VA) );
+				}else{
+					new_io_work = new io_work( FILE_WRITE, 
+						buffer_to_dump, 
+						(gen_config.max_vertex_id%seg_config->segment_cap)*sizeof(VA) );
+				}
 
 				//activate the disk thread
 				attr_disk_thread->io_work_to_do = new_io_work;
@@ -129,7 +144,7 @@ class fog_engine{
 	
 			//wait till the last write work is finished.
 			while( 1 ){
-				if( new_io_work->finished == true ) break;
+				if( new_io_work->finished ) break;
 				//should measure the time spend on waiting! TODO
 			};
 			delete new_io_work;

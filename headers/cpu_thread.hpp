@@ -40,25 +40,41 @@ class barrier {
 //    friend class cpu_thread<A,VA>;
 };
 
+template <typename A, typename VA>
 struct cpu_work{
 	u32_t engine_state;
 	char* attr_buffer_head;
 	char* my_attr_buffer;
-	u32_t attr_buffer_size;
-	u32_t start_vertex_id;
+	u32_t start_vert_id;
+	u32_t num_of_vertices;
+	segment_config<VA> * seg_config;
 
-	cpu_work( u32_t state, char* buffer, u32_t size, u32_t start_vert )
-		:engine_state(state), attr_buffer_head(buffer), attr_buffer_size(size), start_vertex_id(start_vert)
+	cpu_work( u32_t state, char* buffer, u32_t start_vert, u32_t num_vert, segment_config<VA>* seg_config_in )
+		:engine_state(state), attr_buffer_head(buffer), start_vert_id(start_vert), num_of_vertices(num_vert), seg_config(seg_config_in)
 	{}
 	
 	void operator() ( u32_t processor_id, barrier *sync, index_vert_array *vert_index )
 	{
+		u32_t local_start_vert_off, local_term_vert_off;
         sync->wait();
 		
 		switch( engine_state ){
 			case INIT:
-				printf( "processor:%d, will initialized 0x%llx for %u (size)\n", 
-					processor_id, (u64_t)attr_buffer_head, attr_buffer_size );
+				if( processor_id*seg_config->partition_cap > num_of_vertices ) goto INIT_FIN;
+				//compute loca_start_vert_id and local_term_vert_id
+				local_start_vert_off = processor_id*(seg_config->partition_cap);
+
+				if ( ((processor_id+1)*seg_config->partition_cap-1) > num_of_vertices )
+					local_term_vert_off = num_of_vertices - 1;
+				else
+					local_term_vert_off = local_start_vert_off + seg_config->partition_cap - 1;
+			
+//				printf( "processor:%d, local buffer:0x%llx, vert start from %u, number:%u local start from vertex %u to %u\n", 
+//					processor_id, (u64_t)local_attr_buffer_head, start_vert_id, num_of_vertices, local_start_vert_off, local_term_vert_off );
+				//Note: for A::init, the vertex id and VA* address does not mean the same offset!
+				for (u32_t i=local_start_vert_off; i<=local_term_vert_off; i++ )
+					A::init( start_vert_id + i, (VA*)attr_buffer_head+i );
+INIT_FIN:
 				break;
 			case SCATTER:
 				break;
@@ -85,7 +101,7 @@ public:
 	//following members will be shared among all cpu threads
     static barrier *sync;
     static volatile bool terminate;
-    static struct cpu_work * volatile work_to_do;
+    static struct cpu_work<A,VA> * volatile work_to_do;
 
     cpu_thread(u32_t processor_id_in, index_vert_array * vert_index_in, char* write_buffer_start )
     :processor_id(processor_id_in), vert_index( vert_index_in )
@@ -141,6 +157,6 @@ template <typename A, typename VA>
 volatile bool cpu_thread<A, VA>::terminate;
 
 template <typename A, typename VA>
-cpu_work * volatile cpu_thread<A, VA>::work_to_do;
+cpu_work<A,VA> * volatile cpu_thread<A, VA>::work_to_do;
 
 #endif

@@ -81,6 +81,7 @@ index_vert_array::index_vert_array()
 
 index_vert_array::~index_vert_array()
 {
+	printf( "vertex index array unmapped!\n" );
 	munmap( vertex_array_header, vert_index_file_length );
 	munmap( edge_array_header, edge_file_length );
 }

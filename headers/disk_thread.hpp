@@ -12,20 +12,37 @@ enum{
 
 struct io_work{
 	u32_t operation; //choose from enum
-	bool finished;	//is the work finished?
+	volatile int finished;	//is the work finished? 0 means not finished, 1 means finished
 	char* buffer;
 	u32_t size;
 
 	io_work( u32_t oper, char* buf, u32_t size_in )
-		:operation(oper), finished(false), buffer(buf), size(size_in)
+		:operation(oper), finished(0), buffer(buf), size(size_in)
 	{}
 
-    void operator() (unsigned int processor_id)
+    void operator() (u32_t processor_id, int fd)
     {   
+		//dump buffer to filea
+		switch( operation ){
+			case FILE_READ:
+				break;
+			case FILE_WRITE:
+				printf( "dump to disk tasks is received by disk thread, buffer:0x%llx, size:%u\n", 
+					(u64_t)buffer, size );
+				int written=0, remain=size, res;
+
+				while( written < (int)size ){
+					if( (res = write(fd, buffer, remain)) < 0 )
+						printf( "failure on disk writing!\n" );
+					written += res;
+					remain -= res;
+				}
+				break;
+		}
+		//atomically increment finished 
+		__sync_fetch_and_add(&finished, 1);
 		finished = true;
-		printf( "disk tasks is received by disk thread %d\n", processor_id );
-		printf( "the io work to do: operation:%d, size:%d, buffer:%llx\n", 
-			operation, size, (u64_t)buffer );
+		__sync_synchronize();
 	}
 };
 
@@ -55,7 +72,6 @@ public:
     {
         do{
             disk_task_sem.wait();
-			printf( "signal received from another thread!\n" );
 
 			//TODO: problem on logic!
             if(terminate) {
@@ -63,7 +79,7 @@ public:
  	        	break;
             }
 			if( io_work_to_do )
-	            (*io_work_to_do)(processor_id);
+	            (*io_work_to_do)(processor_id, attr_fd);
 
         }while(1);
     }
