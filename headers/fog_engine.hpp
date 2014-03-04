@@ -32,35 +32,6 @@ class fog_engine{
 		boost::thread* boost_attr_disk_thread;
 
 	public:
-		//this is a self-proving member function, just make sure vert_index is correctly set.
-		void verify_vertex_indexing()
-		{
-			//TODO:
-		}
-
-		static void *map_anon_memory( u64_t size,
-                             bool mlocked,
-                             bool zero = false)
-		{
-			void *space = mmap(NULL, size > 0 ? size:4096,
-                     PROT_READ|PROT_WRITE,
-                     MAP_ANONYMOUS|MAP_SHARED, -1, 0);
-			printf( "Engine::map_anon_memory had allocated %llu bytes at %llx\n", size, (u64_t)space);
-
-			if(space == MAP_FAILED) {
-			    std::cerr << "mmap_anon_mem -- allocation " << "Error!\n";
-			    exit(-1);
-			}
-		  	if(mlocked) {
-				if(mlock(space, size) < 0) {
-			        std::cerr << "mmap_anon_mem -- mlock " << "Error!\n";
-			    }
-		  	}
-			if(zero) {
-		    	memset(space, 0, size);
-		  	}
-			return space;
-		}
 
 		fog_engine(segment_config<VA> *seg_config_in)
 			:seg_config( seg_config_in)
@@ -88,7 +59,7 @@ class fog_engine{
 			//create cpu threads
 			pcpu_threads = new cpu_thread<A,VA> *[gen_config.num_processors];
 			boost_pcpu_threads = new boost::thread *[gen_config.num_processors];
-			for( u32_t i=0; i< gen_config.num_processors; i++ ){
+			for( u32_t i=0; i<gen_config.num_processors; i++ ){
 				pcpu_threads[i] = new cpu_thread<A,VA>(i, vert_index, buffer_for_write);
 				if( i>0 )	//Do not forget, "this->" is thread 0
 					boost_pcpu_threads[i] = new boost::thread( boost::ref(*pcpu_threads[i]) );
@@ -103,27 +74,6 @@ class fog_engine{
 		}
 			
 		~fog_engine(){
-			printf( "begin to reclaim everything\n" );
-			//terminate the cpu threads
-			pcpu_threads[0]->terminate = true;
-			pcpu_threads[0]->work_to_do = NULL;
-			(*pcpu_threads[0])();
-
-			for(int i=1; i<gen_config.num_processors; i++) {
-		        boost_pcpu_threads[i]->join();
-			}
-			for(int i=0; i< gen_config.num_processors; i++)
-				delete pcpu_threads[i];
-
-			//terminate the disk thread
-			attr_disk_thread->terminate = true;
-			attr_disk_thread->disk_tasks.post();
-			boost_attr_disk_thread->join();
-			delete attr_disk_thread;
-
-			//destroy the vertices mapping
-			delete vert_index;
-			printf( "fog_engine::everything clean\n" );
 		}
 
 		void operator() ()
@@ -175,15 +125,7 @@ class fog_engine{
 				attr_disk_thread->disk_task_sem.post();
 
 				current_segment++;
-				if(new_io_work->finished == false ) 
-					printf("the disk task is NOT finished!\n" );
-				else
-					printf("the disk task is FINISHED!\n" );
 			}
-			if(new_io_work->finished == false ) 
-				printf("the disk task is NOT finished!\n" );
-			else
-				printf("the disk task is FINISHED!\n" );
 	
 			//wait till the last write work is finished.
 			while( 1 ){
@@ -193,6 +135,37 @@ class fog_engine{
 			delete new_io_work;
 
 			printf( "fog engine finished initializing attribute files\n" );
+
+			//reclaim everything
+			reclaim_everything();
+		}
+
+		void reclaim_everything()
+		{
+			printf( "begin to reclaim everything\n" );
+			//reclaim pre-allocated space
+			munlock( buffer_for_write, gen_config.memory_size );
+			munmap( buffer_for_write, gen_config.memory_size );
+			//terminate the cpu threads
+			pcpu_threads[0]->terminate = true;
+			pcpu_threads[0]->work_to_do = NULL;
+			(*pcpu_threads[0])();
+
+			for(u32_t i=1; i<gen_config.num_processors; i++) {
+		        boost_pcpu_threads[i]->join();
+			}
+			for(u32_t i=0; i<gen_config.num_processors; i++)
+				delete pcpu_threads[i];
+
+			//terminate the disk thread
+			attr_disk_thread->terminate = true;
+			attr_disk_thread->disk_task_sem.post();
+			boost_attr_disk_thread->join();
+			delete attr_disk_thread;
+
+			//destroy the vertices mapping
+			delete vert_index;
+			printf( "everything reclaimed!\n" );
 		}
 
 		//not finished yet.
@@ -231,6 +204,36 @@ class fog_engine{
 WRONG_TASK:
 			printf( "Engine: add_schedule wrong with task: from %d to %d.\n", task->start, task->term );
 */
+		}
+
+		//this is a self-proving member function, just make sure vert_index is correctly set.
+		void verify_vertex_indexing()
+		{
+			//TODO:
+		}
+
+		static void *map_anon_memory( u64_t size,
+                             bool mlocked,
+                             bool zero = false)
+		{
+			void *space = mmap(NULL, size > 0 ? size:4096,
+                     PROT_READ|PROT_WRITE,
+                     MAP_ANONYMOUS|MAP_SHARED, -1, 0);
+			printf( "Engine::map_anon_memory had allocated %llu bytes at %llx\n", size, (u64_t)space);
+
+			if(space == MAP_FAILED) {
+			    std::cerr << "mmap_anon_mem -- allocation " << "Error!\n";
+			    exit(-1);
+			}
+		  	if(mlocked) {
+				if(mlock(space, size) < 0) {
+			        std::cerr << "mmap_anon_mem -- mlock " << "Error!\n";
+			    }
+		  	}
+			if(zero) {
+		    	memset(space, 0, size);
+		  	}
+			return space;
 		}
 };
 

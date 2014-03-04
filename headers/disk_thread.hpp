@@ -11,6 +11,11 @@ enum{
 };
 
 struct io_work{
+	u32_t operation; //choose from enum
+	bool finished;	//is the work finished?
+	char* buffer;
+	u32_t size;
+
 	io_work( u32_t oper, char* buf, u32_t size_in )
 		:operation(oper), finished(false), buffer(buf), size(size_in)
 	{}
@@ -22,11 +27,6 @@ struct io_work{
 		printf( "the io work to do: operation:%d, size:%d, buffer:%llx\n", 
 			operation, size, (u64_t)buffer );
 	}
-
-	u32_t operation; //choose from enum
-	bool finished;	//is the work finished?
-	char* buffer;
-	u32_t size;
 };
 
 class disk_thread {
@@ -62,7 +62,8 @@ public:
 				printf( "disk thread terminating\n" );
  	        	break;
             }
-            (*io_work_to_do)(processor_id);
+			if( io_work_to_do )
+	            (*io_work_to_do)(processor_id);
 
         }while(1);
     }
