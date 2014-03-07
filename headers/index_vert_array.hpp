@@ -19,7 +19,7 @@ class index_vert_array{
 		int edge_file_fd;
 		unsigned long long vert_index_file_length;
 		unsigned long long edge_file_length;
-		vertex_index* vertex_array_header;
+		vert_index* vert_array_header;
 		edge* edge_array_header;
 	
 	public:
@@ -37,7 +37,7 @@ index_vert_array::index_vert_array()
 	struct stat st;
 	char * memblock;
 
-	mmapped_vert_file = gen_config.vertex_file_name;
+	mmapped_vert_file = gen_config.vert_file_name;
 	mmapped_edge_file = gen_config.edge_file_name;
 
 	vert_index_file_fd = open( mmapped_vert_file.c_str(), O_RDONLY );
@@ -63,7 +63,7 @@ index_vert_array::index_vert_array()
 		exit( -1 );
 	}
     printf( "index array mmapped at virtual address:0x%llx\n", (u64_t)memblock );
-    vertex_array_header = (struct vertex_index *) memblock;
+    vert_array_header = (struct vert_index *) memblock;
 
 	//map edge files to edge_array_header
     fstat(edge_file_fd, &st);
@@ -82,7 +82,7 @@ index_vert_array::index_vert_array()
 index_vert_array::~index_vert_array()
 {
 	printf( "vertex index array unmapped!\n" );
-	munmap( vertex_array_header, vert_index_file_length );
+	munmap( vert_array_header, vert_index_file_length );
 	munmap( edge_array_header, edge_file_length );
 }
 
@@ -90,18 +90,18 @@ unsigned int index_vert_array::num_out_edges( unsigned int vid )
 {
 	unsigned long long start_edge=0L, end_edge=0L;
 	
-	start_edge = vertex_array_header[vid].offset;
+	start_edge = vert_array_header[vid].offset;
 	printf( "start_edge = %lld\n", start_edge );
 	if ( start_edge == 0L ) return 0;
 
-	if ( vid > gen_config.max_vertex_id ) return 0;
+	if ( vid > gen_config.max_vert_id ) return 0;
 
-    if ( vid == gen_config.max_vertex_id )
+    if ( vid == gen_config.max_vert_id )
         end_edge = gen_config.num_edges;
     else{
-        for( u32_t i=vid+1; i<=gen_config.max_vertex_id; i++ ){
-            if( vertex_array_header[i].offset != 0L ){
-                end_edge = vertex_array_header[i].offset -1;
+        for( u32_t i=vid+1; i<=gen_config.max_vert_id; i++ ){
+            if( vert_array_header[i].offset != 0L ){
+                end_edge = vert_array_header[i].offset -1;
                 break;
             }
         }
@@ -119,7 +119,7 @@ edge* index_vert_array::out_edge( unsigned int vid, unsigned int which )
 	edge* ret = new edge;
 	if( which > index_vert_array::num_out_edges( vid ) ) return NULL;
 
-	*ret = (edge)edge_array_header[ vertex_array_header[vid].offset + which ];
+	*ret = (edge)edge_array_header[ vert_array_header[vid].offset + which ];
 
 	return ret;
 }

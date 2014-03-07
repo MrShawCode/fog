@@ -110,7 +110,7 @@ class fog_engine_target{
 					new_cpu_work = new cpu_work<A,VA>( INIT, 
 						buffer_to_dump, 
 						seg_config->segment_cap*i,
-						gen_config.max_vertex_id%seg_config->segment_cap,
+						gen_config.max_vert_id%seg_config->segment_cap,
 						seg_config );
 				}
 				pcpu_threads[0]->work_to_do = new_cpu_work;
@@ -137,7 +137,7 @@ class fog_engine_target{
 				}else{
 					new_io_work = new io_work( FILE_WRITE, 
 						buffer_to_dump, 
-						(gen_config.max_vertex_id%seg_config->segment_cap)*sizeof(VA) );
+						(gen_config.max_vert_id%seg_config->segment_cap)*sizeof(VA) );
 				}
 
 				//activate the disk thread
@@ -208,7 +208,7 @@ class fog_engine_target{
 			return;
 /*			//sanity check first
 			if( task->term != 0 )
-				if( (task->term <= task->start) || (task->term > gen_config.max_vertex_id) )
+				if( (task->term <= task->start) || (task->term > gen_config.max_vert_id) )
 					goto WRONG_TASK;
 				
 			//find out which processor will have it.

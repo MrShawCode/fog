@@ -10,6 +10,8 @@ enum fog_engine_state_enum{
     TERM
 };
 
+#define SCHED_BUFFER_LEN    1024
+
 template <typename A, typename VA>
 class cpu_thread;
 
@@ -69,8 +71,8 @@ struct cpu_work{
 				else
 					local_term_vert_off = local_start_vert_off + seg_config->partition_cap - 1;
 			
-//				printf( "processor:%d, local buffer:0x%llx, vert start from %u, number:%u local start from vertex %u to %u\n", 
-//					processor_id, (u64_t)local_attr_buffer_head, start_vert_id, num_of_vertices, local_start_vert_off, local_term_vert_off );
+//				printf( "processor:%d, vert start from %u, number:%u local start from vertex %u to %u\n", 
+//					processor_id, start_vert_id, num_of_vertices, local_start_vert_off, local_term_vert_off );
 				//Note: for A::init, the vertex id and VA* address does not mean the same offset!
 				for (u32_t i=local_start_vert_off; i<=local_term_vert_off; i++ )
 					A::init( start_vert_id + i, (VA*)attr_buffer_head+i );
@@ -91,12 +93,6 @@ class cpu_thread {
 public:
     const unsigned long processor_id; 
 	index_vert_array* vert_index;
-	//long vision is to merge these two buffers. TODO
-	sched_task *sched_list_head;
-	bool sched_list_updated;	//is the list updated (e.g., a new task inserted)
-	u32_t sched_list_counter; 	//how many sched tasks are there?
-
-	update<VA> *update_list_head;
 
 	//following members will be shared among all cpu threads
     static barrier *sync;
@@ -109,16 +105,6 @@ public:
         if(sync == NULL) { //as it is shared, be created for one time
 	        sync = new barrier(gen_config.num_processors);
         }
-		//compute my sched and update buffer according to the inputted parameters
-		//NOTE: sched task buffer and update buffer for each processor should be contiguous!
-		sched_list_head = (sched_task*)((u64_t)write_buffer_start + processor_id*((gen_config.memory_size/2)/gen_config.num_processors));
-		sched_list_counter = 0;
-		sched_list_updated = false;
-
-		update_list_head = (update<VA>*)((u64_t)sched_list_head + (gen_config.memory_size/4)/gen_config.num_processors);
-
-		printf( "for processor %lu, sched_list_head:0x%llx, update_list_head:0x%llx\n", 
-			processor_id, (u64_t)sched_list_head, (u64_t)update_list_head );
     }   
 
     void operator() ()
