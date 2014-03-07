@@ -6,8 +6,10 @@
 #include "config.hpp"
 #include "index_vert_array.hpp"
 #include "fog_engine.hpp"
+#include "fog_engine_target.hpp"
 
 #include "../application/sssp.hpp"
+#include "../application/pagerank.hpp"
 
 //boost::property_tree::ptree pt;
 //boost::program_options::options_description desc;
@@ -56,8 +58,15 @@ int main( int argc, const char**argv)
 
 		sssp_program::start_vid = atoi(parameter.c_str());
 		printf( "sssp_program start_vid = %d\n", sssp_program::start_vid );
-		//initialize fog engine
-		(*(new fog_engine<sssp_program, sssp_vert_attr>(&seg_config)))();
+		//ready and run
+		(*(new fog_engine_target<sssp_program, sssp_vert_attr>(&seg_config)))();
+	}else if( prog_name == "pagerank" ){
+		segment_config<pagerank_vertex_attr> seg_config;
+
+		pagerank_program::iteration_times = atoi( parameter.c_str() );
+		printf( "pagerank_program iteration_times = %d\n", pagerank_program::iteration_times );
+		//ready and run
+		(*(new fog_engine<pagerank_program, pagerank_vertex_attr>(&seg_config)))();
 	}
 }
 

@@ -5,7 +5,7 @@ typedef unsigned int u32_t;
 typedef unsigned long long u64_t;
 
 struct edge{
-    unsigned int dst_vert;                                         
+    unsigned int dest_vert;                                         
     float edge_weight;
 }__attribute__ ((aligned(8)));                                     
 
@@ -15,8 +15,8 @@ struct vertex_index{
 
 template<typename VA>
 struct update{
-	unsigned int dst_vert;
-	VA vert_attribute;
+	unsigned int dest_vert;
+	VA vert_attr;
 }__attribute__ ((__packed__));
 
 struct sched_task{

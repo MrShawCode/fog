@@ -1,10 +1,12 @@
-//declaration of fog_engine class
-// The features of this class:
-// 1) Schedule list with fixed size (defined by a MACRO)
-// 2) donot need to sort and merge the scheduled tasks, just FIFO.
+//fog_engine_target is defined for targeted queries, such as SSSP.
+// characters of fog_engine_target:
+// 1) Schedule list with dynamic size
+// 2) need to consider merging and (possibly) the scheduled tasks
+// 3) As the schedule list may grow dramatically, the system may need to consider dump 
+//	(partial) of the list to disk (to alieviate pressure on buffer).
 
-#ifndef __FOG_ENGINE_H__
-#define __FOG_ENGINE_H__
+#ifndef __FOG_ENGINE_TARGET_H__
+#define __FOG_ENGINE_TARGET_H__
 
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -17,8 +19,8 @@
 //A stands for the algorithm (i.e., ???_program)
 //VA stands for the vertex attribute
 template <typename A, typename VA>
-class fog_engine{
-		static index_vert_array* vert_index;
+class fog_engine_target{
+		index_vert_array* vert_index;
 
 		segment_config<VA> *seg_config;
 
@@ -36,10 +38,10 @@ class fog_engine{
 
 	public:
 
-		fog_engine(segment_config<VA> *seg_config_in)
+		fog_engine_target(segment_config<VA> *seg_config_in)
 			:seg_config( seg_config_in)
 			{
-			//fog_engine is created with following segment configurations:
+			//fog_engine_target is created with following segment configurations:
 			printf( "Fog_engine is created with following segment configurations:\n" );
             printf( "Sizeof vertex attribute:%lu\n", sizeof(VA) );
 			printf( "Number of segments=%u\nSegment capacity:%u(vertices)\n", 
@@ -72,35 +74,11 @@ class fog_engine{
 			vert_attr_head0 = (VA*)((u64_t)buffer_for_write + gen_config.memory_size/2);
 			vert_attr_head1 = (VA*)((u64_t)vert_attr_head0 + gen_config.memory_size/4);
 
-			printf( "fog_engine: setup vertex attribute buffer at 0x%llx and 0x%llx.\n", 
+			printf( "fog_engine_target: setup vertex attribute buffer at 0x%llx and 0x%llx.\n", 
 				(u64_t)vert_attr_head0, (u64_t)vert_attr_head1 );
 		}
 			
-		~fog_engine(){
-			printf( "begin to reclaim everything\n" );
-			//reclaim pre-allocated space
-			munlock( buffer_for_write, gen_config.memory_size );
-			munmap( buffer_for_write, gen_config.memory_size );
-			//terminate the cpu threads
-			pcpu_threads[0]->terminate = true;
-			pcpu_threads[0]->work_to_do = NULL;
-			(*pcpu_threads[0])();
-
-			for(u32_t i=1; i<gen_config.num_processors; i++) {
-		        boost_pcpu_threads[i]->join();
-			}
-			for(u32_t i=0; i<gen_config.num_processors; i++)
-				delete pcpu_threads[i];
-
-			//terminate the disk thread
-			attr_disk_thread->terminate = true;
-			attr_disk_thread->disk_task_sem.post();
-			boost_attr_disk_thread->join();
-			delete attr_disk_thread;
-
-			//destroy the vertices mapping
-			delete vert_index;
-			printf( "everything reclaimed!\n" );
+		~fog_engine_target(){
 		}
 
 		void operator() ()
@@ -179,13 +157,7 @@ class fog_engine{
 			printf( "fog engine finished initializing attribute files\n" );
 
 			//reclaim everything
-//			reclaim_everything();
-		}
-
-		static void add_update( update<VA> * u )
-		{
-			printf( "will add update to vertex:%d\n", u->dest_vert );
-			delete u;
+			reclaim_everything();
 		}
 
 		void reclaim_everything()
@@ -227,7 +199,7 @@ class fog_engine{
 //			pcpu_threads[partition_no]->sched_list_updated = true;
 		}
 
-		//add vertex id
+		//add vertex id (not finished yet)
 		static void add_schedule( sched_task * task )
 		{
 //			u32_t segment_offset, partition_no, position;
@@ -283,16 +255,6 @@ WRONG_TASK:
 		  	}
 			return space;
 		}
-
-		static u32_t num_of_out_edges( u32_t vid ){
-			return vert_index->num_out_edges( vid );
-		}
-
-		static edge* get_ith_out_edge( u32_t vid, u32_t i_th ){
-			return vert_index->out_edge( vid, i_th );
-		}
 };
 
-template <typename A, typename VA>
-index_vert_array* fog_engine<A,VA>::vert_index;
 #endif

@@ -1,7 +1,7 @@
 #ifndef __SSSP_H__
 #define __SSSP_H__
 
-#include "type.hpp"
+#include "types.hpp"
 #include "fog_engine.hpp"
 
 struct sssp_vert_attr{
@@ -32,8 +32,8 @@ class sssp_program{
 		//gather one update "u" from outside
 		static void gather_one_update( unsigned int vid, sssp_vert_attr* va, struct update<sssp_vert_attr>* u ){
 			//compare the value of u, if it is smaller, absorb the update
-			if( u->vert_attribute.value < va->value ){
-				*va = u->vert_attribute;
+			if( u->vert_attr.value < va->value ){
+				*va = u->vert_attr;
 				//should add schedule of {vid,0}, need api from engine
 			}
 		}

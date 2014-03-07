@@ -1,7 +1,7 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#include "type.hpp"
+#include "types.hpp"
 
 #define DISK_THREAD_ID_BEGIN_WITH	1024
 #define MIN_VERT_TO_PROCESS		1024
