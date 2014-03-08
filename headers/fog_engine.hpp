@@ -288,7 +288,7 @@ class fog_engine{
 			sched_task t_task;
 			u32_t temp_vid;
 			t_task.start = 0;
-			t_task.term = 1024;
+			t_task.term = gen_config.max_vert_id;
 			printf( "test_add_schedule: will add a new task, starts %u term %u. cpu number:%u\n", 
 				t_task.start, t_task.term, gen_config.num_processors );
 
@@ -320,13 +320,24 @@ class fog_engine{
 			}
 
 			//now add the task
+			printf( "add_sched_task_to_processor: will add sched task from:%u to:%u at CPU:%u\n", task->start, task->term, processor_id );
+
+			sched_list_manager* this_manager;
+			this_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
+
+			printf( "this sched_list manager:head:0x%llx,tail:0x%llx,current:0x%llx\n",
+				(u64_t)this_manager->head, (u64_t)this_manager->tail, (u64_t)this_manager->current );
+			printf( "number of schedule list counter:%u, sched_buffer_size:%u\n",
+				this_manager->sched_task_counter, this_manager->sched_buffer_size );
+
+			delete task;
 		}
 
 		//The "task" may be very huge, e.g., [0, max_vert_id],
 		// should fragment it before adding it to the sched_list of processors
 		void add_schedule( sched_task * task )
 		{
-			printf( "Will add schedule from %d to %d.\n", task->start, task->term );
+			printf( "add_schedule:Will add schedule from %d to %d.\n", task->start, task->term );
 			
 			if( task->term == 0 ){
 				assert( task->start <= seg_config.max_vert_id );
@@ -334,20 +345,29 @@ class fog_engine{
 				return;
 			}
 
-/*			assert( task->start <= task->term );
+			assert( task->start <= task->term );
 			assert( task->term <= seg_config.max_vert_id );
 			u32_t i, j;
 			sched_task* p_task;
 
-			for( i=VID_TO_SEGMENT(task->start); i<=VID_TO_SEGMENT(task->term); i++ ){	//loop for segment times
+//			printf( "segment start:%u, term:%u, cpu start:%u, term:%u\n", VID_TO_SEGMENT(task->start), VID_TO_SEGMENT(task->term), VID_TO_PARTITION(task->start), VID_TO_PARTITION(task->term) );
+			for( i=VID_TO_SEGMENT(task->start); i<=VID_TO_SEGMENT(task->term); i++ ){	
+				//loop for segment times
 				//handle the task from task->start to the end of segment i (i.e., seg_config->segment_cap*i).
-				for( j=VID_TO_PARTITION(task->start); j<=VID_TO_PARTITION(task->term); j++ ){ //loop for number of processors
+				for( j=0; j<gen_config.num_processors; j++ ){ //loop for number of processors
+					//just find common parts between [task->start, task->term] and
+					//[START_VID(i,j), TERM_VID(i,j)]
+					if( TERM_VID(i,j) < task->start ) continue;
+					if( START_VID(i,j) > task->term ) continue;
+
+					//there will be common part(s)
 					p_task = new sched_task;
-					p_task->start = (task->start>START_VID(i, j))?task->start:START_VID(i,j);
-					p_task->term = 
+					p_task->start = (task->start>START_VID(i,j))?task->start:START_VID(i,j);
+					p_task->term = (task->term>TERM_VID(i,j))?TERM_VID(i,j):task->term;
+					add_sched_task_to_processor( j, p_task );
 				}
 			}
-*/
+//			delete task;
 			return;
 		}
 
