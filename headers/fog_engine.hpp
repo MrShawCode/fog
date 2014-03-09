@@ -60,7 +60,7 @@ class fog_engine{
 			pcpu_threads = new cpu_thread<A,VA> *[gen_config.num_processors];
 			boost_pcpu_threads = new boost::thread *[gen_config.num_processors];
 			for( u32_t i=0; i<gen_config.num_processors; i++ ){
-				pcpu_threads[i] = new cpu_thread<A,VA>(i, vert_index, buffer_for_write);
+				pcpu_threads[i] = new cpu_thread<A,VA>(i, vert_index, seg_config);
 				if( i>0 )	//Do not forget, "this->" is thread 0
 					boost_pcpu_threads[i] = new boost::thread( boost::ref(*pcpu_threads[i]) );
 			}
@@ -78,8 +78,6 @@ class fog_engine{
 
 		void operator() ()
 		{
-			test_add_sched_tasks();
-
 			//initilization loop, loop for seg_config->num_segment times,
 			// each time, invoke cpu threads that called A::init to initialize
 			// the value in the attribute buffer, dump the content to file after done,
@@ -87,6 +85,7 @@ class fog_engine{
 			cpu_work<A,VA>* new_cpu_work = NULL;
 			io_work* new_io_work = NULL;
 			char * buffer_to_dump = NULL;
+			init_param* p_init_param=new init_param;
 
 			printf( "fog engine operator is called, conduct init phase for %d times.\n", seg_config->num_segments );
 			current_attr_segment = 0;
@@ -98,17 +97,17 @@ class fog_engine{
 		
 				//create cpu threads
 				if( i != (seg_config->num_segments-1) ){
+					p_init_param->attr_buffer_head = buffer_to_dump;
+					p_init_param->start_vert_id = seg_config->segment_cap*i;
+					p_init_param->num_of_vertices = seg_config->segment_cap;
 					new_cpu_work = new cpu_work<A,VA>( INIT, 
-						buffer_to_dump, 
-						seg_config->segment_cap*i,
-						seg_config->segment_cap, 
-						seg_config );
+						(void*)p_init_param );
 				}else{	//the last segment, should be smaller than a full segment
+					p_init_param->attr_buffer_head = buffer_to_dump;
+					p_init_param->start_vert_id = seg_config->segment_cap*i;
+					p_init_param->num_of_vertices = gen_config.max_vert_id%seg_config->segment_cap;
 					new_cpu_work = new cpu_work<A,VA>( INIT, 
-						buffer_to_dump, 
-						seg_config->segment_cap*i,
-						gen_config.max_vert_id%seg_config->segment_cap,
-						seg_config );
+						(void*)p_init_param );
 				}
 				pcpu_threads[0]->work_to_do = new_cpu_work;
 				(*pcpu_threads[0])();
@@ -151,7 +150,17 @@ class fog_engine{
 			};
 			delete new_io_work;
 
-			printf( "fog engine finished initializing attribute files\n" );
+			printf( "fog engine finished initializing attribute files, and will continue to add tasks!\n" );
+			//test_add_sched_tasks();
+			//return;
+
+			sched_task *t_task = new sched_task;
+			
+			t_task->start = 0;
+			t_task->term = gen_config.max_vert_id;
+
+			add_schedule( t_task );
+			show_all_sched_tasks();
 		}
 
 		void reclaim_everything()
@@ -190,11 +199,9 @@ class fog_engine{
 			printf( "===============\tShow sched and update buffer infor for each CPU\t=============\n" );
 			printf( "CPU\tSched_list_man\tUpdate_map_man\tUpdate_map\tSched_list\tUpdate_buf\tStripLen\tStripCap\n" );
 			for( u32_t i=0; i<gen_config.num_processors; i++ ){
-				printf( "%d\t0x%llx\t0x%llx\t0x%llx\t0x%llx\t0x%llx\t0x%llx\t0x%llx\n", i,
+				printf( "%d\t0x%llx\t0x%llx\t0x%llx\t0x%llx\t0x%llx\n", i,
 					(u64_t)seg_config->per_cpu_info_list[i]->sched_manager,
 					(u64_t)seg_config->per_cpu_info_list[i]->update_manager,
-					(u64_t)seg_config->per_cpu_info_list[i]->update_map,
-					(u64_t)seg_config->per_cpu_info_list[i]->sched_list_head,
 					(u64_t)seg_config->per_cpu_info_list[i]->update_buffer_head,
 					(u64_t)seg_config->per_cpu_info_list[i]->strip_len,
 					(u64_t)seg_config->per_cpu_info_list[i]->strip_cap
@@ -249,14 +256,11 @@ class fog_engine{
 			printf( "Strip size:0x%llx, Strip cap:%llu, total_header_len:%u\n", strip_size, strip_cap, total_header_len );
 			
 			for(u32_t i=0; i<gen_config.num_processors; i++){
+				//headers
 				seg_config->per_cpu_info_list[i]->sched_manager = 
 					(sched_list_manager*)seg_config->per_cpu_info_list[i]->buffer_head;
 				seg_config->per_cpu_info_list[i]->update_manager = 
 					(update_map_manager*)((u64_t)seg_config->per_cpu_info_list[i]->buffer_head + sizeof(sched_list_manager));
-				seg_config->per_cpu_info_list[i]->update_map = 
-					(u32_t*)((u64_t)seg_config->per_cpu_info_list[i]->update_manager + sizeof(update_map_manager));
-				seg_config->per_cpu_info_list[i]->sched_list_head = 
-					(sched_task*)((u64_t)seg_config->per_cpu_info_list[i]->update_map + update_map_size);
 
 				//regarding the strips
 				seg_config->per_cpu_info_list[i]->update_buffer_head = //the first strip
@@ -265,32 +269,67 @@ class fog_engine{
 				seg_config->per_cpu_info_list[i]->strip_cap = strip_cap;
 
 				//populate sched_manager, refer to types.hpp
-				seg_config->per_cpu_info_list[i]->sched_manager->sched_buffer_size = SCHED_BUFFER_LEN;
+				seg_config->per_cpu_info_list[i]->sched_manager->sched_buffer_head =
+					(sched_task*)((u64_t)seg_config->per_cpu_info_list[i]->update_manager 
+					+ sizeof(update_map_manager) + update_map_size );
+				seg_config->per_cpu_info_list[i]->sched_manager->sched_buffer_size = 
+					SCHED_BUFFER_LEN;
+
 				seg_config->per_cpu_info_list[i]->sched_manager->sched_task_counter = 0;
 				seg_config->per_cpu_info_list[i]->sched_manager->head = 
 				seg_config->per_cpu_info_list[i]->sched_manager->tail = 
 				seg_config->per_cpu_info_list[i]->sched_manager->current = 
-					(sched_task*)seg_config->per_cpu_info_list[i]->sched_list_head;
+					seg_config->per_cpu_info_list[i]->sched_manager->sched_buffer_head;
 
+				//populate update_manager, refer to types.hpp
+				seg_config->per_cpu_info_list[i]->update_manager->update_map_head = 
+					(u32_t*)((u64_t)seg_config->per_cpu_info_list[i]->update_manager 
+					+ sizeof(update_map_manager));
+				seg_config->per_cpu_info_list[i]->update_manager->update_map_size =
+					update_map_size;
 				seg_config->per_cpu_info_list[i]->update_manager->max_margin_value = 0;
 			}
-//			show_sched_update_buffer();
+			//show_sched_update_buffer();
+		}
+
+		void show_sched_list_tasks( sched_list_manager *sched_manager )
+		{
+			sched_task* head = sched_manager->head;
+			sched_task* p_task = head;
+
+			for( u32_t i=0; i<sched_manager->sched_task_counter; i++ ){
+				printf( "Task %d: Start from :%d to:%d\n", i, p_task->start, p_task->term );
+				if( (p_task - sched_manager->sched_buffer_head) > sched_manager->sched_buffer_size )
+					p_task = sched_manager->sched_buffer_head;
+				else
+					p_task++;
+			}
 		}
 
 		//will browse all sched_lists and list the tasks.
 		void show_all_sched_tasks()
 		{
+			sched_list_manager* sched_manager;
 
+			printf( "==========================	Browse all scheduled tasks	==========================\n" );
+			//browse all cpus
+			for(u32_t i=0; i<gen_config.num_processors; i++){
+				sched_manager = seg_config->per_cpu_info_list[i]->sched_manager;
+				printf( "Processor %d: Number of scheduled tasks: %d, Details:\n", i,
+					sched_manager->sched_task_counter );
+				show_sched_list_tasks( sched_manager );
+			}
+			printf( "==========================	That's All	==========================\n" );
 		}
 	
 		void test_add_sched_tasks( )
 		{
-			sched_task t_task;
+			sched_task* t_task=new sched_task;
 			u32_t temp_vid;
-			t_task.start = 0;
-			t_task.term = gen_config.max_vert_id;
+			t_task->start = gen_config.max_vert_id/4;
+			t_task->term = gen_config.max_vert_id/2;
 			printf( "test_add_schedule: will add a new task, starts %u term %u. cpu number:%u\n", 
-				t_task.start, t_task.term, gen_config.num_processors );
+				t_task->start, t_task->term, gen_config.num_processors );
 
 			temp_vid = 1073741824;
 			printf( "VID = %u, the SEGMENT ID=%d, CPU = %d\n", temp_vid, VID_TO_SEGMENT(temp_vid), VID_TO_PARTITION(temp_vid) );
@@ -299,10 +338,39 @@ class fog_engine{
 			//test if "assert" works in add_sched_task_to_processor
 			//add_sched_task_to_processor( 6, &t_task );
 
-			add_schedule( &t_task );
+			add_schedule( t_task );
 
 			//will show all scheduled tasks of all processors
-			//show_all_sched_tasks();
+			show_all_sched_tasks();
+		}
+
+		//this member function is NOT re-enterable! since memory state will change
+		//returns: true means successful, false means failure
+		//note: do NOT delete the task object when exiting
+		bool add_sched_task_to_ring_buffer( sched_list_manager* sched_manager, sched_task* task )
+		{
+/*			printf( "add sched task to ring buffer, with sched_list_manager:%llx\t", 
+				(u64_t) sched_manager );
+			printf( "head:0x%llx,tail:0x%llx,current:0x%llx\n",
+				(u64_t)sched_manager->head, (u64_t)sched_manager->tail, 
+				(u64_t)sched_manager->current );
+			printf( "number of schedule list counter:%u, sched_buffer_size:%u\n",
+				sched_manager->sched_task_counter, sched_manager->sched_buffer_size );
+*/
+			if( (sched_manager->sched_task_counter+1) > sched_manager->sched_buffer_size )
+				return false;
+
+			*(sched_manager->tail) = *task;
+			//moving rounds
+			//remember: sched_manager->pointers(sched_buffer_head, tail,etc) are sched_tasks
+			if( sched_manager->tail >= (sched_manager->sched_buffer_head 
+						+ sched_manager->sched_buffer_size) )
+					sched_manager->tail = sched_manager->sched_buffer_head;
+			else
+					sched_manager->tail++;
+
+			sched_manager->sched_task_counter++;
+			return true;
 		}
 
 		//KNOWN PROBLEM: assert does NOT work!
@@ -320,16 +388,10 @@ class fog_engine{
 			}
 
 			//now add the task
-			printf( "add_sched_task_to_processor: will add sched task from:%u to:%u at CPU:%u\n", task->start, task->term, processor_id );
+//			printf( "add_sched_task_to_processor: will add sched task from:%u to:%u at CPU:%u\n", task->start, task->term, processor_id );
 
-			sched_list_manager* this_manager;
-			this_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
-
-			printf( "this sched_list manager:head:0x%llx,tail:0x%llx,current:0x%llx\n",
-				(u64_t)this_manager->head, (u64_t)this_manager->tail, (u64_t)this_manager->current );
-			printf( "number of schedule list counter:%u, sched_buffer_size:%u\n",
-				this_manager->sched_task_counter, this_manager->sched_buffer_size );
-
+			if( !add_sched_task_to_ring_buffer( seg_config->per_cpu_info_list[processor_id]->sched_manager, task ) )
+				printf( "add_sched_task_to_processor failed on adding the task to ring buffer!\n" );
 			delete task;
 		}
 
@@ -367,17 +429,11 @@ class fog_engine{
 					add_sched_task_to_processor( j, p_task );
 				}
 			}
-//			delete task;
+			delete task;
 			return;
 		}
 
 		//==================================	follow functions handle update buffer	===========================
-
-		static void add_update( update<VA> * u )
-		{
-			printf( "will add update to vertex:%d\n", u->dest_vert );
-			delete u;
-		}
 
 		//==================================	auxiliary functions below	===========================
 		//this is a self-proving member function, just make sure vert_index is correctly set.

@@ -47,8 +47,6 @@ struct per_cpu_data{
 	u64_t buffer_size;
 	sched_list_manager* sched_manager;
 	update_map_manager* update_manager;
-	u32_t* update_map;
-	sched_task* sched_list_head;
 	char* update_buffer_head;
 	u64_t strip_len;
 	u64_t strip_cap;	//how many updates will a strip store?

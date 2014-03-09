@@ -30,13 +30,19 @@ struct sched_task{
 
 //the data structure that manages the ring buffer containing all scheduled tasks
 struct sched_list_manager{
+	//fields that define the buffer
+	sched_task* sched_buffer_head;
     u32_t sched_buffer_size;    //the size of this buffer (unit is "sched_task")
+
+	//fields that define the list
     u32_t sched_task_counter;   //remember the number of tasks.
     sched_task *head, *tail, *current;
 }__attribute__ ((aligned(8)));
 
 //the data structure that manages the update buffer.
 struct update_map_manager{
+	u32_t* update_map_head;	//points to the beginning of the map
+	u32_t update_map_size;	//the size of update map: num_of_segments*num_of_processors
     u32_t max_margin_value; //remember how many updates can be stored in (which strip)
 }__attribute__ ((aligned(8)));
 
