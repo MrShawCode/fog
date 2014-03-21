@@ -15,7 +15,7 @@ extern unsigned long long  num_edges;
 extern unsigned long max_out_edges;
 
 extern struct edge edge_buffer[EDGE_BUFFER_LEN];
-extern struct vertex_index vert_buffer[VERT_BUFFER_LEN];
+extern struct vert_index vert_buffer[VERT_BUFFER_LEN];
 
 char *get_adjline();
 int flush_buffer_to_file( int fd, char* buffer, unsigned int size );

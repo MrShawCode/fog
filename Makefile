@@ -4,7 +4,7 @@ BINARY_DIR = bin
 HEADERS_PATH = headers
 
 #compile/link options
-SYSLIBS = -L/usr/local/lib -lboost_system -lboost_program_options -lboost_thread -lz -lrt -lboost_thread-mt
+SYSLIBS = -L/usr/local/lib -L/usr/lib64  -lboost_system -lboost_program_options -lboost_thread -lz -lrt -lboost_thread-mt
 CXX?= g++
 CXXFLAGS?= -O3 -DNDEBUG -Wall -Wno-unused-function -I./$(HEADERS_PATH)
 CXXFLAGS+= -Wfatal-errors

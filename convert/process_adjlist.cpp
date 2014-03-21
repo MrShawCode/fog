@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "type.hpp"
+#include "types.hpp"
 #include "convert.h"
 
 float produce_random_weight()
@@ -51,7 +51,7 @@ void process_adjlist(const char * input_file_name,
        exit(-1);
    }
 
-    memset((char *)vert_buffer, 0, VERT_BUFFER_LEN * sizeof(struct vertex_index) );
+    memset((char *)vert_buffer, 0, VERT_BUFFER_LEN * sizeof(struct vert_index) );
 	memset((char *)edge_buffer, 0, EDGE_BUFFER_LEN * sizeof(struct edge) );
 
     while ((res = (char *) get_adjline()) != '\0')
@@ -78,8 +78,8 @@ void process_adjlist(const char * input_file_name,
                 if (src_vert >= (vert_buffer_offset + 1) * VERT_BUFFER_LEN){
                     vert_buffer_offset += 1;
                     //flush the vertex index array to file.
-                    flush_buffer_to_file(vert_index_file, (char *)vert_buffer, VERT_BUFFER_LEN * sizeof(vertex_index));
-                    memset((char *)vert_buffer, 0, VERT_BUFFER_LEN * sizeof(struct vertex_index));
+                    flush_buffer_to_file(vert_index_file, (char *)vert_buffer, VERT_BUFFER_LEN * sizeof(vert_index));
+                    memset((char *)vert_buffer, 0, VERT_BUFFER_LEN * sizeof(struct vert_index));
                 }
 
                 vert_suffix = src_vert - vert_buffer_offset * VERT_BUFFER_LEN;
@@ -91,7 +91,7 @@ void process_adjlist(const char * input_file_name,
                 dst_vert = tmp_int;
                 num_edges++;
                 edge_suffix = num_edges - (edge_buffer_offset * EDGE_BUFFER_LEN);
-                edge_buffer[edge_suffix].dst_vert = dst_vert;
+                edge_buffer[edge_suffix].dest_vert = dst_vert;
                 edge_buffer[edge_suffix].edge_weight = produce_random_weight();
 
 				num_out_edges ++;

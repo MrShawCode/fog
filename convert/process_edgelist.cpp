@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <time.h>
 
-#include "type.hpp"
+#include "types.hpp"
 #include "convert.h"
 
 #define LINE_FORMAT		"%d\t%d\n"
@@ -25,7 +25,7 @@ unsigned int src_vert, dst_vert;
 //when buffer is filled, write to the output index/edge file
 // and then, continue reading and populating.
 struct edge edge_buffer[EDGE_BUFFER_LEN];
-struct vertex_index vert_buffer[VERT_BUFFER_LEN];
+struct vert_index vert_buffer[VERT_BUFFER_LEN];
 
 /*
  * Regarding the vertex indexing:
@@ -76,7 +76,7 @@ void process_edgelist( const char* input_file_name,
 	}
 
 	memset( (char*)edge_buffer, 0, EDGE_BUFFER_LEN*sizeof(struct edge) );
-	memset( (char*)vert_buffer, 0, VERT_BUFFER_LEN*sizeof(struct vertex_index) );
+	memset( (char*)vert_buffer, 0, VERT_BUFFER_LEN*sizeof(struct vert_index) );
 
 	//parsing input file now.
 	while ( read_one_edge() != CUSTOM_EOF ){
@@ -97,7 +97,7 @@ void process_edgelist( const char* input_file_name,
 		//HANDLE THE EDGES
 		//fill in the edge buffer, as well as the vertex id buffer
 		edge_suffix = num_edges - (edge_buffer_offset * EDGE_BUFFER_LEN);
-		edge_buffer[edge_suffix].dst_vert = dst_vert;
+		edge_buffer[edge_suffix].dest_vert = dst_vert;
 		edge_buffer[edge_suffix].edge_weight = produce_random_weight();
 
 		if (edge_suffix == (EDGE_BUFFER_LEN-1)){
@@ -118,9 +118,9 @@ void process_edgelist( const char* input_file_name,
 			if (src_vert >= (vert_buffer_offset+1) * VERT_BUFFER_LEN ){
 				vert_buffer_offset += 1;
 				flush_buffer_to_file( vert_index_file, (char*)vert_buffer,
-					VERT_BUFFER_LEN*sizeof(struct vertex_index) );
+					VERT_BUFFER_LEN*sizeof(struct vert_index) );
 
-				memset( (char*)vert_buffer, 0, VERT_BUFFER_LEN*sizeof(struct vertex_index) );
+				memset( (char*)vert_buffer, 0, VERT_BUFFER_LEN*sizeof(struct vert_index) );
 			}
 			vert_suffix = src_vert - vert_buffer_offset * VERT_BUFFER_LEN;
 			vert_buffer[vert_suffix].offset = num_edges;
@@ -134,7 +134,7 @@ void process_edgelist( const char* input_file_name,
 	flush_buffer_to_file( edge_file, (char*)edge_buffer,
 				EDGE_BUFFER_LEN*sizeof(edge) );
 	flush_buffer_to_file( vert_index_file, (char*)vert_buffer,
-				VERT_BUFFER_LEN*sizeof(vertex_index) );
+				VERT_BUFFER_LEN*sizeof(vert_index) );
 
 	//finished processing
 	fclose( in );
