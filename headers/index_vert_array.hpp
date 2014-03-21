@@ -56,32 +56,32 @@ index_vert_array::index_vert_array()
     fstat(vert_index_file_fd, &st);
     vert_index_file_length = (u64_t) st.st_size;
 
-    printf( "vertex list file size:%lld(MBytes)\n", vert_index_file_length/(1024*1024) );
+    PRINT_DEBUG( "vertex list file size:%lld(MBytes)", vert_index_file_length/(1024*1024) );
     memblock = (char*) mmap( NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, vert_index_file_fd, 0 );
     if( memblock == MAP_FAILED ){
-        printf( "index file mapping failed!\n" );
+        PRINT_DEBUG( "index file mapping failed!" );
 		exit( -1 );
 	}
-    printf( "index array mmapped at virtual address:0x%llx\n", (u64_t)memblock );
+    PRINT_DEBUG( "index array mmapped at virtual address:0x%llx", (u64_t)memblock );
     vert_array_header = (struct vert_index *) memblock;
 
 	//map edge files to edge_array_header
     fstat(edge_file_fd, &st);
     edge_file_length = (u64_t) st.st_size;
 
-    printf( "edge list file size:%lld(MBytes)\n", edge_file_length/(1024*1024) );
+    PRINT_DEBUG( "edge list file size:%lld(MBytes)", edge_file_length/(1024*1024) );
     memblock = (char*) mmap( NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, edge_file_fd, 0 );
     if( memblock == MAP_FAILED ){
-        printf( "edge file mapping failed!\n" );
+        PRINT_DEBUG( "edge file mapping failed!" );
 		exit( -1 );
 	}
-    printf( "edge array mmapped at virtual address:0x%llx\n", (u64_t)memblock );
+    PRINT_DEBUG( "edge array mmapped at virtual address:0x%llx", (u64_t)memblock );
     edge_array_header = (struct edge *) memblock;
 }
 
 index_vert_array::~index_vert_array()
 {
-	printf( "vertex index array unmapped!\n" );
+	PRINT_DEBUG( "vertex index array unmapped!" );
 	munmap( vert_array_header, vert_index_file_length );
 	munmap( edge_array_header, edge_file_length );
 }
@@ -91,7 +91,7 @@ unsigned int index_vert_array::num_out_edges( unsigned int vid )
 	unsigned long long start_edge=0L, end_edge=0L;
 	
 	start_edge = vert_array_header[vid].offset;
-	printf( "start_edge = %lld\n", start_edge );
+	PRINT_DEBUG( "start_edge = %lld", start_edge );
 	if ( start_edge == 0L ) return 0;
 
 	if ( vid > gen_config.max_vert_id ) return 0;
@@ -106,9 +106,9 @@ unsigned int index_vert_array::num_out_edges( unsigned int vid )
             }
         }
     }
-	printf( "end_edge = %lld\n", end_edge );
+	PRINT_DEBUG( "end_edge = %lld", end_edge );
 	if( end_edge < start_edge ){
-		printf( "edge disorder detected!\n" );
+		PRINT_DEBUG( "edge disorder detected!" );
 		return 0;
 	}
 	return (end_edge - start_edge + 1);

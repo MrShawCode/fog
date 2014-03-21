@@ -2,6 +2,7 @@
 #define __CONFIG_H__
 
 #include "types.hpp"
+#include "print_debug.hpp"
 
 //general config stores the general configuration information, such as number of processors,
 // description of the original graph.
@@ -68,22 +69,22 @@ class segment_config{
         //show configuration data
 		void show_config(const char* buffer_header)
 		{
-            printf( "==========Begin of config info============\n" );
-            printf( "Fog_engine is created with following segment configurations:\n" );
-            printf( "Sizeof vertex attribute:%lu\n", sizeof(VA) );
-            printf( "Number of segments=%u\nSegment capacity:%u(vertices)\n", 
+            PRINT_DEBUG( "==========Begin of config info============" );
+            PRINT_DEBUG( "Fog_engine is created with following segment configurations:" );
+            PRINT_DEBUG( "Sizeof vertex attribute:%lu", sizeof(VA) );
+            PRINT_DEBUG( "Number of segments=%uSegment capacity:%u(vertices)", 
                 num_segments, segment_cap );
-            printf( "Partition capacity:%u\n", partition_cap );
-            printf( "----------Addressing-------------\n" );
-            printf( "Write buffer: buffer_header addr:0x%llx, size:0x%llx\n", (u64_t)buffer_header, gen_config.memory_size );
-            printf( "attribute buffer0:0x%llx, size:0x%llx\n", (u64_t)attr_buf0 );
-            printf( "attribute buffer1:0x%llx, size:0x%llx\n", (u64_t)attr_buf1 );
-            printf( "PerCPU Buffer:\n" );
+            PRINT_DEBUG( "Partition capacity:%u", partition_cap );
+            PRINT_DEBUG( "----------Addressing-------------" );
+            PRINT_DEBUG( "Write buffer: buffer_header addr:0x%llx, size:0x%llx", (u64_t)buffer_header, gen_config.memory_size );
+            PRINT_DEBUG( "attribute buffer0:0x%llx, size:0x%llx", (u64_t)attr_buf0 );
+            PRINT_DEBUG( "attribute buffer1:0x%llx, size:0x%llx", (u64_t)attr_buf1 );
+            PRINT_DEBUG( "PerCPU Buffer:" );
             for( u32_t i=0; i<gen_config.num_processors; i++ ){
-                printf( "CPU:%d, Sched and Update buffer begins:0x%llx, size:0x%llx\n", 
+                PRINT_DEBUG( "CPU:%d, Sched and Update buffer begins:0x%llx, size:0x%llx", 
                     i, (u64_t)per_cpu_info_list[i]->buffer_head, per_cpu_info_list[i]->buffer_size );
             }
-            printf( "==========End of config info============\n" );
+            PRINT_DEBUG( "==========End of config info============" );
 		}
 
 		//calculate the configration for segments and partitions
@@ -118,54 +119,4 @@ class segment_config{
 		}
 };
 
-//Variadic Macros By hejian.
-
-#include <stdio.h>  
-#include <stdlib.h>  
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-  
-
-#define __DEBUG__  1 
-/*
- * 0 means printing the debug information to the stderr
- * so 1 means writing the debug information to the log_file.
- */
-
-/*
- * for example:
- * DEBUG("The speed of light in a vacuum in octal: %c = %om/s", 'c', 299792458);
- * will export the statement : File: macro_print.cpp, Line: 00031: The speed of light in a vacuum in octal: c = 2167474112m/s
- */
-
-#if __DEBUG__ == 0
-    #define DEBUG(format,...) do {fprintf(stderr, "File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__) ;}while(0)
-#elif __DEBUG__ == 1
-    FILE *log_file;
-    #define DEBUG(format,...) do {fprintf(log_file, "File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__) ;}while(0)
-        
-#else  
-#define DEBUG(format,...)  
-#endif // the endif of "if __DEBUG__ == 0 && if __DEBUG__ == 1"
-
-  
-// the main bellow will show you how to use this macro
-/*int main(int argc, char **argv) {  
-    if (!(log_file = fopen(LOG_FILE, "w"))) //open file for mode
-    {
-        printf("failed to open %s.\n", LOG_FILE);
-        exit(666);
-    }
-    char str[]="Hello World";  
-    DEBUG("A ha, check me: %s",str);  
-    DEBUG("This is the %dnd test.", 2);
-    DEBUG("The two smallest primes are %d and %i", 2, 3);
-    DEBUG("The speed of light in a vacuum in octal: %c = %om/s", 'c', 299792458);
-    DEBUG("This is all DEBUGged to %s", LOG_FILE);
-    DEBUG("Of course, we can use further formatting--pi is close to %2.2f", 3.14159);
-    DEBUG("Avogadro's number is %e, or if you prefer %G", 6.02257e23, 6.02257e23);
-    return 0;  
-}*/
-
-#endif//the end of #ifndef __CONFIG_H__
+#endif

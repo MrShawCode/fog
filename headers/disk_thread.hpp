@@ -4,6 +4,7 @@
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
+#include "print_debug.hpp"
 
 enum{
 	FILE_READ = 0,
@@ -27,13 +28,13 @@ struct io_work{
 			case FILE_READ:
 				break;
 			case FILE_WRITE:
-				printf( "dump to disk tasks is received by disk thread, buffer:0x%llx, size:%u\n", 
+				PRINT_DEBUG( "dump to disk tasks is received by disk thread, buffer:0x%llx, size:%u", 
 					(u64_t)buffer, size );
 				int written=0, remain=size, res;
 
 				while( written < (int)size ){
 					if( (res = write(fd, buffer, remain)) < 0 )
-						printf( "failure on disk writing!\n" );
+						PRINT_DEBUG( "failure on disk writing!" );
 					written += res;
 					remain -= res;
 				}
@@ -59,7 +60,7 @@ public:
     {
 		attr_fd = open( gen_config.attr_file_name.c_str(), O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH );
 		if( attr_fd < 0 ){
-			printf( "Cannot create attribute file for writing!\n");
+			PRINT_DEBUG( "Cannot create attribute file for writing!");
 			exit( -1 );
 		}
 	}
@@ -75,7 +76,7 @@ public:
 
 			//TODO: problem on logic!
             if(terminate) {
-				printf( "disk thread terminating\n" );
+				PRINT_DEBUG( "disk thread terminating" );
  	        	break;
             }
 			if( io_work_to_do )

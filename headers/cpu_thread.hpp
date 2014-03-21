@@ -2,6 +2,7 @@
 #define __CPU_THREAD_HPP__
 
 #include "config.hpp"
+#include "print_debug.hpp"
 
 enum fog_engine_state_enum{
     INIT = 0,
@@ -85,7 +86,7 @@ struct cpu_work{
 				else
 					local_term_vert_off = local_start_vert_off + seg_config->partition_cap - 1;
 			
-				printf( "processor:%d, vert start from %u, number:%u local start from vertex %u to %u\n", 
+				PRINT_DEBUG( "processor:%d, vert start from %u, number:%u local start from vertex %u to %u", 
 					processor_id, 
 					p_init_param->start_vert_id, 
 					p_init_param->num_of_vertices, 
