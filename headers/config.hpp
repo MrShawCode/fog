@@ -14,6 +14,7 @@ struct general_config{
 		u32_t max_out_edges;
 
 		//sysconfig
+		u32_t num_io_threads;
 		u32_t num_processors;
 		u64_t memory_size;
 

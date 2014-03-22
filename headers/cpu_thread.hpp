@@ -149,12 +149,6 @@ public:
 	sched_task* get_sched_task()
 	{return NULL;}
 
-	void sort_sched_list()
-	{}
-
-	void merge_sched_list()
-	{}
-
 	void browse_sched_list()
 	{}
 

@@ -30,12 +30,13 @@ class fog_engine{
 		static u32_t fog_engine_state;
 		static u32_t current_attr_segment;
 
+		//io work queue
+		io_queue* fog_io_queue;
+
 		cpu_thread<A,VA> ** pcpu_threads;
 		boost::thread ** boost_pcpu_threads;
 		
 		VA *vert_attr_head0, *vert_attr_head1;
-		disk_thread * attr_disk_thread;
-		boost::thread* boost_attr_disk_thread;
 
 	public:
 
@@ -51,9 +52,8 @@ class fog_engine{
 			//config the buffer for writting
 			seg_config = new segment_config<VA>( (const char*)buffer_for_write );
 
-			//create disk thread
-			attr_disk_thread = new disk_thread( DISK_THREAD_ID_BEGIN_WITH );
-			boost_attr_disk_thread = new boost::thread( boost::ref(*attr_disk_thread) );
+			//create io queue
+			fog_io_queue = new io_queue;
 
 			//assume buffer_for_write is aligned, although it is possible that it is NOT! TODO
 
@@ -84,7 +84,7 @@ class fog_engine{
 			// the value in the attribute buffer, dump the content to file after done,
 			// then swap the attribute buffer (between 0 and 1)
 			cpu_work<A,VA>* new_cpu_work = NULL;
-			io_work* new_io_work = NULL;
+			io_work* init_io_work = NULL;
 			char * buffer_to_dump = NULL;
 			init_param* p_init_param=new init_param;
 
@@ -92,7 +92,7 @@ class fog_engine{
 			current_attr_segment = 0;
 			fog_engine_state = INIT;
 			for( u32_t i=0; i < seg_config->num_segments; i++ ){
-				//which attribute buffer I will write to?
+				//which attribute buffer should be dumped to disk?
 				if ( current_attr_segment%2== 0 ) buffer_to_dump = (char*)vert_attr_head0;
 				else buffer_to_dump = (char*)vert_attr_head1;
 		
@@ -117,51 +117,66 @@ class fog_engine{
 				new_cpu_work = NULL;
 				
 				//dump current attr buffer to disk
-				if ( new_io_work != NULL ){
+				if ( init_io_work != NULL ){
 					//keep waiting till previous disk work is finished
-					while( 1 ){
-						if( new_io_work->finished ) break;
-						//should measure the time spend on waiting! TODO
-					};
-					delete new_io_work;
-					new_io_work = NULL;
+					fog_io_queue->wait_for_io_task( init_io_work );
+					fog_io_queue->del_io_task( init_io_work );
+					init_io_work = NULL;
 				}
 
 				if( i != (seg_config->num_segments-1) ){
-					new_io_work = new io_work( FILE_WRITE, 
+					init_io_work = new io_work( FILE_WRITE, 
 						buffer_to_dump, 
-						seg_config->segment_cap*sizeof(VA) );
+						(u64_t)i*seg_config->segment_cap*sizeof(VA),
+						(u64_t)seg_config->segment_cap*sizeof(VA) );
 				}else{
-					new_io_work = new io_work( FILE_WRITE, 
+					init_io_work = new io_work( FILE_WRITE, 
 						buffer_to_dump, 
-						(gen_config.max_vert_id%seg_config->segment_cap)*sizeof(VA) );
+						(u64_t)i*seg_config->segment_cap*sizeof(VA),
+						(u64_t)(gen_config.max_vert_id%seg_config->segment_cap)*sizeof(VA) );
 				}
 
 				//activate the disk thread
-				attr_disk_thread->io_work_to_do = new_io_work;
-				attr_disk_thread->disk_task_sem.post();
+				fog_io_queue->add_io_task( init_io_work );
 
 				current_attr_segment++;
 			}
 	
-			//wait till the last write work is finished.
-			while( 1 ){
-				if( new_io_work->finished ) break;
-				//should measure the time spend on waiting! TODO
-			};
-			delete new_io_work;
+			//the INIT phase finished now, ALTHOUGH the last write is still on its way. 
+			// Do NOT wait!
+			io_work * read_io_work;
+			char * read_buffer = NULL;
 
-			PRINT_DEBUG( "fog engine finished initializing attribute files, and will continue to add tasks!" );
-			//test_add_sched_tasks();
-			//return;
+			if( buffer_to_dump == (char*) vert_attr_head0 )
+				read_buffer = (char*)vert_attr_head1;
+			else read_buffer = (char*)vert_attr_head0;
 
-			sched_task *t_task = new sched_task;
-			
-			t_task->start = 0;
-			t_task->term = gen_config.max_vert_id;
+			read_io_work = new io_work( FILE_READ, 
+				read_buffer, 
+				0,
+				(u64_t)seg_config->segment_cap*sizeof(VA) );
+			fog_io_queue->add_io_task( read_io_work );
 
-			add_schedule( t_task );
+			//should add tasks here, when the disk is busy.
+            sched_task *t_task = new sched_task;
+ 
+            t_task->start = 0;
+            t_task->term = gen_config.max_vert_id;
+ 
+            add_schedule( t_task );
+
 			show_all_sched_tasks();
+			//now, check if the reading task is finished.
+			fog_io_queue->wait_for_io_task( read_io_work );
+			fog_io_queue->del_io_task( read_io_work );
+			PRINT_DEBUG( "fog engine finished reading the first segment in to buffer!\n" );
+			
+			
+			//FOLLOWING BELONGS TO THE INIT PHASE! wait till the last write work is finished.
+			fog_io_queue->wait_for_io_task( init_io_work );
+			fog_io_queue->del_io_task( init_io_work );
+			PRINT_DEBUG( "fog engine finished initializing attribute files!" );
+			//ABOVE BELONGS TO THE INIT PHASE! wait till the last write work is finished.
 		}
 
 		void reclaim_everything()
@@ -182,10 +197,7 @@ class fog_engine{
 				delete pcpu_threads[i];
 
 			//terminate the disk thread
-			attr_disk_thread->terminate = true;
-			attr_disk_thread->disk_task_sem.post();
-			boost_attr_disk_thread->join();
-			delete attr_disk_thread;
+			delete fog_io_queue;
 
 			//destroy the vertices mapping
 			delete vert_index;
@@ -374,7 +386,6 @@ class fog_engine{
 			return true;
 		}
 
-		//KNOWN PROBLEM: assert does NOT work!
 		void add_sched_task_to_processor( u32_t processor_id, sched_task *task )
 		{
 			//assert *task point to a valid task

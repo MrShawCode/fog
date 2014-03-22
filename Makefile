@@ -20,7 +20,7 @@ TEST_OBJS= $(addprefix $(OBJECT_DIR)/, $(TEST_SRC))
 TEST_TARGET=$(BINARY_DIR)/test
 
 FOG_SRC = main.o
-FOG_HEADERS = types.hpp config.hpp disk_thread.hpp cpu_thread.hpp index_vert_array.hpp fog_engine.hpp options_utils.h config_parse.h
+FOG_HEADERS = types.hpp config.hpp print_debug.hpp disk_thread.hpp cpu_thread.hpp index_vert_array.hpp fog_engine.hpp options_utils.h config_parse.h
 FOG_REL_HEADERS = $(addprefix $(HEADERS_PATH)/, $(FOG_HEADERS))
 FOG_OBJS= $(addprefix $(OBJECT_DIR)/, $(FOG_SRC))
 FOG_TARGET = $(BINARY_DIR)/fog
