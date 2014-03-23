@@ -13,7 +13,7 @@
   
 
 #define LOG_FILE  "print.log"
-#define __PRINT__DEBUG__  0
+#define __PRINT__DEBUG__  2
 /*
  * the values for __PRINT_DEBUG__
  * 0 means printing the debug information to the stderr

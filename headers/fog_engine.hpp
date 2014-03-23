@@ -79,6 +79,22 @@ class fog_engine{
 
 		void operator() ()
 		{
+			int ret;
+
+			init_phase();
+			//start scatter & gather
+			while(1){
+				ret = scatter_updates();
+
+				gather_updates();
+
+				if( ret == 0 ) break;
+			}
+
+		}
+
+		void init_phase()
+		{
 			//initilization loop, loop for seg_config->num_segment times,
 			// each time, invoke cpu threads that called A::init to initialize
 			// the value in the attribute buffer, dump the content to file after done,
@@ -144,18 +160,6 @@ class fog_engine{
 	
 			//the INIT phase finished now, ALTHOUGH the last write is still on its way. 
 			// Do NOT wait!
-			io_work * read_io_work;
-			char * read_buffer = NULL;
-
-			if( buffer_to_dump == (char*) vert_attr_head0 )
-				read_buffer = (char*)vert_attr_head1;
-			else read_buffer = (char*)vert_attr_head0;
-
-			read_io_work = new io_work( FILE_READ, 
-				read_buffer, 
-				0,
-				(u64_t)seg_config->segment_cap*sizeof(VA) );
-			fog_io_queue->add_io_task( read_io_work );
 
 			//should add tasks here, when the disk is busy.
             sched_task *t_task = new sched_task;
@@ -165,18 +169,119 @@ class fog_engine{
  
             add_schedule( t_task );
 
-			show_all_sched_tasks();
-			//now, check if the reading task is finished.
-			fog_io_queue->wait_for_io_task( read_io_work );
-			fog_io_queue->del_io_task( read_io_work );
-			PRINT_DEBUG( "fog engine finished reading the first segment in to buffer!\n" );
-			
+//			show_all_sched_tasks();
 			
 			//FOLLOWING BELONGS TO THE INIT PHASE! wait till the last write work is finished.
 			fog_io_queue->wait_for_io_task( init_io_work );
 			fog_io_queue->del_io_task( init_io_work );
 			PRINT_DEBUG( "fog engine finished initializing attribute files!" );
 			//ABOVE BELONGS TO THE INIT PHASE! wait till the last write work is finished.
+		}
+
+		//scater_updates: 
+		// scatter updates to update buffer, till update buffer filled, or no more sched tasks
+		// return value:
+		// 0: no more sched tasks
+		// 1: update buffer full.
+		int scatter_updates()
+		{
+			cpu_work<A,VA>* scatter_cpu_work = NULL;
+			io_work * read_io_work = NULL;
+			char * next_buffer = NULL, *read_buffer = NULL;
+			u32_t begin_with;
+			u64_t offset, read_size;
+			scatter_param* p_scatter_param=new scatter_param;
+
+			begin_with = find_min_sched_segment();
+			assert( begin_with < seg_config->num_segments );
+
+			PRINT_DEBUG( "seg_config->num_segments = %d\n", seg_config->num_segments );
+			for( u32_t i=begin_with; i<seg_config->num_segments; i++ ){
+				PRINT_DEBUG( "i=%d, read_io_work=%llx\n", i, read_io_work );
+
+				if (i%2) read_buffer = (char*)vert_attr_head1;
+				else read_buffer = (char*)vert_attr_head0;
+
+				if ( read_io_work == NULL ){
+
+					offset = (u64_t)i*(u64_t)seg_config->segment_cap*sizeof(VA);
+					if( i!=(seg_config->num_segments-1) )
+						read_size = (u64_t)(gen_config.max_vert_id%seg_config->segment_cap)*sizeof(VA);
+					else
+						read_size = (u64_t)seg_config->segment_cap*sizeof(VA);
+
+					read_io_work = new io_work( FILE_READ, 
+						read_buffer, 
+						offset,
+						read_size );
+					fog_io_queue->add_io_task( read_io_work );
+
+					fog_io_queue->wait_for_io_task( read_io_work );
+					fog_io_queue->del_io_task( read_io_work );
+					PRINT_DEBUG( "fog engine finished reading the first segment!" );
+				}else{
+					//wait the completion of previously issued io work, 
+					// and issue another one
+					fog_io_queue->wait_for_io_task( read_io_work );
+					fog_io_queue->del_io_task( read_io_work );
+					
+					read_buffer = next_buffer;
+				}
+	
+				//issue another io work if applicable
+				if( (i+1) < seg_config->num_segments ){
+					//next_buffer MUST be different from read_buffer
+					if((i+1)%2) next_buffer = (char*)vert_attr_head1;
+					else next_buffer = (char*)vert_attr_head0;
+
+					offset = (u64_t)(i+1)*(u64_t)seg_config->segment_cap*sizeof(VA);
+					if( (i+1)!=(seg_config->num_segments-1) )
+						read_size = (u64_t)seg_config->segment_cap*sizeof(VA);
+					else
+						read_size = (u64_t)(gen_config.max_vert_id%seg_config->segment_cap)*sizeof(VA);
+
+					read_io_work = new io_work( FILE_READ, 
+						next_buffer, 
+						offset,
+						read_size );
+					fog_io_queue->add_io_task( read_io_work );
+					PRINT_DEBUG( "will invoke next read io work, offset %llu, size:%llu\n", offset, read_size );
+				}
+
+				//now begin computation to overlap with the undergoing reading...
+				//Remember to ONLY use read_buffer!
+				p_scatter_param->start_vert_id = seg_config->segment_cap*i;
+				p_scatter_param->start_vert_id = seg_config->segment_cap*i;
+				if( i != (seg_config->num_segments-1) )
+					p_scatter_param->num_of_vertices = seg_config->segment_cap;
+				else	//the last segment, should be smaller than a full segment
+					p_scatter_param->num_of_vertices = gen_config.max_vert_id%seg_config->segment_cap;
+
+				scatter_cpu_work = new cpu_work<A,VA>( SCATTER, (void*)p_scatter_param );
+
+				pcpu_threads[0]->work_to_do = scatter_cpu_work;
+				(*pcpu_threads[0])();
+				//cpu threads finished init current attr buffer
+				delete scatter_cpu_work;
+				scatter_cpu_work = NULL;
+
+				//after computation, check the status of cpu threads, and return
+				PRINT_DEBUG( "After scatter computation\n" );
+				for( u32_t i=0; i<gen_config.num_processors; i++ )
+					PRINT_DEBUG( "Processor %d status %d\n", i, pcpu_threads[i]->status );
+
+				//before returning, make sure to delete the previously issued io read task!
+			}
+			return 0;
+
+		}
+
+		//gather_updates:
+		// gather all updates in the update buffer.
+		// this function is rather simple, therefore, no return results.
+		void gather_updates()
+		{
+
 		}
 
 		void reclaim_everything()
@@ -261,9 +366,10 @@ class fog_engine{
 			//divide the update buffer to "strip"s
 			strip_size = update_buffer_size / seg_config->num_segments;
 			//round down strip size
-			if( strip_size % sizeof(update<VA>) )
-				strip_size -= strip_size%sizeof(update<VA>);
+			if( strip_size % (sizeof(update<VA>)*gen_config.num_processors) )
+				strip_size -= strip_size%(sizeof(update<VA>)*gen_config.num_processors);
 			strip_cap = strip_size / sizeof(update<VA>);
+			assert( (strip_cap%gen_config.num_processors == 0) );
 
 			total_header_len = seg_config->per_cpu_info_list[0]->buffer_size - seg_config->num_segments*strip_size;
 			PRINT_DEBUG( "Strip size:0x%llx, Strip cap:%llu, total_header_len:%u", strip_size, strip_cap, total_header_len );
@@ -303,6 +409,19 @@ class fog_engine{
 				seg_config->per_cpu_info_list[i]->update_manager->max_margin_value = 0;
 			}
 			//show_sched_update_buffer();
+		}
+
+		//find the minimal segment (to begin reading) from the sched lists of each PCPU
+		u32_t find_min_sched_segment()
+		{
+			u32_t ret=0, start_with;
+			for( u32_t i=0; i<gen_config.num_processors; i++ ){
+				start_with = seg_config->per_cpu_info_list[i]->sched_manager->current->start;
+
+				if( VID_TO_SEGMENT( start_with ) < ret )
+					ret = VID_TO_SEGMENT( start_with );
+			}
+			return ret;
 		}
 
 		void show_sched_list_tasks( sched_list_manager *sched_manager )

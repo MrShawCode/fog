@@ -4,11 +4,19 @@
 #include "config.hpp"
 #include "print_debug.hpp"
 
-enum fog_engine_state_enum{
+enum fog_engine_state{
     INIT = 0,
     SCATTER,
     GATHER,
     TERM
+};
+
+//denotes the different status of cpu threads after they finished the given tasks.
+// Note: these status are for scatter phase ONLY!
+enum cpu_thread_status{
+	HUNGRY=100,	//I can still scatter more updates
+	FULL,		//No, I cannot scatter more updates, since my update buffer is full
+	NO_SCHED	//I have no more sched tasks, I finished the whole scatter phase
 };
 
 #define SCHED_BUFFER_LEN    1024
@@ -50,7 +58,9 @@ struct init_param{
 };
 
 struct scatter_param{
-
+	char* attr_buffer_head;
+	u32_t start_vert_id;
+	u32_t num_of_vertices;
 };
 
 struct gather_param{
@@ -66,7 +76,8 @@ struct cpu_work{
 		:engine_state(state), state_param(state_param_in)
 	{}
 	
-	void operator() ( u32_t processor_id, barrier *sync, index_vert_array *vert_index, segment_config<VA>* seg_config )
+	void operator() ( u32_t processor_id, barrier *sync, index_vert_array *vert_index, 
+		segment_config<VA>* seg_config, int *status )
 	{
 		u32_t local_start_vert_off, local_term_vert_off;
         sync->wait();
@@ -86,12 +97,12 @@ struct cpu_work{
 				else
 					local_term_vert_off = local_start_vert_off + seg_config->partition_cap - 1;
 			
-				PRINT_DEBUG( "processor:%d, vert start from %u, number:%u local start from vertex %u to %u", 
-					processor_id, 
-					p_init_param->start_vert_id, 
-					p_init_param->num_of_vertices, 
-					local_start_vert_off, 
-					local_term_vert_off );
+//				PRINT_DEBUG( "processor:%d, vert start from %u, number:%u local start from vertex %u to %u", 
+//					processor_id, 
+//					p_init_param->start_vert_id, 
+//					p_init_param->num_of_vertices, 
+//					local_start_vert_off, 
+//					local_term_vert_off );
 
 				//Note: for A::init, the vertex id and VA* address does not mean the same offset!
 				for (u32_t i=local_start_vert_off; i<=local_term_vert_off; i++ )
@@ -101,7 +112,45 @@ struct cpu_work{
 			}
 			case SCATTER:
 			{
+				scatter_param* p_scatter_param = (scatter_param*) state_param;
+				sched_list_manager* my_sched_list_manager;
+				update_map_manager* my_update_map_manager;
+				update<VA>* my_update_buffer_head;
 
+				my_sched_list_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
+				my_update_map_manager = seg_config->per_cpu_info_list[processor_id]->update_manager;
+				my_update_buffer_head = (update<VA>*) seg_config->per_cpu_info_list[processor_id]->update_buffer_head;
+
+				//exit when the inputted attributes out of reach
+				if( processor_id*seg_config->partition_cap > p_scatter_param->num_of_vertices ) break;
+
+				//compute loca_start_vert_id and local_term_vert_id
+				local_start_vert_off = processor_id*(seg_config->partition_cap);
+
+				if ( ((processor_id+1)*seg_config->partition_cap-1) > p_scatter_param->num_of_vertices )
+					local_term_vert_off = p_scatter_param->num_of_vertices - 1;
+				else
+					local_term_vert_off = local_start_vert_off + seg_config->partition_cap - 1;
+			
+				PRINT_DEBUG( "processor:%d, scatter vert start from %u, number:%u local start from vertex %u to %u", 
+					processor_id, 
+					p_scatter_param->start_vert_id, 
+					p_scatter_param->num_of_vertices, 
+					local_start_vert_off, 
+					local_term_vert_off );
+
+				//obtain the scheduled task, and loop on the task to generate updates.
+				//should tell if my_sched_list_manager->current->term == 0
+				for( u32_t i=my_sched_list_manager->current->start; i<my_sched_list_manager->current->term; i++){
+
+				}
+
+				//Note: for A::init, the vertex id and VA* address does not mean the same offset!
+				for (u32_t i=local_start_vert_off; i<=local_term_vert_off; i++ )
+					A::init( p_scatter_param->start_vert_id + i, (VA*)(p_scatter_param->attr_buffer_head) + i );
+
+				*status = HUNGRY;
+				break;
 			}
 			default:
 				printf( "Unknow fog engine state is encountered\n" );
@@ -117,6 +166,7 @@ public:
     const unsigned long processor_id; 
 	index_vert_array* vert_index;
 	segment_config<VA>* seg_config;
+	int status;
 
 	//following members will be shared among all cpu threads
     static barrier *sync;
@@ -139,7 +189,7 @@ public:
 	            break;
             }
             else {
-	            (*work_to_do)(processor_id, sync, vert_index, seg_config );
+	            (*work_to_do)(processor_id, sync, vert_index, seg_config, &status );
 
             sync->wait(); // Must synchronize before p0 exits (object is on stack)
             }
