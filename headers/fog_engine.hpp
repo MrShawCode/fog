@@ -350,7 +350,31 @@ class fog_engine{
 				PRINT_DEBUG( "There are %u update in processor %d, utilization rate is:%f\n", 
 					total_updates, i, (double)total_updates/((double)strip_cap*seg_config->num_segments) );
 			}
+
+			for( u32_t i=0; i<gen_config.num_processors; i++ ){
+				map_manager = seg_config->per_cpu_info_list[i]->update_manager;
+				map_head = map_manager->update_map_head;
+				show_update_map( i, map_head );
+			}
 		}
+
+	    void show_update_map( int processor_id, u32_t* map_head )
+    	{   
+	        //print title
+	        printf( "--------------- update map of CPU%d begin-----------------\n", processor_id );
+			printf( "\t" );
+    	    for( u32_t i=0; i<gen_config.num_processors; i++ )
+    	    printf( "\tCPU%d", i );
+        	printf( "\n" );
+
+	        for( u32_t i=0; i<seg_config->num_segments; i++ ){
+    	        printf( "Strip%d\t\t", i );
+        	    for( u32_t j=0; j<gen_config.num_processors; j++ )
+            	    printf( "%d\t", *(map_head+i*(gen_config.num_processors)+j) );
+	            printf( "\n" );
+    	    }
+        	printf( "--------------- update map of CPU%d end-----------------\n", processor_id );
+	    }   
 
 		//clear the update buffer for all processors,
 		//	this should be done after gathering.

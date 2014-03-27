@@ -136,13 +136,6 @@ struct cpu_work{
 				attr_array_head = (VA*) p_scatter_param->attr_array_head;
 				my_update_buffer_head = (update<VA>*) seg_config->per_cpu_info_list[processor_id]->update_buffer_head;
 
-				if ( processor_id == 0 ){
-					PRINT_DEBUG( "my_update_map_manager addr:%llx, update_map_head:%llx, segment cap:%u, part cap:%u\n", 
-						(u64_t)my_update_map_manager, (u64_t)my_update_map_head, 
-						seg_config->segment_cap, seg_config->partition_cap );
-					print_update_map( processor_id, my_update_map_head, seg_config );
-				}
-
 				while( 1 ){
 					p_task = get_sched_task( my_sched_list_manager );
 
@@ -176,8 +169,10 @@ struct cpu_work{
 
 							//save t_update to update buffer;
 				
-							strip_num = t_update->dest_vert/seg_config->segment_cap;
-							cpu_offset = (t_update->dest_vert%seg_config->segment_cap)/seg_config->partition_cap;
+//							strip_num = t_update->dest_vert/seg_config->segment_cap;
+//							cpu_offset = (t_update->dest_vert%seg_config->segment_cap)/seg_config->partition_cap;
+							strip_num = VID_TO_SEGMENT( t_update->dest_vert );
+							cpu_offset = VID_TO_PARTITION( t_update->dest_vert );
 
 							assert( strip_num < seg_config->num_segments );
 							assert( cpu_offset < gen_config.num_processors );
@@ -199,18 +194,13 @@ struct cpu_work{
 								map_value ++;
 								*(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset) = map_value;
 
-								if ( processor_id == 0 )
-									PRINT_DEBUG( "processor 0 added one update, at row %d col %d\n", strip_num, cpu_offset );
-
 								//compute the laxity
 								if( min_laxity > (per_cpu_strip_cap - map_value) )
 									min_laxity = per_cpu_strip_cap - map_value;
-							}else if (processor_id == 0){
+							}else{
 								PRINT_DEBUG( "Losing update to vertex %u at processor %d: max_laxity:%u, num of out edge:%u!\n", 
 									t_update->dest_vert, processor_id, 
 									my_update_map_manager->max_margin_value, num_out_edges );
-								PRINT_DEBUG( "map_value=%u, per_cpu_strip_cap=%u\n", map_value, per_cpu_strip_cap );
-								PRINT_DEBUG( "strip_num=%u, cpu_offset=%u\n", strip_num, cpu_offset );
 							}
 
 							//drop t_edge and t_update
@@ -218,8 +208,6 @@ struct cpu_work{
 							delete t_update;
 						}
 						//update laxity
-						if( processor_id == 0)
-							PRINT_DEBUG( "min_laxity = %u\n", min_laxity );
 						if (my_update_map_manager->max_margin_value > min_laxity )
 							my_update_map_manager->max_margin_value = min_laxity;
 					}
@@ -264,23 +252,6 @@ struct cpu_work{
 
 		//move forward head
 		sched_manager->head = sched_manager->current;
-	}
-
-	void print_update_map( int processor_id, u32_t* map_head, segment_config<VA>* seg_config )
-	{
-		//print title
-		PRINT_DEBUG( "--------------- update map of CPU%d begin-----------------\n", processor_id );
-		for( u32_t i=0; i<gen_config.num_processors; i++ )
-		PRINT_DEBUG( "\tCPU%d", i );
-		PRINT_DEBUG( "\n" );
-
-		for( u32_t i=0; i<seg_config->num_segments; i++ ){
-			PRINT_DEBUG( "Strip%d\t", i );
-			for( u32_t j=0; j<gen_config.num_processors; j++ )
-				PRINT_DEBUG( "%d\t", *(map_head+i*(gen_config.num_processors)+j) );
-			PRINT_DEBUG( "\n" );
-		}
-		PRINT_DEBUG( "--------------- update map of CPU%d end-----------------\n", processor_id );
 	}
 };
 
