@@ -392,6 +392,8 @@ class fog_engine{
 				map_head = map_manager->update_map_head;
 
 				memset( map_head, 0, map_manager->update_map_size );
+
+				map_manager->max_margin_value = seg_config->per_cpu_info_list[i]->strip_cap/gen_config.num_processors;
 			}
 		}
 
