@@ -50,8 +50,7 @@ struct per_cpu_data{
 	sched_list_manager* sched_manager;
 	update_map_manager* update_manager;
 	char* update_buffer_head;
-	u64_t strip_len;
-	u64_t strip_cap;	//how many updates will a strip store?
+	u32_t strip_cap;	//how many updates will a strip store?
 }__attribute__ ((aligned(8)));
 
 template <typename VA>

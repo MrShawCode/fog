@@ -62,8 +62,8 @@ struct io_work{
 			}
 			case FILE_WRITE:
 			{
-				PRINT_DEBUG( "dump to disk tasks is received by disk thread, buffer:0x%llx, offset:%llu, size:%llu", 
-					(u64_t)buffer, offset, size );
+//				PRINT_DEBUG( "dump to disk tasks is received by disk thread, buffer:0x%llx, offset:%llu, size:%llu", 
+//					(u64_t)buffer, offset, size );
 					
 				int written=0, remain=size, res;
 

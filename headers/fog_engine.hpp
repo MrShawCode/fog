@@ -37,6 +37,21 @@ class fog_engine{
 		boost::thread ** boost_pcpu_threads;
 		
 		VA *vert_attr_head0, *vert_attr_head1;
+		
+		//The reasons to use another mmaped file to access the attribute file (in SCATTER phase):
+		//	It is really hard if not possible to arrange the attribute buffer by repeatively reading
+		//	the attribute file in/replace, since there may be different status among the cpu threads.
+		//	For ex., cpu0 may need to access segment 1, while other cpu threads need to access the 
+		//	segment 2. 
+		//	The other reason is that, since file reading and buffer replacing is done intermediatively,
+		//	there will be (and must be) a waste at the last step. 
+		//	Think about the case that cpu threads filled up their update buffer, and ready to finish
+		//	their current SCATTER phase. But remember, at this time, there is another file reading 
+		//	conducting on the background, which is useless and the following steps (i.e., GATHER)
+		//	must wait till the completion of this background operation.
+		int attr_fd;
+		u64_t attr_file_length;
+		VA *attr_array_header;
 
 	public:
 
@@ -86,6 +101,10 @@ class fog_engine{
 			while(1){
 				ret = scatter_updates();
 
+				show_update_buf_util();
+				clear_update_buffer_all_cpu();
+
+				break;
 				gather_updates();
 
 				if( ret == 0 ) break;
@@ -183,8 +202,42 @@ class fog_engine{
 		// return value:
 		// 0: no more sched tasks
 		// 1: update buffer full.
+		// -1: failure
 		int scatter_updates()
 		{
+			cpu_work<A,VA>* scatter_cpu_work = NULL;
+			scatter_param* p_scatter_param=new scatter_param;
+
+			if( map_attr_file() < 0 ){
+				PRINT_DEBUG( "Fog_engine::scatter_updates failed!\n" );
+				return -1;
+			}
+
+			p_scatter_param->attr_array_head = (void*)attr_array_header;
+
+			scatter_cpu_work = new cpu_work<A,VA>( SCATTER, (void*)p_scatter_param );
+
+			pcpu_threads[0]->work_to_do = scatter_cpu_work;
+			(*pcpu_threads[0])();
+			//cpu threads finished init current attr buffer
+			delete scatter_cpu_work;
+			scatter_cpu_work = NULL;
+
+			//after computation, check the status of cpu threads, and return
+			PRINT_DEBUG( "After scatter computation\n" );
+			for( u32_t i=0; i<gen_config.num_processors; i++ )
+				PRINT_DEBUG( "Processor %d status %d\n", i, pcpu_threads[i]->status );
+
+			return 0;
+
+		}
+
+		//gather_updates:
+		// gather all updates in the update buffer.
+		// this function is rather simple, therefore, no return results.
+		void gather_updates()
+		{
+/*
 			cpu_work<A,VA>* scatter_cpu_work = NULL;
 			io_work * read_io_work = NULL;
 			char * next_buffer = NULL, *read_buffer = NULL;
@@ -273,15 +326,99 @@ class fog_engine{
 				//before returning, make sure to delete the previously issued io read task!
 			}
 			return 0;
-
+*/
 		}
 
-		//gather_updates:
-		// gather all updates in the update buffer.
-		// this function is rather simple, therefore, no return results.
-		void gather_updates()
+		//compute the utilization rate of update buffers (i.e., all processors)
+		void show_update_buf_util( void )
 		{
+			update_map_manager* map_manager;
+			u32_t* map_head;
+			u32_t strip_cap;
+			u32_t total_updates;
 
+			for( u32_t i=0; i<gen_config.num_processors; i++ ){
+				map_manager = seg_config->per_cpu_info_list[i]->update_manager;
+				map_head = map_manager->update_map_head;
+				strip_cap = seg_config->per_cpu_info_list[i]->strip_cap;
+
+				total_updates = 0;
+				for( u32_t j=0; j<(seg_config->num_segments*gen_config.num_processors); j++ )
+					total_updates += *(map_head+j);
+
+				//print the utilization status
+				PRINT_DEBUG( "There are %u update in processor %d, utilization rate is:%f\n", 
+					total_updates, i, (double)total_updates/((double)strip_cap*seg_config->num_segments) );
+			}
+		}
+
+		//clear the update buffer for all processors,
+		//	this should be done after gathering.
+		void clear_update_buffer_all_cpu( void )
+		{
+			update_map_manager* map_manager;
+			u32_t* map_head;
+
+			for( u32_t i=0; i<gen_config.num_processors; i++ ){
+				map_manager = seg_config->per_cpu_info_list[i]->update_manager;
+				map_head = map_manager->update_map_head;
+
+				memset( map_head, 0, map_manager->update_map_size * sizeof(u32_t) );
+			}
+		}
+
+		//map the attribute file
+		//return value:
+		// 0 means success;
+		// -1 means failure.
+		int map_attr_file()
+		{
+		    struct stat st;
+    		char * memblock;
+
+			attr_fd = open( gen_config.attr_file_name.c_str(), O_RDONLY );
+			if( attr_fd < 0 ){
+				PRINT_DEBUG( "Fog_engine::map_attr_file Cannot open attribute file!\n" );
+				return -1;
+			}
+	
+	    	fstat( attr_fd, &st );
+	    	attr_file_length = (u64_t) st.st_size;
+
+		    memblock = (char*) mmap( NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, attr_fd, 0 );
+		    if( memblock == MAP_FAILED ){
+		        PRINT_DEBUG( "index file mapping failed!" );
+		        exit( -1 );
+		    }
+
+			attr_array_header = (VA*) memblock;
+			return 0;
+		}
+
+		//map the attribute file
+		//return value:
+		// 0 means success;
+		// -1 means failure.
+		int unmap_attr_file()
+		{
+			munmap( (void*)attr_array_header, attr_file_length );
+			close( attr_fd );
+			return 0;
+		}
+
+		//remap the attribute file
+		//return value:
+		// 0 means success;
+		// -1 means failure.
+		int remap_attr_file()
+		{
+			int ret;
+
+			if( (ret = unmap_attr_file()) < 0 ) return ret;
+
+			if( (ret = map_attr_file()) < 0 ) return ret;
+
+			return 0;
 		}
 
 		void reclaim_everything()
@@ -345,7 +482,8 @@ class fog_engine{
 		void init_sched_update_buffer()
 		{
 			u32_t update_map_size, sched_list_size, total_header_len;
-			u64_t update_buffer_size, strip_size, strip_cap;
+			u64_t update_buffer_size, strip_size;
+			u32_t strip_cap;
 
 			update_map_size = seg_config->num_segments * gen_config.num_processors * sizeof(u32_t);
 			sched_list_size = SCHED_BUFFER_LEN * sizeof(sched_task);
@@ -368,11 +506,11 @@ class fog_engine{
 			//round down strip size
 			if( strip_size % (sizeof(update<VA>)*gen_config.num_processors) )
 				strip_size -= strip_size%(sizeof(update<VA>)*gen_config.num_processors);
-			strip_cap = strip_size / sizeof(update<VA>);
+			strip_cap = (u32_t)(strip_size / sizeof(update<VA>));
 			assert( (strip_cap%gen_config.num_processors == 0) );
 
 			total_header_len = seg_config->per_cpu_info_list[0]->buffer_size - seg_config->num_segments*strip_size;
-			PRINT_DEBUG( "Strip size:0x%llx, Strip cap:%llu, total_header_len:%u", strip_size, strip_cap, total_header_len );
+			PRINT_DEBUG( "Strip size:0x%llx, Strip cap:%u, total_header_len:%u", strip_size, strip_cap, total_header_len );
 			
 			for(u32_t i=0; i<gen_config.num_processors; i++){
 				//headers
@@ -384,7 +522,6 @@ class fog_engine{
 				//regarding the strips
 				seg_config->per_cpu_info_list[i]->update_buffer_head = //the first strip
 					(char*)((u64_t)seg_config->per_cpu_info_list[i]->buffer_head + total_header_len);
-				seg_config->per_cpu_info_list[i]->strip_len = strip_size;
 				seg_config->per_cpu_info_list[i]->strip_cap = strip_cap;
 
 				//populate sched_manager, refer to types.hpp
@@ -406,7 +543,7 @@ class fog_engine{
 					+ sizeof(update_map_manager));
 				seg_config->per_cpu_info_list[i]->update_manager->update_map_size =
 					update_map_size;
-				seg_config->per_cpu_info_list[i]->update_manager->max_margin_value = 0;
+				seg_config->per_cpu_info_list[i]->update_manager->max_margin_value = strip_cap/gen_config.num_processors;
 			}
 			//show_sched_update_buffer();
 		}

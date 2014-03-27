@@ -14,9 +14,8 @@ enum fog_engine_state{
 //denotes the different status of cpu threads after they finished the given tasks.
 // Note: these status are for scatter phase ONLY!
 enum cpu_thread_status{
-	HUNGRY=100,	//I can still scatter more updates
-	FULL,		//No, I cannot scatter more updates, since my update buffer is full
-	NO_SCHED	//I have no more sched tasks, I finished the whole scatter phase
+	UPDATE_BUF_FULL = 100,		//Cannot scatter more updates, since my update buffer is full
+	NO_MORE_SCHED	//I have no more sched tasks, I finished the whole scatter phase
 };
 
 #define SCHED_BUFFER_LEN    1024
@@ -58,9 +57,7 @@ struct init_param{
 };
 
 struct scatter_param{
-	char* attr_buffer_head;
-	u32_t start_vert_id;
-	u32_t num_of_vertices;
+	void* attr_array_head;
 };
 
 struct gather_param{
@@ -115,41 +112,120 @@ struct cpu_work{
 				scatter_param* p_scatter_param = (scatter_param*) state_param;
 				sched_list_manager* my_sched_list_manager;
 				update_map_manager* my_update_map_manager;
+				u32_t my_strip_cap, per_cpu_strip_cap, min_laxity;
+				u32_t* my_update_map_head;
+
+				VA* attr_array_head;
 				update<VA>* my_update_buffer_head;
+
+				sched_task *p_task;
+				edge* t_edge;
+				update<VA> *t_update;
+				u32_t num_out_edges, i;
+				u32_t strip_num, cpu_offset, map_value, update_map_offset, update_buffer_offset;
+
+//				PRINT_DEBUG( "processor:%d, parameter address:%llx", processor_id, (u64_t)p_scatter_param );
 
 				my_sched_list_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
 				my_update_map_manager = seg_config->per_cpu_info_list[processor_id]->update_manager;
+				my_strip_cap = seg_config->per_cpu_info_list[processor_id]->strip_cap;
+				per_cpu_strip_cap = my_strip_cap/gen_config.num_processors;
+				min_laxity = per_cpu_strip_cap; //this is the maximum laxity
+				my_update_map_head = my_update_map_manager->update_map_head;
+
+				attr_array_head = (VA*) p_scatter_param->attr_array_head;
 				my_update_buffer_head = (update<VA>*) seg_config->per_cpu_info_list[processor_id]->update_buffer_head;
 
-				//exit when the inputted attributes out of reach
-				if( processor_id*seg_config->partition_cap > p_scatter_param->num_of_vertices ) break;
-
-				//compute loca_start_vert_id and local_term_vert_id
-				local_start_vert_off = processor_id*(seg_config->partition_cap);
-
-				if ( ((processor_id+1)*seg_config->partition_cap-1) > p_scatter_param->num_of_vertices )
-					local_term_vert_off = p_scatter_param->num_of_vertices - 1;
-				else
-					local_term_vert_off = local_start_vert_off + seg_config->partition_cap - 1;
-			
-				PRINT_DEBUG( "processor:%d, scatter vert start from %u, number:%u local start from vertex %u to %u", 
-					processor_id, 
-					p_scatter_param->start_vert_id, 
-					p_scatter_param->num_of_vertices, 
-					local_start_vert_off, 
-					local_term_vert_off );
-
-				//obtain the scheduled task, and loop on the task to generate updates.
-				//should tell if my_sched_list_manager->current->term == 0
-				for( u32_t i=my_sched_list_manager->current->start; i<my_sched_list_manager->current->term; i++){
-
+				if ( processor_id == 0 ){
+					PRINT_DEBUG( "my_update_map_manager addr:%llx, update_map_head:%llx, segment cap:%u, part cap:%u\n", 
+						(u64_t)my_update_map_manager, (u64_t)my_update_map_head, 
+						seg_config->segment_cap, seg_config->partition_cap );
+					print_update_map( processor_id, my_update_map_head, seg_config );
 				}
 
-				//Note: for A::init, the vertex id and VA* address does not mean the same offset!
-				for (u32_t i=local_start_vert_off; i<=local_term_vert_off; i++ )
-					A::init( p_scatter_param->start_vert_id + i, (VA*)(p_scatter_param->attr_buffer_head) + i );
+				while( 1 ){
+					p_task = get_sched_task( my_sched_list_manager );
 
-				*status = HUNGRY;
+					if( p_task == NULL ){
+						*status = NO_MORE_SCHED;
+						return;
+					}
+
+					PRINT_DEBUG( "processor:%d, task start:%u, task term:%u, remain task:%u\n", 
+						processor_id, p_task->start, p_task->term, my_sched_list_manager->sched_task_counter );
+
+					for( i=p_task->start; i<p_task->term; i++ ){
+						//how many edges does "i" have?
+						num_out_edges = vert_index->num_out_edges( i );
+						if( num_out_edges == 0 ) continue;
+
+						//should tell if the remaining space in update buffer is enough to store the updates?
+						// if buffer full, should return.
+						if( my_update_map_manager->max_margin_value < num_out_edges ){
+							*status = UPDATE_BUF_FULL;
+							p_task->start = i;
+							return;
+						}
+					
+						for( u32_t j=0; j<num_out_edges; j++ ){
+							t_edge = vert_index->out_edge( i, j );
+							assert( t_edge ); //make sure the edge exists!
+
+							t_update = A::scatter_one_edge( i, (VA*)&attr_array_head[i], num_out_edges, t_edge );
+							assert( t_update );//make sure the update is not NULL
+
+							//save t_update to update buffer;
+				
+							strip_num = t_update->dest_vert/seg_config->segment_cap;
+							cpu_offset = (t_update->dest_vert%seg_config->segment_cap)/seg_config->partition_cap;
+
+							assert( strip_num < seg_config->num_segments );
+							assert( cpu_offset < gen_config.num_processors );
+							//update map layout
+							//			cpu0				cpu1				.....
+							//strip 0-> map_value(s0,c0)	map_value(s0, c1)	.....
+							//strip 1-> map_value(s1,c0)	map_value(s1, c1)	.....
+							//strip 2-> map_value(s2,c0)	map_value(s2, c1)	.....
+							//		... ...
+	
+							map_value = *(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset);
+
+							if( map_value < per_cpu_strip_cap ){
+								update_buffer_offset = strip_num*my_strip_cap + map_value*gen_config.num_processors + cpu_offset;
+
+								*(my_update_buffer_head + update_buffer_offset) = *t_update;
+
+								//update the map
+								map_value ++;
+								*(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset) = map_value;
+
+								if ( processor_id == 0 )
+									PRINT_DEBUG( "processor 0 added one update, at row %d col %d\n", strip_num, cpu_offset );
+
+								//compute the laxity
+								if( min_laxity < (per_cpu_strip_cap - map_value) )
+									min_laxity = per_cpu_strip_cap - map_value;
+							}else if (processor_id == 0){
+								PRINT_DEBUG( "Losing update to vertex %u at processor %d: max_laxity:%u, num of out edge:%u!\n", 
+									t_update->dest_vert, processor_id, 
+									my_update_map_manager->max_margin_value, num_out_edges );
+								PRINT_DEBUG( "map_value=%u, per_cpu_strip_cap=%u\n", map_value, per_cpu_strip_cap );
+								PRINT_DEBUG( "strip_num=%u, cpu_offset=%u\n", strip_num, cpu_offset );
+							}
+
+							//drop t_edge and t_update
+							delete t_edge;
+							delete t_update;
+						}
+						//update laxity
+						if (my_update_map_manager->max_margin_value > min_laxity )
+							my_update_map_manager->max_margin_value = min_laxity;
+					}
+					//tell if this task is finished or not, if not, update it to make it start from i
+					if( i >= p_task->term )
+						del_sched_task( my_sched_list_manager );
+				}
+				*status = UPDATE_BUF_FULL;
 				break;
 			}
 			default:
@@ -157,6 +233,52 @@ struct cpu_work{
 		}
 
         sync->wait();
+	}
+
+	//return current sched_task
+	//return NULL when there is no more tasks
+	sched_task * get_sched_task( sched_list_manager* sched_manager )
+	{
+		if( sched_manager->sched_task_counter == 0 ) return NULL;
+
+		return sched_manager->current;
+	}
+
+	//delete current sched_task
+	//note: Must be the current sched_task!
+	// After deletion, current pointer should move forward by one
+	void del_sched_task( sched_list_manager* sched_manager )
+	{
+		assert( sched_manager->sched_task_counter > 0 );
+
+		sched_manager->sched_task_counter --;
+
+		//move forward current pointer
+        if( sched_manager->current >= (sched_manager->sched_buffer_head
+                    + sched_manager->sched_buffer_size) )
+                sched_manager->current = sched_manager->sched_buffer_head;
+        else
+                sched_manager->current++;
+
+		//move forward head
+		sched_manager->head = sched_manager->current;
+	}
+
+	void print_update_map( int processor_id, u32_t* map_head, segment_config<VA>* seg_config )
+	{
+		//print title
+		PRINT_DEBUG( "--------------- update map of CPU%d begin-----------------\n", processor_id );
+		for( u32_t i=0; i<gen_config.num_processors; i++ )
+		PRINT_DEBUG( "\tCPU%d", i );
+		PRINT_DEBUG( "\n" );
+
+		for( u32_t i=0; i<seg_config->num_segments; i++ ){
+			PRINT_DEBUG( "Strip%d\t", i );
+			for( u32_t j=0; j<gen_config.num_processors; j++ )
+				PRINT_DEBUG( "%d\t", *(map_head+i*(gen_config.num_processors)+j) );
+			PRINT_DEBUG( "\n" );
+		}
+		PRINT_DEBUG( "--------------- update map of CPU%d end-----------------\n", processor_id );
 	}
 };
 

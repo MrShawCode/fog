@@ -82,8 +82,10 @@ index_vert_array::index_vert_array()
 index_vert_array::~index_vert_array()
 {
 	PRINT_DEBUG( "vertex index array unmapped!" );
-	munmap( vert_array_header, vert_index_file_length );
-	munmap( edge_array_header, edge_file_length );
+	munmap( (void*)vert_array_header, vert_index_file_length );
+	munmap( (void*)edge_array_header, edge_file_length );
+	close( vert_index_file_fd );
+	close( edge_file_fd );
 }
 
 unsigned int index_vert_array::num_out_edges( unsigned int vid )
@@ -91,7 +93,6 @@ unsigned int index_vert_array::num_out_edges( unsigned int vid )
 	unsigned long long start_edge=0L, end_edge=0L;
 	
 	start_edge = vert_array_header[vid].offset;
-	PRINT_DEBUG( "start_edge = %lld", start_edge );
 	if ( start_edge == 0L ) return 0;
 
 	if ( vid > gen_config.max_vert_id ) return 0;
@@ -106,7 +107,6 @@ unsigned int index_vert_array::num_out_edges( unsigned int vid )
             }
         }
     }
-	PRINT_DEBUG( "end_edge = %lld", end_edge );
 	if( end_edge < start_edge ){
 		PRINT_DEBUG( "edge disorder detected!" );
 		return 0;
