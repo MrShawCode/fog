@@ -154,7 +154,9 @@ struct cpu_work{
 
 						//should tell if the remaining space in update buffer is enough to store the updates?
 						// if buffer full, should return.
-						if( my_update_map_manager->max_margin_value < num_out_edges ){
+						if( my_update_map_manager->max_margin_value < (num_out_edges) ){
+							PRINT_DEBUG( "Processor %d: update full with max laxity=%u, current out edgs=%u. i=%u\n",
+								processor_id, my_update_map_manager->max_margin_value, num_out_edges, i );
 							*status = UPDATE_BUF_FULL;
 							p_task->start = i;
 							return;
@@ -215,7 +217,7 @@ struct cpu_work{
 					if( i >= p_task->term )
 						del_sched_task( my_sched_list_manager );
 				}
-				*status = UPDATE_BUF_FULL;
+				*status = NO_MORE_SCHED;
 				break;
 			}
 			default:

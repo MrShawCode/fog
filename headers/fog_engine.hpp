@@ -85,6 +85,8 @@ class fog_engine{
 			vert_attr_head0 = (VA*)((u64_t)buffer_for_write + gen_config.memory_size/2);
 			vert_attr_head1 = (VA*)((u64_t)vert_attr_head0 + gen_config.memory_size/4);
 
+			attr_fd = 0;
+
 			init_sched_update_buffer();
 		}
 			
@@ -104,7 +106,6 @@ class fog_engine{
 				show_update_buf_util();
 				clear_update_buffer_all_cpu();
 
-				break;
 				gather_updates();
 
 				if( ret == 0 ) break;
@@ -208,7 +209,7 @@ class fog_engine{
 			cpu_work<A,VA>* scatter_cpu_work = NULL;
 			scatter_param* p_scatter_param=new scatter_param;
 
-			if( map_attr_file() < 0 ){
+			if( remap_attr_file() < 0 ){
 				PRINT_DEBUG( "Fog_engine::scatter_updates failed!\n" );
 				return -1;
 			}
@@ -225,8 +226,11 @@ class fog_engine{
 
 			//after computation, check the status of cpu threads, and return
 			PRINT_DEBUG( "After scatter computation\n" );
-			for( u32_t i=0; i<gen_config.num_processors; i++ )
+			for( u32_t i=0; i<gen_config.num_processors; i++ ){
 				PRINT_DEBUG( "Processor %d status %d\n", i, pcpu_threads[i]->status );
+				if ( pcpu_threads[i]->status != NO_MORE_SCHED )
+					return 1;
+			}
 
 			return 0;
 
@@ -387,7 +391,7 @@ class fog_engine{
 				map_manager = seg_config->per_cpu_info_list[i]->update_manager;
 				map_head = map_manager->update_map_head;
 
-				memset( map_head, 0, map_manager->update_map_size * sizeof(u32_t) );
+				memset( map_head, 0, map_manager->update_map_size );
 			}
 		}
 
@@ -438,7 +442,8 @@ class fog_engine{
 		{
 			int ret;
 
-			if( (ret = unmap_attr_file()) < 0 ) return ret;
+			if( attr_fd )
+				if( (ret = unmap_attr_file()) < 0 ) return ret;
 
 			if( (ret = map_attr_file()) < 0 ) return ret;
 

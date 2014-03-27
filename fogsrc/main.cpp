@@ -36,8 +36,8 @@ int main( int argc, const char**argv)
 	//config subjected to change.
 	gen_config.num_processors = 4;
 	gen_config.num_io_threads = 2;
-	//gen_config.memory_size = (u64_t)4*1024*1024*1024;
-	gen_config.memory_size = (u64_t)1*1024*1024*1024;
+	gen_config.memory_size = (u64_t)4*1024*1024*1024;
+	//gen_config.memory_size = (u64_t)1*1024*1024*1024;
 
     //add by  hejian
     if (!(log_file = fopen(LOG_FILE, "w"))) //open file for mode

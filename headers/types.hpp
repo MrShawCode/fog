@@ -42,7 +42,7 @@ struct sched_list_manager{
 //the data structure that manages the update buffer.
 struct update_map_manager{
 	u32_t* update_map_head;	//points to the beginning of the map
-	u32_t update_map_size;	//the size of update map: num_of_segments*num_of_processors
+	u32_t update_map_size;	//the size of update map: num_of_segments*num_of_processors. IN BYTES!!!
     u32_t max_margin_value; //remember how many updates can be stored in (which strip)
 }__attribute__ ((aligned(8)));
 
