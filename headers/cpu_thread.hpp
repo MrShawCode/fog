@@ -203,7 +203,7 @@ struct cpu_work{
 									PRINT_DEBUG( "processor 0 added one update, at row %d col %d\n", strip_num, cpu_offset );
 
 								//compute the laxity
-								if( min_laxity < (per_cpu_strip_cap - map_value) )
+								if( min_laxity > (per_cpu_strip_cap - map_value) )
 									min_laxity = per_cpu_strip_cap - map_value;
 							}else if (processor_id == 0){
 								PRINT_DEBUG( "Losing update to vertex %u at processor %d: max_laxity:%u, num of out edge:%u!\n", 
@@ -218,6 +218,8 @@ struct cpu_work{
 							delete t_update;
 						}
 						//update laxity
+						if( processor_id == 0)
+							PRINT_DEBUG( "min_laxity = %u\n", min_laxity );
 						if (my_update_map_manager->max_margin_value > min_laxity )
 							my_update_map_manager->max_margin_value = min_laxity;
 					}
