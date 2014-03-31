@@ -172,10 +172,10 @@ struct cpu_work{
 						//		... ...
 						map_value = *(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset);
 
-						if( processor_id == 0 ){
-							PRINT_DEBUG( "add one update at seg %u, cpu_off %u, map_value=%u, i=%u\n", 
-								strip_num, cpu_offset, map_value, i );
-						}
+//						if( processor_id == 0 ){
+//							PRINT_DEBUG( "add one update at seg %u, cpu_off %u, map_value=%u, i=%u\n", 
+//								strip_num, cpu_offset, map_value, i );
+//						}
 
 						if( map_value < per_cpu_strip_cap ){
 							update_buf_offset = strip_num*per_cpu_strip_cap*gen_config.num_processors
