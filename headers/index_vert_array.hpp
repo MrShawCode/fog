@@ -56,32 +56,32 @@ index_vert_array::index_vert_array()
     fstat(vert_index_file_fd, &st);
     vert_index_file_length = (u64_t) st.st_size;
 
-    PRINT_DEBUG( "vertex list file size:%lld(MBytes)", vert_index_file_length/(1024*1024) );
+    PRINT_DEBUG( "vertex list file size:%lld(MBytes)\n", vert_index_file_length/(1024*1024) );
     memblock = (char*) mmap( NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, vert_index_file_fd, 0 );
     if( memblock == MAP_FAILED ){
-        PRINT_DEBUG( "index file mapping failed!" );
+        PRINT_ERROR( "index file mapping failed!\n" );
 		exit( -1 );
 	}
-    PRINT_DEBUG( "index array mmapped at virtual address:0x%llx", (u64_t)memblock );
+    PRINT_DEBUG( "index array mmapped at virtual address:0x%llx\n", (u64_t)memblock );
     vert_array_header = (struct vert_index *) memblock;
 
 	//map edge files to edge_array_header
     fstat(edge_file_fd, &st);
     edge_file_length = (u64_t) st.st_size;
 
-    PRINT_DEBUG( "edge list file size:%lld(MBytes)", edge_file_length/(1024*1024) );
+    PRINT_DEBUG( "edge list file size:%lld(MBytes)\n", edge_file_length/(1024*1024) );
     memblock = (char*) mmap( NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, edge_file_fd, 0 );
     if( memblock == MAP_FAILED ){
-        PRINT_DEBUG( "edge file mapping failed!" );
+        PRINT_ERROR( "edge file mapping failed!\n" );
 		exit( -1 );
 	}
-    PRINT_DEBUG( "edge array mmapped at virtual address:0x%llx", (u64_t)memblock );
+    PRINT_DEBUG( "edge array mmapped at virtual address:0x%llx\n", (u64_t)memblock );
     edge_array_header = (struct edge *) memblock;
 }
 
 index_vert_array::~index_vert_array()
 {
-	PRINT_DEBUG( "vertex index array unmapped!" );
+	PRINT_DEBUG( "vertex index array unmapped!\n" );
 	munmap( (void*)vert_array_header, vert_index_file_length );
 	munmap( (void*)edge_array_header, edge_file_length );
 	close( vert_index_file_fd );
@@ -108,7 +108,7 @@ unsigned int index_vert_array::num_out_edges( unsigned int vid )
         }
     }
 	if( end_edge < start_edge ){
-		PRINT_DEBUG( "edge disorder detected!" );
+		PRINT_ERROR( "edge disorder detected!\n" );
 		return 0;
 	}
 	return (end_edge - start_edge + 1);

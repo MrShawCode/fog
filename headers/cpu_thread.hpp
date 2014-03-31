@@ -51,7 +51,7 @@ class barrier {
 };
 
 struct init_param{
-	char* attr_buffer_head;
+	char* attr_buf_head;
 	u32_t start_vert_id;
 	u32_t num_of_vertices;
 };
@@ -94,7 +94,7 @@ struct cpu_work{
 				else
 					local_term_vert_off = local_start_vert_off + seg_config->partition_cap - 1;
 			
-//				PRINT_DEBUG( "processor:%d, vert start from %u, number:%u local start from vertex %u to %u", 
+//				PRINT_DEBUG( "processor:%d, vert start from %u, number:%u local start from vertex %u to %u\n", 
 //					processor_id, 
 //					p_init_param->start_vert_id, 
 //					p_init_param->num_of_vertices, 
@@ -103,7 +103,7 @@ struct cpu_work{
 
 				//Note: for A::init, the vertex id and VA* address does not mean the same offset!
 				for (u32_t i=local_start_vert_off; i<=local_term_vert_off; i++ )
-					A::init( p_init_param->start_vert_id + i, (VA*)(p_init_param->attr_buffer_head) + i );
+					A::init( p_init_param->start_vert_id + i, (VA*)(p_init_param->attr_buf_head) + i );
 
 				break;
 			}
@@ -112,30 +112,94 @@ struct cpu_work{
 				scatter_param* p_scatter_param = (scatter_param*) state_param;
 				sched_list_manager* my_sched_list_manager;
 				update_map_manager* my_update_map_manager;
-				u32_t my_strip_cap, per_cpu_strip_cap, min_laxity;
+				aux_update_buf_manager<VA>* my_aux_manager;
+				u32_t my_strip_cap, per_cpu_strip_cap;
 				u32_t* my_update_map_head;
 
 				VA* attr_array_head;
-				update<VA>* my_update_buffer_head;
+				update<VA>* my_update_buf_head;
 
 				sched_task *p_task;
 				edge* t_edge;
 				update<VA> *t_update;
-				u32_t num_out_edges, i;
-				u32_t strip_num, cpu_offset, map_value, update_map_offset, update_buffer_offset;
+				u32_t num_out_edges, i, temp_laxity;
+				u32_t strip_num, cpu_offset, map_value, update_buf_offset;
 
-//				PRINT_DEBUG( "processor:%d, parameter address:%llx", processor_id, (u64_t)p_scatter_param );
+//				PRINT_DEBUG( "processor:%d, parameter address:%llx\n", processor_id, (u64_t)p_scatter_param );
 
 				my_sched_list_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
 				my_update_map_manager = seg_config->per_cpu_info_list[processor_id]->update_manager;
+				my_aux_manager = seg_config->per_cpu_info_list[processor_id]->aux_manager;
+
 				my_strip_cap = seg_config->per_cpu_info_list[processor_id]->strip_cap;
 				per_cpu_strip_cap = my_strip_cap/gen_config.num_processors;
-				min_laxity = per_cpu_strip_cap; //this is the maximum laxity
 				my_update_map_head = my_update_map_manager->update_map_head;
 
 				attr_array_head = (VA*) p_scatter_param->attr_array_head;
-				my_update_buffer_head = (update<VA>*) seg_config->per_cpu_info_list[processor_id]->update_buffer_head;
+				my_update_buf_head = 
+					(update<VA>*)(seg_config->per_cpu_info_list[processor_id]->strip_buf_head);
 
+				if( processor_id == 0 ){
+					PRINT_DEBUG( "my_strip_cap=%u, per_cpu_strip_cap=%u\n", my_strip_cap, per_cpu_strip_cap );
+					//AUX buffer status
+					PRINT_DEBUG( "aux buffer: number of updates=%u, capacity=%u\n", 
+							my_aux_manager->num_updates, my_aux_manager->buf_cap );
+				}
+
+				//move the updates in auxiliary update buffer to sched_update buffer
+				//	before handling new tasks.
+				if( my_aux_manager->num_updates > 0 ){
+					for( i=(my_aux_manager->num_updates-1); i>=0; i-- ){
+/*						if( add_update_to_sched_update( 
+							seg_config,
+							my_update_map_head, 
+							my_update_buf_head, 
+							(update<VA>*)(my_aux_manager->update_head + i),
+							per_cpu_strip_cap ) < 0 ) break;
+*/
+						t_update = (update<VA>*)(my_aux_manager->update_head + i);
+						strip_num = VID_TO_SEGMENT( t_update->dest_vert );
+						cpu_offset = VID_TO_PARTITION( t_update->dest_vert );
+
+						assert( strip_num < seg_config->num_segments );
+						assert( cpu_offset < gen_config.num_processors );
+
+						//update map layout
+						//			cpu0				cpu1				.....
+						//strip 0-> map_value(s0,c0)	map_value(s0, c1)	.....
+						//strip 1-> map_value(s1,c0)	map_value(s1, c1)	.....
+						//strip 2-> map_value(s2,c0)	map_value(s2, c1)	.....
+						//		... ...
+						map_value = *(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset);
+
+						if( processor_id == 0 ){
+							PRINT_DEBUG( "add one update at seg %u, cpu_off %u, map_value=%u, i=%u\n", 
+								strip_num, cpu_offset, map_value, i );
+						}
+
+						if( map_value < per_cpu_strip_cap ){
+							update_buf_offset = strip_num*per_cpu_strip_cap*gen_config.num_processors
+								+ map_value*gen_config.num_processors 
+								+ cpu_offset;
+
+							*(my_update_buf_head + update_buf_offset) = *t_update;
+
+							//update the map
+							map_value ++;
+							*(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset) = map_value;
+						}else
+							break;
+					}
+					my_aux_manager->num_updates = i+1;
+				}
+
+				if( processor_id == 0 ){
+					//AUX buffer status
+					PRINT_DEBUG( "after handling aux buffer: number of updates=%u, capacity=%u\n", 
+							my_aux_manager->num_updates, my_aux_manager->buf_cap );
+				}
+
+				//Handling new tasks now.
 				while( 1 ){
 					p_task = get_sched_task( my_sched_list_manager );
 
@@ -144,19 +208,25 @@ struct cpu_work{
 						return;
 					}
 
-					PRINT_DEBUG( "processor:%d, task start:%u, task term:%u, remain task:%u\n", 
-						processor_id, p_task->start, p_task->term, my_sched_list_manager->sched_task_counter );
+					PRINT_DEBUG( "processor:%d, task start:%u, task term:%u, remain task:%u. updates in aux:%u\n", 
+						processor_id, 
+						p_task->start, 
+						p_task->term, 
+						my_sched_list_manager->sched_task_counter,
+						my_aux_manager->num_updates );
 
 					for( i=p_task->start; i<p_task->term; i++ ){
 						//how many edges does "i" have?
 						num_out_edges = vert_index->num_out_edges( i );
 						if( num_out_edges == 0 ) continue;
 
-						//should tell if the remaining space in update buffer is enough to store the updates?
-						// if buffer full, should return.
-						if( my_update_map_manager->max_margin_value < (num_out_edges) ){
-							PRINT_DEBUG( "Processor %d: update full with max laxity=%u, current out edgs=%u. i=%u\n",
-								processor_id, my_update_map_manager->max_margin_value, num_out_edges, i );
+						//tell if the remaining space in update buffer is enough to store the updates?
+						// since we add an auxiliary update buffer, need to 
+						temp_laxity = my_aux_manager->buf_cap - my_aux_manager->num_updates;
+
+						if( temp_laxity < num_out_edges ){
+							PRINT_DEBUG( "Processor %d: laxity=%u, current out edgs=%u. i=%u\n",
+								processor_id, temp_laxity, num_out_edges, i );
 							*status = UPDATE_BUF_FULL;
 							p_task->start = i;
 							return;
@@ -169,49 +239,50 @@ struct cpu_work{
 							t_update = A::scatter_one_edge( i, (VA*)&attr_array_head[i], num_out_edges, t_edge );
 							assert( t_update );//make sure the update is not NULL
 
-							//save t_update to update buffer;
-				
-//							strip_num = t_update->dest_vert/seg_config->segment_cap;
-//							cpu_offset = (t_update->dest_vert%seg_config->segment_cap)/seg_config->partition_cap;
+/*							if( add_update_to_sched_update( 
+								seg_config,
+								my_update_map_head, 
+								my_update_buf_head, 
+								t_update, 
+								per_cpu_strip_cap ) < 0 )
+*/
 							strip_num = VID_TO_SEGMENT( t_update->dest_vert );
 							cpu_offset = VID_TO_PARTITION( t_update->dest_vert );
 
 							assert( strip_num < seg_config->num_segments );
 							assert( cpu_offset < gen_config.num_processors );
-							//update map layout
-							//			cpu0				cpu1				.....
-							//strip 0-> map_value(s0,c0)	map_value(s0, c1)	.....
-							//strip 1-> map_value(s1,c0)	map_value(s1, c1)	.....
-							//strip 2-> map_value(s2,c0)	map_value(s2, c1)	.....
-							//		... ...
-	
+
 							map_value = *(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset);
 
 							if( map_value < per_cpu_strip_cap ){
-								update_buffer_offset = strip_num*my_strip_cap + map_value*gen_config.num_processors + cpu_offset;
+								update_buf_offset = strip_num*my_strip_cap
+									+ map_value*gen_config.num_processors 
+									+ cpu_offset;
 
-								*(my_update_buffer_head + update_buffer_offset) = *t_update;
+								*(my_update_buf_head + update_buf_offset) = *t_update;
 
 								//update the map
 								map_value ++;
 								*(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset) = map_value;
-
-								//compute the laxity
-								if( min_laxity > (per_cpu_strip_cap - map_value) )
-									min_laxity = per_cpu_strip_cap - map_value;
 							}else{
-								PRINT_DEBUG( "Losing update to vertex %u at processor %d: max_laxity:%u, num of out edge:%u!\n", 
-									t_update->dest_vert, processor_id, 
-									my_update_map_manager->max_margin_value, num_out_edges );
+								//should add it to auxiliary update buffer
+								*(my_aux_manager->update_head + my_aux_manager->num_updates ) = *t_update;
+
+/*								u64_t abs_addr = (u64_t)my_aux_manager->update_head;
+								abs_addr += (u64_t)(my_aux_manager->num_updates) * sizeof(update<VA>);
+								*((update<VA>*)abs_addr) = *t_update;
+
+//								*(my_aux_manager->update_head) = *t_update;
+								if( (my_aux_manager->num_updates % 1000 == 0) && (processor_id == 0 ))
+									PRINT_DEBUG( "abs_addr = 0x%llx\n", abs_addr );
+*/
+								my_aux_manager->num_updates ++;
 							}
 
 							//drop t_edge and t_update
 							delete t_edge;
 							delete t_update;
 						}
-						//update laxity
-						if (my_update_map_manager->max_margin_value > min_laxity )
-							my_update_map_manager->max_margin_value = min_laxity;
 					}
 					//tell if this task is finished or not, if not, update it to make it start from i
 					if( i >= p_task->term )
@@ -226,6 +297,63 @@ struct cpu_work{
 
         sync->wait();
 	}
+
+/*
+	//return value:
+	//0: added successfully
+	//-1: failed on adding
+	int add_update_to_sched_update( 
+				seg_config,
+				map_head, 
+				buf_head, 
+				p_update, 
+				per_cpu_strip_cap )
+	{
+
+		t_update = (update<VA>*)(my_aux_manager->update_head + i);
+		strip_num = VID_TO_SEGMENT( t_update->dest_vert );
+		cpu_offset = VID_TO_PARTITION( t_update->dest_vert );
+
+//						assert( strip_num < seg_config->num_segments );
+//						assert( cpu_offset < gen_config.num_processors );
+
+		//update map layout
+		//			cpu0				cpu1				.....
+		//strip 0-> map_value(s0,c0)	map_value(s0, c1)	.....
+		//strip 1-> map_value(s1,c0)	map_value(s1, c1)	.....
+		//strip 2-> map_value(s2,c0)	map_value(s2, c1)	.....
+		//		... ...
+		map_value = *(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset);
+
+		if( map_value < per_cpu_strip_cap ){
+			update_buf_offset = strip_num*per_cpu_strip_cap*gen_config.num_processors
+				+ map_value*gen_config.num_processors 
+				+ cpu_offset;
+
+		*(my_update_buf_head + update_buf_offset) = *t_update;
+
+		//update the map
+		map_value ++;
+	}
+*/
+
+    void show_update_map( int processor_id, segment_config<VA>* seg_config, u32_t* map_head )
+    {
+        //print title
+        PRINT_SHORT( "--------------- update map of CPU%d begin-----------------\n", processor_id );
+        PRINT_SHORT( "\t" );
+        for( u32_t i=0; i<gen_config.num_processors; i++ )
+        PRINT_SHORT( "\tCPU%d", i );
+        PRINT_SHORT( "\n" );
+
+        for( u32_t i=0; i<seg_config->num_segments; i++ ){
+            PRINT_SHORT( "Strip%d\t\t", i );
+            for( u32_t j=0; j<gen_config.num_processors; j++ )
+            PRINT_SHORT( "%d\t", *(map_head+i*(gen_config.num_processors)+j) );
+            PRINT_SHORT( "\n" );
+        }
+        PRINT_SHORT( "--------------- update map of CPU%d end-----------------\n", processor_id );
+    }
 
 	//return current sched_task
 	//return NULL when there is no more tasks
@@ -246,9 +374,9 @@ struct cpu_work{
 		sched_manager->sched_task_counter --;
 
 		//move forward current pointer
-        if( sched_manager->current >= (sched_manager->sched_buffer_head
-                    + sched_manager->sched_buffer_size) )
-                sched_manager->current = sched_manager->sched_buffer_head;
+        if( sched_manager->current >= (sched_manager->sched_buf_head
+                    + sched_manager->sched_buf_size) )
+                sched_manager->current = sched_manager->sched_buf_head;
         else
                 sched_manager->current++;
 

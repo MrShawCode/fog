@@ -29,15 +29,35 @@
 
 #if __PRINT__DEBUG__ == 0
 FILE *log_file;
-#define PRINT_DEBUG(format,...) do {fprintf(stderr, "File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__) ;}while(0)
+#define PRINT_DEBUG(format,...) do {fprintf(stderr, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;}while(0)
+#define PRINT_SHORT(format,...) do {fprintf(stderr, ""format"", ##__VA_ARGS__) ;}while(0)
+#define PRINT_ERROR(format,...) do {fprintf(stderr, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;}while(0)
+
 #elif __PRINT__DEBUG__ == 1
 FILE *log_file;
-#define PRINT_DEBUG(format,...) do {fprintf(log_file, "File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__) ;}while(0)
+#define PRINT_DEBUG(format,...) do {fprintf(log_file, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;}while(0)
+#define PRINT_SHORT(format,...) do {fprintf(log_file, ""format"",##__VA_ARGS__) ;}while(0)
+
+#define PRINT_ERROR(format,...) do { \
+    fprintf(log_file, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;\
+    fprintf(stderr, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;\
+}while(0)
+
 #elif __PRINT__DEBUG__ == 2
 FILE *log_file;
 #define PRINT_DEBUG(format,...) do { \
-    fprintf(log_file, "File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__) ;\
-    fprintf(stderr, "File: "__FILE__", Line: %05d: "format"\n", __LINE__, ##__VA_ARGS__) ;\
+    fprintf(log_file, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;\
+    fprintf(stderr, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;\
+}while(0)
+#define PRINT_SHORT(format,...) do { \
+    fprintf(log_file, ""format"", ##__VA_ARGS__) ;\
+    fprintf(stderr, ""format"", ##__VA_ARGS__) ;\
+}while(0)
+
+
+#define PRINT_ERROR(format,...) do { \
+    fprintf(log_file, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;\
+    fprintf(stderr, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;\
 }while(0)
         
 #else  

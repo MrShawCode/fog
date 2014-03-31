@@ -34,7 +34,7 @@ struct io_work{
 		switch( operation ){
 			case FILE_READ:
 			{
-                PRINT_DEBUG( "read to disk content to buffer :0x%llx, offset:%llu, size:%llu", 
+                PRINT_DEBUG( "read to disk content to buffer :0x%llx, offset:%llu, size:%llu\n", 
                     (u64_t)buffer, offset, size );
                         
                 int finished=0, remain=size, res;
@@ -42,16 +42,16 @@ struct io_work{
                 //the file should exist now
                 fd = open( gen_config.attr_file_name.c_str(), O_RDWR, S_IRUSR | S_IRGRP | S_IROTH );
                 if( fd < 0 ){
-                    PRINT_DEBUG( "Cannot open attribute file for writing!");
+                    PRINT_ERROR( "Cannot open attribute file for writing!\n");
                     exit( -1 );
                 }
                 if( lseek( fd, offset, SEEK_SET ) < 0 ){
-                    PRINT_DEBUG( "Cannot seek the attribute file!");
+                    PRINT_ERROR( "Cannot seek the attribute file!\n");
                     exit( -1 );
                 }
                 while( finished < (int)size ){
                     if( (res = read(fd, buffer, remain)) < 0 ) 
-                        PRINT_DEBUG( "failure on disk reading!" );
+                        PRINT_ERROR( "failure on disk reading!\n" );
                     finished += res;
                     remain -= res;
                 }
@@ -62,7 +62,7 @@ struct io_work{
 			}
 			case FILE_WRITE:
 			{
-//				PRINT_DEBUG( "dump to disk tasks is received by disk thread, buffer:0x%llx, offset:%llu, size:%llu", 
+//				PRINT_DEBUG( "dump to disk tasks is received by disk thread, buffer:0x%llx, offset:%llu, size:%llu\n", 
 //					(u64_t)buffer, offset, size );
 					
 				int written=0, remain=size, res;
@@ -70,16 +70,16 @@ struct io_work{
 				//the file should exist now
 				fd = open( gen_config.attr_file_name.c_str(), O_RDWR, S_IRUSR | S_IRGRP | S_IROTH );
 				if( fd < 0 ){
-					PRINT_DEBUG( "Cannot open attribute file for writing!");
+					PRINT_ERROR( "Cannot open attribute file for writing!\n");
 					exit( -1 );
 				}
 				if( lseek( fd, offset, SEEK_SET ) < 0 ){
-					PRINT_DEBUG( "Cannot seek the attribute file!");
+					PRINT_ERROR( "Cannot seek the attribute file!\n");
 					exit( -1 );
 				}
 				while( written < (int)size ){
 					if( (res = write(fd, buffer, remain)) < 0 )
-						PRINT_DEBUG( "failure on disk writing!" );
+						PRINT_ERROR( "failure on disk writing!\n" );
 					written += res;
 					remain -= res;
 				}
@@ -141,10 +141,14 @@ class io_queue{
 		//the attribute file may not exist!
 		attr_fd = open( gen_config.attr_file_name.c_str(), O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR | S_IRGRP | S_IROTH );
 		if( attr_fd < 0 ){
-			PRINT_DEBUG( "Cannot create attribute file for writing!");
+			PRINT_ERROR( "Cannot create attribute file for writing!\n");
 			exit( -1 );
 		}
-		ftruncate( attr_fd, 0 );
+		if( ftruncate( attr_fd, 0 ) < 0 ){
+			PRINT_ERROR( "Cannot create attribute file for writing!\n");
+			exit( -1 );
+		}
+			
 		close( attr_fd );
 
 		//invoke the disk threads
@@ -213,7 +217,7 @@ void disk_thread::operator() ()
             work_queue->io_queue_sem.wait();
 
             if(work_queue->terminate_all) {
-                PRINT_DEBUG( "disk thread terminating" );
+                PRINT_DEBUG( "disk thread terminating\n" );
                 break;
             }
 
