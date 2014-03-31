@@ -14,8 +14,10 @@ enum fog_engine_state{
 //denotes the different status of cpu threads after they finished the given tasks.
 // Note: these status are for scatter phase ONLY!
 enum cpu_thread_status{
-	UPDATE_BUF_FULL = 100,		//Cannot scatter more updates, since my update buffer is full
-	NO_MORE_SCHED	//I have no more sched tasks, I finished the whole scatter phase
+	UPDATE_BUF_FULL = 100,	//Cannot scatter more updates, since my update buffer is full
+	NO_MORE_SCHED,			//I have no more sched tasks, but have updates in the auxiliary update buffer
+	FINISHED_SCATTER		//I have no more sched tasks, and no updates in auxiliary update buffer.
+							//	But still have updates in my strip update buffer. 
 };
 
 #define SCHED_BUFFER_LEN    1024
@@ -139,21 +141,21 @@ struct cpu_work{
 				my_update_buf_head = 
 					(update<VA>*)(seg_config->per_cpu_info_list[processor_id]->strip_buf_head);
 
-				if( processor_id == 0 ){
-					PRINT_DEBUG( "my_strip_cap=%u, per_cpu_strip_cap=%u\n", my_strip_cap, per_cpu_strip_cap );
-					//AUX buffer status
-					PRINT_DEBUG( "aux buffer: number of updates=%u, capacity=%u\n", 
-							my_aux_manager->num_updates, my_aux_manager->buf_cap );
-				}
+//				if( processor_id == 0 ){
+//					PRINT_DEBUG( "my_strip_cap=%u, per_cpu_strip_cap=%u\n", my_strip_cap, per_cpu_strip_cap );
+//					//AUX buffer status
+//					PRINT_DEBUG( "aux buffer: number of updates=%u, capacity=%u\n", 
+//							my_aux_manager->num_updates, my_aux_manager->buf_cap );
+//				}
 
 				//move the updates in auxiliary update buffer to sched_update buffer
 				//	before handling new tasks.
-				PRINT_DEBUG( "PRELOAD--processor id:%u, aux head:0x%llx, last update address:0x%llx with num_updates=%u. strip buffer:0x%llx\n",
-					processor_id, 
-					(u64_t) my_aux_manager->update_head,
-					(u64_t) (my_aux_manager->update_head + my_aux_manager->num_updates),
-					my_aux_manager->num_updates,
-					(u64_t) my_update_buf_head );
+//				PRINT_DEBUG( "PRELOAD--processor id:%u, aux head:0x%llx, last update address:0x%llx with num_updates=%u. strip buffer:0x%llx\n",
+//					processor_id, 
+//					(u64_t) my_aux_manager->update_head,
+//					(u64_t) (my_aux_manager->update_head + my_aux_manager->num_updates),
+//					my_aux_manager->num_updates,
+//					(u64_t) my_update_buf_head );
 
 				if( my_aux_manager->num_updates > 0 ){
 					for( i=my_aux_manager->num_updates; i>0; i-- ){
@@ -190,18 +192,21 @@ struct cpu_work{
 					my_aux_manager->num_updates = i;
 				}
 
-				PRINT_DEBUG( "AFTER PRELOAD--processor id:%u, aux head:0x%llx, last update address:0x%llx with num_updates=%u\n",
-					processor_id, 
-					(u64_t) my_aux_manager->update_head,
-					(u64_t) (my_aux_manager->update_head + my_aux_manager->num_updates),
-					my_aux_manager->num_updates );
+//				PRINT_DEBUG( "AFTER PRELOAD--processor id:%u, aux head:0x%llx, last update address:0x%llx with num_updates=%u\n",
+//					processor_id, 
+//					(u64_t) my_aux_manager->update_head,
+//					(u64_t) (my_aux_manager->update_head + my_aux_manager->num_updates),
+//					my_aux_manager->num_updates );
 
 				//Handling new tasks now.
 				while( 1 ){
 					p_task = get_sched_task( my_sched_list_manager );
 
 					if( p_task == NULL ){
-						*status = NO_MORE_SCHED;
+						if( my_aux_manager->num_updates > 0 )
+							*status = NO_MORE_SCHED;
+						else
+							*status = FINISHED_SCATTER;
 						return;
 					}
 
@@ -226,11 +231,11 @@ struct cpu_work{
 								processor_id, temp_laxity, num_out_edges, i );
 							*status = UPDATE_BUF_FULL;
 							p_task->start = i;
-							PRINT_DEBUG( "processor id:%u, aux head:0x%llx, last update address:0x%llx with num_updates=%u\n",
-								processor_id, 
-								(u64_t) my_aux_manager->update_head,
-								(u64_t) (my_aux_manager->update_head + my_aux_manager->num_updates),
-								my_aux_manager->num_updates );
+//							PRINT_DEBUG( "processor id:%u, aux head:0x%llx, last update address:0x%llx with num_updates=%u\n",
+//								processor_id, 
+//								(u64_t) my_aux_manager->update_head,
+//								(u64_t) (my_aux_manager->update_head + my_aux_manager->num_updates),
+//								my_aux_manager->num_updates );
 							return;
 						}
 					
@@ -241,13 +246,6 @@ struct cpu_work{
 							t_update = A::scatter_one_edge( i, (VA*)&attr_array_head[i], num_out_edges, t_edge );
 							assert( t_update );//make sure the update is not NULL
 
-/*							if( add_update_to_sched_update( 
-								seg_config,
-								my_update_map_head, 
-								my_update_buf_head, 
-								t_update, 
-								per_cpu_strip_cap ) < 0 )
-*/
 							strip_num = VID_TO_SEGMENT( t_update->dest_vert );
 							cpu_offset = VID_TO_PARTITION( t_update->dest_vert );
 
@@ -270,14 +268,6 @@ struct cpu_work{
 								//should add it to auxiliary update buffer
 								*(my_aux_manager->update_head + my_aux_manager->num_updates) = *t_update;
 
-/*								u64_t abs_addr = (u64_t)my_aux_manager->update_head;
-								abs_addr += (u64_t)(my_aux_manager->num_updates) * sizeof(update<VA>);
-								*((update<VA>*)abs_addr) = *t_update;
-
-//								*(my_aux_manager->update_head) = *t_update;
-								if( (my_aux_manager->num_updates % 1000 == 0) && (processor_id == 0 ))
-									PRINT_DEBUG( "abs_addr = 0x%llx\n", abs_addr );
-*/
 								my_aux_manager->num_updates ++;
 							}
 
@@ -359,7 +349,7 @@ struct cpu_work{
 
 	//return current sched_task
 	//return NULL when there is no more tasks
-	sched_task * get_sched_task( sched_list_manager* sched_manager )
+	static sched_task * get_sched_task( sched_list_manager* sched_manager )
 	{
 		if( sched_manager->sched_task_counter == 0 ) return NULL;
 

@@ -17,6 +17,7 @@
 #include "print_debug.hpp"
 
 #define SCHED_BUFFER_LEN	1024
+#define MIN_DIVIDABLE_TASK_LEN	1024
 
 //A stands for the algorithm (i.e., ???_program)
 //VA stands for the vertex attribute structure
@@ -90,11 +91,12 @@ class fog_engine{
 
 		void operator() ()
 		{
-			int ret;
+			int ret, loop_counter=0;
 
 			init_phase();
 			//start scatter & gather
 			while(1){
+				PRINT_WARNING( "SCATTER and UPDATE loop %d\n", loop_counter++ );
 				ret = scatter_updates();
 
 				show_update_buf_util();
@@ -200,7 +202,7 @@ class fog_engine{
 		// -1: failure
 		int scatter_updates()
 		{
-			int ret;
+			int ret, unemployed;
 			cpu_work<A,VA>* scatter_cpu_work = NULL;
 			scatter_param* p_scatter_param=new scatter_param;
 
@@ -222,12 +224,22 @@ class fog_engine{
 			//after computation, check the status of cpu threads, and return
 			PRINT_DEBUG( "After scatter computation\n" );
 			ret = 0;
+			unemployed = 0;	//assume there is no unemployed
 			for( u32_t i=0; i<gen_config.num_processors; i++ ){
 				PRINT_DEBUG( "Processor %d status %d\n", i, pcpu_threads[i]->status );
-				if ( pcpu_threads[i]->status != NO_MORE_SCHED )
+				if ( pcpu_threads[i]->status != FINISHED_SCATTER )
 					ret = 1;
+			
+				if ( pcpu_threads[i]->status != UPDATE_BUF_FULL )
+					unemployed = 1;
 			}
 
+			if ( ret == 0 ) return ret;
+
+			//ret == 1
+			if ( unemployed )
+				rebalance_sched_tasks();
+	
 			return ret;
 
 		}
@@ -327,6 +339,70 @@ class fog_engine{
 			}
 			return 0;
 */
+		}
+
+		//unemployments found, rebalance the sched tasks among the cpu threads
+		// the idea is to allow the unemployed CPUs to steal tasks from the 
+		// heavest loaded CPU. The load of the latter will be divided among the unemployed CPUs.
+		//Note: this function should be called after the scatter phase to avoid any 
+		// race conditions with any running cpu threads
+		//Note: Only the current task of the cpu threads is concerned!
+		void rebalance_sched_tasks( void )
+		{
+			u32_t num_unemployed, max_task_len, heavest_cpu;
+			sched_task *p_task, *t_task;
+			sched_task *heavy_task = NULL;	//the task of the heavest loaded CPU
+			u32_t new_task_len, j;
+
+			//browse the cpu thread list to find the number of unemployed CPUs
+			// as well as the biggest task.
+			num_unemployed = max_task_len = heavest_cpu = 0;
+			
+			for( u32_t i=0; i<gen_config.num_processors; i++ ){
+				p_task = cpu_work<A,VA>::get_sched_task( seg_config->per_cpu_info_list[i]->sched_manager );
+				if( p_task == NULL ) num_unemployed ++;
+				else if (p_task->term != 0 )
+					if( (p_task->term - p_task->start) > max_task_len ){
+						max_task_len = p_task->term - p_task->start;
+						heavest_cpu = i;
+						heavy_task = p_task;
+					}
+			}
+
+			//it is still possible that nobody has work to do, but this function is still called.
+			//for example: only some of the CPU threads have pending updates in their auxiliary
+			//update buffer, and all CPUs had finished processing their tasks.
+			if( num_unemployed == gen_config.num_processors ) return;
+
+			PRINT_DEBUG( "fog_engine::rebalance_sched_tasks unemployed:%u, heavest cpu:%u, max task len:%u (from %u to %u)\n",
+				num_unemployed, heavest_cpu, max_task_len, heavy_task->start, heavy_task->term );
+
+			//do not divide small task
+			if( max_task_len < MIN_DIVIDABLE_TASK_LEN ) return;
+
+			//do not forget the heavest cpu, he will also have a portion
+			new_task_len = max_task_len/(num_unemployed+1);
+
+			//add new task to the unemployed
+			for( j=0; j<num_unemployed; j++ ){
+				t_task = new sched_task;
+
+				//find task in backward direction
+				t_task->term = heavy_task->term - j*new_task_len;
+				t_task->start = heavy_task->term - (j+1)*new_task_len + 1;
+
+				//add this task to the unemployed cpu
+				for( u32_t i=0; i<gen_config.num_processors; i++ ){
+					if ( cpu_work<A,VA>::get_sched_task( seg_config->per_cpu_info_list[i]->sched_manager ) == NULL ){
+						PRINT_DEBUG( "will add task start from %u to %u to CPU %u\n", t_task->start, t_task->term, i );
+						add_sched_task_to_processor( i, t_task );
+						break;
+					}
+				}
+			}
+
+			//update the heavest cpu task
+			heavy_task->term -= j*new_task_len;
 		}
 
 		//compute the utilization rate of update buffers (i.e., all processors)
