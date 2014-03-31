@@ -148,16 +148,16 @@ struct cpu_work{
 
 				//move the updates in auxiliary update buffer to sched_update buffer
 				//	before handling new tasks.
+				PRINT_DEBUG( "PRELOAD--processor id:%u, aux head:0x%llx, last update address:0x%llx with num_updates=%u. strip buffer:0x%llx\n",
+					processor_id, 
+					(u64_t) my_aux_manager->update_head,
+					(u64_t) (my_aux_manager->update_head + my_aux_manager->num_updates),
+					my_aux_manager->num_updates,
+					(u64_t) my_update_buf_head );
+
 				if( my_aux_manager->num_updates > 0 ){
-					for( i=(my_aux_manager->num_updates-1); i>=0; i-- ){
-/*						if( add_update_to_sched_update( 
-							seg_config,
-							my_update_map_head, 
-							my_update_buf_head, 
-							(update<VA>*)(my_aux_manager->update_head + i),
-							per_cpu_strip_cap ) < 0 ) break;
-*/
-						t_update = (update<VA>*)(my_aux_manager->update_head + i);
+					for( i=my_aux_manager->num_updates; i>0; i-- ){
+						t_update = (update<VA>*)(my_aux_manager->update_head + i - 1);
 						strip_num = VID_TO_SEGMENT( t_update->dest_vert );
 						cpu_offset = VID_TO_PARTITION( t_update->dest_vert );
 
@@ -172,15 +172,12 @@ struct cpu_work{
 						//		... ...
 						map_value = *(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset);
 
-//						if( processor_id == 0 ){
-//							PRINT_DEBUG( "add one update at seg %u, cpu_off %u, map_value=%u, i=%u\n", 
-//								strip_num, cpu_offset, map_value, i );
-//						}
-
 						if( map_value < per_cpu_strip_cap ){
 							update_buf_offset = strip_num*per_cpu_strip_cap*gen_config.num_processors
 								+ map_value*gen_config.num_processors 
 								+ cpu_offset;
+
+							assert( update_buf_offset < (my_strip_cap*(strip_num+1)) );
 
 							*(my_update_buf_head + update_buf_offset) = *t_update;
 
@@ -190,14 +187,14 @@ struct cpu_work{
 						}else
 							break;
 					}
-					my_aux_manager->num_updates = i+1;
+					my_aux_manager->num_updates = i;
 				}
 
-				if( processor_id == 0 ){
-					//AUX buffer status
-					PRINT_DEBUG( "after handling aux buffer: number of updates=%u, capacity=%u\n", 
-							my_aux_manager->num_updates, my_aux_manager->buf_cap );
-				}
+				PRINT_DEBUG( "AFTER PRELOAD--processor id:%u, aux head:0x%llx, last update address:0x%llx with num_updates=%u\n",
+					processor_id, 
+					(u64_t) my_aux_manager->update_head,
+					(u64_t) (my_aux_manager->update_head + my_aux_manager->num_updates),
+					my_aux_manager->num_updates );
 
 				//Handling new tasks now.
 				while( 1 ){
@@ -229,6 +226,11 @@ struct cpu_work{
 								processor_id, temp_laxity, num_out_edges, i );
 							*status = UPDATE_BUF_FULL;
 							p_task->start = i;
+							PRINT_DEBUG( "processor id:%u, aux head:0x%llx, last update address:0x%llx with num_updates=%u\n",
+								processor_id, 
+								(u64_t) my_aux_manager->update_head,
+								(u64_t) (my_aux_manager->update_head + my_aux_manager->num_updates),
+								my_aux_manager->num_updates );
 							return;
 						}
 					
@@ -266,7 +268,7 @@ struct cpu_work{
 								*(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset) = map_value;
 							}else{
 								//should add it to auxiliary update buffer
-								*(my_aux_manager->update_head + my_aux_manager->num_updates ) = *t_update;
+								*(my_aux_manager->update_head + my_aux_manager->num_updates) = *t_update;
 
 /*								u64_t abs_addr = (u64_t)my_aux_manager->update_head;
 								abs_addr += (u64_t)(my_aux_manager->num_updates) * sizeof(update<VA>);
