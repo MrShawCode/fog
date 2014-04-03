@@ -37,15 +37,33 @@ static void setup_options_fog(int argc, const char* argv[])
 {
   desc.add_options()
 	( "help,h", "Display help message")
-	( "graph,g", boost::program_options::value<std::string>()->required(), "The name of the graph to be processed (the .desc file)")
-	( "application,a", boost::program_options::value<std::string>()->required(), "The name of the application (e.g., pagerank)")
-	( "parameter,p", boost::program_options::value<std::string>()->required(), "Parameter to the application (e.g., iter times for pagerank, start vid for sssp");
-    
+	( "graph,g", boost::program_options::value<std::string>()->required(), 
+		"The name of the graph to be processed (i.e., the .desc file).")
+	( "application,a", boost::program_options::value<std::string>()->required(), 
+		"The name of the application, e.g., pagerank, sssp, bfs.")
+	//following are system parameters
+    ( "memory,m", boost::program_options::value<unsigned long>()->default_value(1024), //default 1GB
+     "Size of the buffer for writing (unit is MB)")
+    ( "processors,p",  boost::program_options::value<unsigned long>()->default_value(4),
+      "Number of processors")
+    ( "diskthreads,d",  boost::program_options::value<unsigned long>()->default_value(2),
+      "Number of Disk(I/O) threads")
+	//following are the parameters for appilcations
+	// pagerank
+    ("pagerank::niters", boost::program_options::value<unsigned long>()->default_value(4),
+     "number of iterations for pagerank.")
+	// sssp
+    ("sssp::source", boost::program_options::value<unsigned long>()->default_value(0),
+     "source vertex id for sssp")
+	// belief propagation
+    ("bp::niters", boost::program_options::value<unsigned long>()->default_value(5),
+     "number of iterations for belief propagation");
+
   try {
     boost::program_options::store(boost::program_options::parse_command_line(argc,
 									     argv,
 									     desc),
-				  vm);
+									  	 vm);
     boost::program_options::notify(vm);
   }
   catch (boost::program_options::error &e) {

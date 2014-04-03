@@ -24,21 +24,19 @@ extern FILE * log_file;
 int main( int argc, const char**argv)
 {
 	std::string	prog_name;
-	std::string parameter;
 	std::string desc_name;
 
     setup_options_fog( argc, argv );
 	prog_name = vm["application"].as<std::string>();
-	parameter = vm["parameter"].as<std::string>();
 	desc_name = vm["graph"].as<std::string>();
 
 	init_graph_desc( desc_name );
 
 	//config subjected to change.
-	gen_config.num_processors = 4;
-	gen_config.num_io_threads = 2;
-	//gen_config.memory_size = (u64_t)4*1024*1024*1024;
-	gen_config.memory_size = (u64_t)1*1024*1024*1024;
+	gen_config.num_processors = vm["processors"].as<unsigned long>();
+	gen_config.num_io_threads = vm["diskthreads"].as<unsigned long>();
+	//the unit of memory is MB
+	gen_config.memory_size = (u64_t)(vm["memory"].as<unsigned long>())*1024*1024;
 
     //add by  hejian
     if (!(log_file = fopen(LOG_FILE, "w"))) //open file for mode
@@ -46,7 +44,6 @@ int main( int argc, const char**argv)
         printf("failed to open %s.\n", LOG_FILE);
         exit(666);
     }
-
 
 	gen_config.min_vert_id = pt.get<u32_t>("description.min_vertex_id");
 	gen_config.max_vert_id = pt.get<u32_t>("description.max_vertex_id");
@@ -57,8 +54,8 @@ int main( int argc, const char**argv)
 	gen_config.edge_file_name = desc_name.substr(0, desc_name.find_last_of(".") )+".edge";
 	gen_config.attr_file_name = desc_name.substr(0, desc_name.find_last_of(".") )+".attr";
 
-	PRINT_DEBUG( "Graph name: %s\nApplication name:%s, with parameter:%s\n", 
-		desc_name.c_str(), prog_name.c_str(), parameter.c_str() );
+	PRINT_DEBUG( "Graph name: %s\nApplication name:%s\n", 
+		desc_name.c_str(), prog_name.c_str() );
 
 	PRINT_DEBUG( "Configurations:\n" );
 	PRINT_DEBUG( "gen_config.memory_size = 0x%llx\n", gen_config.memory_size );
@@ -72,7 +69,7 @@ int main( int argc, const char**argv)
 	if( prog_name == "sssp" ){
         fog_engine_target<sssp_program, sssp_vert_attr> *eng;
 
-		sssp_program::start_vid = atoi(parameter.c_str());
+		sssp_program::start_vid = vm["sssp::source"].as<unsigned long>();
 		PRINT_DEBUG( "sssp_program start_vid = %d\n", sssp_program::start_vid );
 		//ready and run
 		(*(eng = new fog_engine_target<sssp_program, sssp_vert_attr>()))();
@@ -81,7 +78,7 @@ int main( int argc, const char**argv)
 	}else if( prog_name == "pagerank" ){
 		fog_engine<pagerank_program, pagerank_vert_attr> * eng;
 
-		pagerank_program::iteration_times = atoi( parameter.c_str() );
+		pagerank_program::iteration_times = vm["pagerank::niters"].as<unsigned long>();
 		PRINT_DEBUG( "pagerank_program iteration_times = %d\n", pagerank_program::iteration_times );
 		//ready and run
 		(*(eng = new fog_engine<pagerank_program, pagerank_vert_attr>()))();
