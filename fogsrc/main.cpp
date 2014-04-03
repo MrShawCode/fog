@@ -12,6 +12,7 @@
 
 #include "../application/sssp.hpp"
 #include "../application/pagerank.hpp"
+#include "bitmap.hpp"
 
 //boost::property_tree::ptree pt;
 //boost::program_options::options_description desc;
@@ -36,8 +37,8 @@ int main( int argc, const char**argv)
 	//config subjected to change.
 	gen_config.num_processors = 4;
 	gen_config.num_io_threads = 2;
-	gen_config.memory_size = (u64_t)4*1024*1024*1024;
-	//gen_config.memory_size = (u64_t)1*1024*1024*1024;
+	//gen_config.memory_size = (u64_t)4*1024*1024*1024;
+	gen_config.memory_size = (u64_t)1*1024*1024*1024;
 
     //add by  hejian
     if (!(log_file = fopen(LOG_FILE, "w"))) //open file for mode
@@ -69,13 +70,14 @@ int main( int argc, const char**argv)
 	PRINT_DEBUG( "gen_config.attr_file_name(WRITE ONLY) = %s\n", gen_config.attr_file_name.c_str() );
 
 	if( prog_name == "sssp" ){
-/*		segment_config<sssp_vert_attr> seg_config;
+        fog_engine_target<sssp_program, sssp_vert_attr> *eng;
 
 		sssp_program::start_vid = atoi(parameter.c_str());
 		PRINT_DEBUG( "sssp_program start_vid = %d\n", sssp_program::start_vid );
 		//ready and run
-		(*(new fog_engine_target<sssp_program, sssp_vert_attr>(&seg_config)))();
-*/
+		(*(eng = new fog_engine_target<sssp_program, sssp_vert_attr>()))();
+        delete eng;
+
 	}else if( prog_name == "pagerank" ){
 		fog_engine<pagerank_program, pagerank_vert_attr> * eng;
 

@@ -25,7 +25,8 @@ class pagerank_program{
 		// this_vert: point to the attribute of vertex to be scattered.
 		// num_outedge: the number of out edges of the vertex to be scattered.
 		// this_edge: the edge to be scattered this time. 
-		//Notes: 1) this member fuction will be used to scatter ONE edge of a vertex.
+		//Notes: 
+		// 1) this member fuction will be used to scatter ONE edge of a vertex.
 		// 2) the return value will be a pointer to the generated update.
 		//	However, it is possible that no update will be generated at all! 
 		//	In that case, this member function should return NULL.
@@ -44,31 +45,6 @@ class pagerank_program{
 			return ret;
 		}
 
-/*		//scatter the updates according to the out-edges of vertex "vid"
-		static void scatter( u32_t vid, pagerank_vert_attr* this_vert )
-		{
-			// attr_array[vid]->rank will retrieve the latest rank value of vertex vid
-			// vert_index_array->num_out_edges(vid) will return the number of out 
-			// edges of vertex vid
-			// config.max_vertex_id+1 denotes the total number of vertices of the graph
-			int num_of_out_edges = fog_engine<pagerank_program, pagerank_vert_attr>::num_of_out_edges( vid );
-
-			int scatter_weight = DAMPING_FACTOR*(this_vert->rank / num_of_out_edges) +
-				1 - DAMPING_FACTOR;
-
-			struct edge *t_edge;
-			struct update<pagerank_vert_attr> t_update;
-
-			for( int i=0; i<num_of_out_edges; i++){
-				t_edge = fog_engine<pagerank_program, pagerank_vert_attr>::get_ith_out_edge( vid, i );
-
-				t_update.dest_vert = t_edge->dest_vert;
-				t_update.vert_attr.rank = scatter_weight;
-				// will add the update to buffer
-				fog_engine<pagerank_program, pagerank_vert_attr>::add_update( &t_update );
-			}
-		}
-*/
 		// Gather one update. Explain the parameters:
 		// vid: the vertex id of destination vertex;
 		// va: the attribute of destination vertex;

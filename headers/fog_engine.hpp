@@ -206,18 +206,25 @@ class fog_engine{
 			cpu_work<A,VA>* scatter_cpu_work = NULL;
 			scatter_param* p_scatter_param=new scatter_param;
 
-			if( remap_attr_file() < 0 ){
-				PRINT_ERROR( "Fog_engine::scatter_updates failed!\n" );
-				return -1;
+			//prepare attribute date
+			if( seg_config->num_attr_buf == 1 ){
+				p_scatter_param->attr_array_head = (void*)seg_config->attr_buf0;
+			}else{
+				if( remap_attr_file() < 0 ){
+					PRINT_ERROR( "Fog_engine::scatter_updates failed!\n" );
+					return -1;
+				}
+
+				p_scatter_param->attr_array_head = (void*)attr_array_header;
 			}
 
-			p_scatter_param->attr_array_head = (void*)attr_array_header;
-
+			//invoke cpu threads
 			scatter_cpu_work = new cpu_work<A,VA>( SCATTER, (void*)p_scatter_param );
 
 			pcpu_threads[0]->work_to_do = scatter_cpu_work;
 			(*pcpu_threads[0])();
-			//cpu threads finished init current attr buffer
+
+			//cpu threads return
 			delete scatter_cpu_work;
 			scatter_cpu_work = NULL;
 
