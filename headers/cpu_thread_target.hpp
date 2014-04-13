@@ -2,9 +2,20 @@
 #define __CPU_THREAD_TARGET_HPP__
 
 #include "cpu_thread.hpp"
+#include "bitmap.hpp"
+#include "disk_thread_target.hpp"
 
 #include "config.hpp"
 #include "print_debug.hpp"
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sstream> 
+#include <fcntl.h>
+
 
 /*enum fog_engine_state{
     INIT = 0,
@@ -58,27 +69,55 @@ class cpu_thread_target;
 	char* attr_buf_head;
 	u32_t start_vert_id;
 	u32_t num_of_vertices;
-};
+};*/
 
-struct scatter_param{
+struct scatter_param_target{
 	void* attr_array_head;
 };
 
-struct gather_param{
+struct gather_param_target{
 
 };
-*/
+
 template <typename A, typename VA>
 struct cpu_work_target{
 	u32_t engine_state;
 	void* state_param;
+    static io_queue_target* thread_io_queue;
 
 	cpu_work_target( u32_t state, void* state_param_in )
 		:engine_state(state), state_param(state_param_in)
-	{}
+	{
+        thread_io_queue = new io_queue_target;
+    }
 	
+         //get file name for current segment
+     std::string get_current_bitmap_file_name(u32_t processor_id, u32_t set_id, u32_t strip_id)
+     { 
+         std::stringstream str_strip, str_procs, str_set;
+         str_strip << strip_id;
+         str_set << set_id;
+         str_procs << processor_id;
+         std::string current_file_name = "CPU"+str_procs.str()+"_"+str_set.str()+"_sched_strip"+str_strip.str();
+         return current_file_name;
+     }
+
+    //for exp
+     static void read_bitmap_file_to_buf(char * current_read_buf, std::string current_file_name, u32_t read_size )
+     {   
+         io_work_target * read_bitmap_io_work = NULL;
+         read_bitmap_io_work = new io_work_target( current_file_name.c_str(),
+             FILE_READ,
+             current_read_buf,                                    
+             0,                                                   
+             read_size);
+         
+         thread_io_queue->add_io_task( read_bitmap_io_work );        
+         thread_io_queue->wait_for_io_task( read_bitmap_io_work);    
+         thread_io_queue->del_io_task( read_bitmap_io_work );        
+     }
 	void operator() ( u32_t processor_id, barrier *sync, index_vert_array *vert_index, 
-		segment_config<VA>* seg_config, int *status )
+		segment_config<VA, sched_bitmap_manager>* seg_config, int *status )
 	{
 		u32_t local_start_vert_off, local_term_vert_off;
         sync->wait();
@@ -113,152 +152,62 @@ struct cpu_work_target{
 			}
 			case SCATTER:
 			{
-				scatter_param* p_scatter_param = (scatter_param*) state_param;
-				sched_list_manager* my_sched_list_manager;
-				update_map_manager* my_update_map_manager;
-				aux_update_buf_manager<VA>* my_aux_manager;
-				u32_t my_strip_cap, per_cpu_strip_cap;
-				u32_t* my_update_map_head;
+                /*scatter_param_target * p_scatter_param = (scatter_param_target *)state_param; 
+                sched_bitmap_manager * my_sched_bitmap_manager;
+                update_map_manager * my_update_map_manager;
+                aux_update_buf_manager<VA> * my_aux_manager;
+                u32_t my_strip_cap, per_cpu_strip_cap;
+                u32_t * my_update_map_head;
 
-				VA* attr_array_head;
-				update<VA>* my_update_buf_head;
+                VA * attr_array_head;
+                update<VA> * my_update_buf_head;
 
-				sched_task *p_task;
-				edge* t_edge;
-				update<VA> *t_update;
-				u32_t num_out_edges, i, temp_laxity;
-				u32_t strip_num, cpu_offset, map_value, update_buf_offset;
+                bitmap * p_bitmap;
+                edge * t_edge;
+                update<VA> * t_update;
+                u32_t num_out_edges, i, temp_laxity;
+                u32_t strip_num, cpu_offset, map_value, update_buf_offset;
 
-//				PRINT_DEBUG( "processor:%d, parameter address:%llx\n", processor_id, (u64_t)p_scatter_param );
+                PRINT_DEBUG("processor : %d, parameter address:%llx\n", processor_id, (u64_t)p_scatter_param);
 
-				my_sched_list_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
-				my_update_map_manager = seg_config->per_cpu_info_list[processor_id]->update_manager;
-				my_aux_manager = seg_config->per_cpu_info_list[processor_id]->aux_manager;
+                my_sched_bitmap_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
+                my_update_map_manager = seg_config->per_cpu_info_list[processor_id]->update_manager;
+                my_aux_manager = seg_config->per_cpu_info_list[processor_id]->aux_manager;
 
-				my_strip_cap = seg_config->per_cpu_info_list[processor_id]->strip_cap;
-				per_cpu_strip_cap = my_strip_cap/gen_config.num_processors;
-				my_update_map_head = my_update_map_manager->update_map_head;
+                my_strip_cap = seg_config->per_cpu_info_list[processor_id]->strip_cap;
+                per_cpu_strip_cap = my_strip_cap/gen_config.num_processors;
+                my_update_map_head = my_update_map_manager->update_map_head;
+                attr_array_head = (VA *)p_scatter_param->attr_array_head;
+                my_update_buf_head = (update<VA> *)(seg_config->per_cpu_info_list[processor_id]->strip_buf_head);
 
-				attr_array_head = (VA*) p_scatter_param->attr_array_head;
-				my_update_buf_head = 
-					(update<VA>*)(seg_config->per_cpu_info_list[processor_id]->strip_buf_head);
 
-//				if( processor_id == 0 ){
-//					PRINT_DEBUG( "my_strip_cap=%u, per_cpu_strip_cap=%u\n", my_strip_cap, per_cpu_strip_cap );
-//					//AUX buffer status
-//					PRINT_DEBUG( "aux buffer: number of updates=%u, capacity=%u\n", 
-//							my_aux_manager->num_updates, my_aux_manager->buf_cap );
-//				}
+                int current_bitmap_file_fd;
+                for (u32_t strip_id = 0; strip_id < seg_config->num_segments; strip_id++)
+                {
+                    std::string current_bitmap_file_name = get_current_bitmap_file_name(processor_id, 1, strip_id);
+                    PRINT_DEBUG("current_bitmap_file_name = %s\n", current_bitmap_file_name.c_str());
+                    struct stat st;
 
-				//move the updates in auxiliary update buffer to sched_update buffer
-				//	before handling new tasks.
-//				PRINT_DEBUG( "PRELOAD--processor id:%u, aux head:0x%llx, last update address:0x%llx with num_updates=%u. strip buffer:0x%llx\n",
-//					processor_id, 
-//					(u64_t) my_aux_manager->update_head,
-//					(u64_t) (my_aux_manager->update_head + my_aux_manager->num_updates),
-//					my_aux_manager->num_updates,
-//					(u64_t) my_update_buf_head );
-
-				if( my_aux_manager->num_updates > 0 ){
-					for( i=my_aux_manager->num_updates; i>0; i-- ){
-						t_update = (update<VA>*)(my_aux_manager->update_head + i - 1);
-						strip_num = VID_TO_SEGMENT( t_update->dest_vert );
-						cpu_offset = VID_TO_PARTITION( t_update->dest_vert );
-
-						assert( strip_num < seg_config->num_segments );
-						assert( cpu_offset < gen_config.num_processors );
-
-						//update map layout
-						//			cpu0				cpu1				.....
-						//strip 0-> map_value(s0,c0)	map_value(s0, c1)	.....
-						//strip 1-> map_value(s1,c0)	map_value(s1, c1)	.....
-						//strip 2-> map_value(s2,c0)	map_value(s2, c1)	.....
-						//		... ...
-						map_value = *(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset);
-
-						if( map_value < per_cpu_strip_cap ){
-							update_buf_offset = strip_num*per_cpu_strip_cap*gen_config.num_processors
-								+ map_value*gen_config.num_processors 
-								+ cpu_offset;
-
-							assert( update_buf_offset < (my_strip_cap*(strip_num+1)) );
-
-							*(my_update_buf_head + update_buf_offset) = *t_update;
-
-							//update the map
-							map_value ++;
-							*(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset) = map_value;
-						}else
-							break;
-					}
-					my_aux_manager->num_updates = i;
-				}
-
-//				PRINT_DEBUG( "AFTER PRELOAD--processor id:%u, aux head:0x%llx, last update address:0x%llx with num_updates=%u\n",
-//					processor_id, 
-//					(u64_t) my_aux_manager->update_head,
-//					(u64_t) (my_aux_manager->update_head + my_aux_manager->num_updates),
-//					my_aux_manager->num_updates );
-
-				//Handling new tasks now.
-				while( 1 ){
-					p_task = get_sched_task( my_sched_list_manager );
-
-					if( p_task == NULL ){
-						if( my_aux_manager->num_updates > 0 )
-							*status = NO_MORE_SCHED;
-						else
-							*status = FINISHED_SCATTER;
-						return;
-					}
-
-					PRINT_DEBUG( "processor:%d, task start:%u, task term:%u, remain task:%u. updates in aux:%u\n", 
-						processor_id, 
-						p_task->start, 
-						p_task->term, 
-						my_sched_list_manager->sched_task_counter,
-						my_aux_manager->num_updates );
-                    
-
-                    //when there is a litter tasks
-                    if (p_task->term == -1) 
+                    current_bitmap_file_fd = open(current_bitmap_file_name.c_str(), O_RDONLY);
+                    fstat(current_bitmap_file_fd, &st);
+                    if (st.st_size != 0)
                     {
-                        assert(p_task->start != -1);
-                        num_out_edges = vert_index->num_out_edges(p_task->start);
-                        if (num_out_edges = 0)
-                        { 
-                            PRINT_DEBUG("This vertex %d his no out-edges\n", p_task->start);
-                            return;
-                        }
+                        char *current_read_buf = seg_config->per_cpu_info_list[processor_id]->sched_manager->sched_bitmap_head; 
+                        bitmap * new_read_bitmap = new bitmap(
+                                seg_config->per_cpu_info_list[processor_id]->sched_manager->bitmap_file_size,
+                                seg_config->partition_cap,
+                                (bitmap_t)current_read_buf,
+                                (u32_t)1);
 
-                        temp_laxity = my_aux_manager->buf_cap - my_aux_manager->num_updates;
-                        if (temp_laxity < num_out_edges)
-                        {
-                            PRINT_DEBUG("PRocessor %d: laxity=%u, current out edges:%u. i = %u\n", processor_id, temp_laxity, num_out_edges, i);
-                            *status = UPDATE_BUF_FULL;
-                            p_task->start = i;
-                            return;
-                        }
-
-                        for(u32_t j = 0; j < num_out_edges; j++)
-                        {
-                            t_edge = vert_index->out_edge(p_task->start, j); 
-                            assert(t_edge);//make sure the edge exists!
-                            t_update = A::scatter_one_edge(p_task->start, (VA*)&attr_array_head[p_task->start], num_out_edges, t_edge);
-                            assert(t_update);//make sure this update is not NULL
-                            //drop t_edge and t_update
-                            delete t_edge;
-                            delete t_update;
-                        }
+                        read_bitmap_file_to_buf(
+                                current_read_buf, 
+                                current_bitmap_file_name,
+                                seg_config->per_cpu_info_list[processor_id]->sched_manager->bitmap_file_size);
+                        new_read_bitmap->print_binary(0,100);            
+                        PRINT_DEBUG("STRIP_ID = %d, PROCESSOR_ID = %d\n", processor_id, strip_id);
                     }
-                    
-
-					//tell if this task is finished or not, if not, update it to make it start from i
-					if( i >= p_task->term )
-						del_sched_task( my_sched_list_manager );
-				}
-				*status = NO_MORE_SCHED;
-				break;
+                }*/
+                break;
 			}
 			default:
 				printf( "Unknow fog engine state is encountered\n" );
@@ -306,7 +255,7 @@ struct cpu_work_target{
 	}
 */
 
-    void show_update_map( int processor_id, segment_config<VA>* seg_config, u32_t* map_head )
+    void show_update_map( int processor_id, segment_config<VA, sched_bitmap_manager>* seg_config, u32_t* map_head )
     {
         //print title
         PRINT_SHORT( "--------------- update map of CPU%d begin-----------------\n", processor_id );
@@ -359,7 +308,7 @@ class cpu_thread_target {
 public:
     const unsigned long processor_id; 
 	index_vert_array* vert_index;
-	segment_config<VA>* seg_config;
+	segment_config<VA, sched_bitmap_manager>* seg_config;
 	int status;
 
 	//following members will be shared among all cpu threads
@@ -367,7 +316,7 @@ public:
     static volatile bool terminate;
     static struct cpu_work_target<A,VA> * volatile work_to_do;
 
-    cpu_thread_target(u32_t processor_id_in, index_vert_array * vert_index_in, segment_config<VA>* seg_config_in )
+    cpu_thread_target(u32_t processor_id_in, index_vert_array * vert_index_in, segment_config<VA, sched_bitmap_manager>* seg_config_in )
     :processor_id(processor_id_in), vert_index(vert_index_in), seg_config(seg_config_in)
     {   
         if(sync == NULL) { //as it is shared, be created for one time
@@ -406,5 +355,8 @@ volatile bool cpu_thread_target<A, VA>::terminate;
 
 template <typename A, typename VA>
 cpu_work_target<A,VA> * volatile cpu_thread_target<A, VA>::work_to_do;
+
+template <typename A, typename VA>
+io_queue_target * cpu_work_target<A, VA>::thread_io_queue;
 
 #endif

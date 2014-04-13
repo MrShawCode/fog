@@ -76,7 +76,7 @@ struct cpu_work{
 	{}
 	
 	void operator() ( u32_t processor_id, barrier *sync, index_vert_array *vert_index, 
-		segment_config<VA>* seg_config, int *status )
+		segment_config<VA, sched_list_manager>* seg_config, int *status )
 	{
 		u32_t local_start_vert_off, local_term_vert_off;
         sync->wait();
@@ -329,7 +329,7 @@ struct cpu_work{
 	}
 */
 
-    void show_update_map( int processor_id, segment_config<VA>* seg_config, u32_t* map_head )
+    void show_update_map( int processor_id, segment_config<VA, sched_list_manager>* seg_config, u32_t* map_head )
     {
         //print title
         PRINT_SHORT( "--------------- update map of CPU%d begin-----------------\n", processor_id );
@@ -382,7 +382,7 @@ class cpu_thread {
 public:
     const unsigned long processor_id; 
 	index_vert_array* vert_index;
-	segment_config<VA>* seg_config;
+	segment_config<VA, sched_list_manager>* seg_config;
 	int status;
 
 	//following members will be shared among all cpu threads
@@ -390,7 +390,7 @@ public:
     static volatile bool terminate;
     static struct cpu_work<A,VA> * volatile work_to_do;
 
-    cpu_thread(u32_t processor_id_in, index_vert_array * vert_index_in, segment_config<VA>* seg_config_in )
+    cpu_thread(u32_t processor_id_in, index_vert_array * vert_index_in, segment_config<VA, sched_list_manager>* seg_config_in )
     :processor_id(processor_id_in), vert_index(vert_index_in), seg_config(seg_config_in)
     {   
         if(sync == NULL) { //as it is shared, be created for one time

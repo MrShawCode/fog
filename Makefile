@@ -4,7 +4,8 @@ BINARY_DIR = bin
 HEADERS_PATH = headers
 
 #compile/link options
-SYSLIBS = -L/usr/local/lib -L/usr/lib64  -lboost_system -lboost_program_options -lboost_thread -lz -lrt -lboost_thread-mt
+#SYSLIBS = -L/usr/local/lib -L/usr/lib64  -lboost_system -lboost_program_options -lboost_thread -lz -lrt -lboost_thread-mt
+SYSLIBS = -L/usr/local/lib -L/usr/lib  -lboost_system -lboost_program_options -lboost_thread -lz -lrt -lm -lpthread
 CXX?= g++
 #CXXFLAGS?= -O3 -DNDEBUG -Wall -Wno-unused-function -I./$(HEADERS_PATH)
 CXXFLAGS?= -O3 -DDEBUG -Wall -Wno-unused-function -I./$(HEADERS_PATH)
@@ -20,7 +21,7 @@ TEST_OBJS= $(addprefix $(OBJECT_DIR)/, $(TEST_SRC))
 TEST_TARGET=$(BINARY_DIR)/test
 
 FOG_SRC = main.o
-FOG_HEADERS = types.hpp config.hpp print_debug.hpp disk_thread.hpp cpu_thread.hpp index_vert_array.hpp fog_engine.hpp options_utils.h config_parse.h fog_engine_target.hpp bitmap.hpp
+FOG_HEADERS = types.hpp config.hpp print_debug.hpp disk_thread.hpp cpu_thread.hpp index_vert_array.hpp fog_engine.hpp options_utils.h config_parse.h fog_engine_target.hpp bitmap.hpp disk_thread_target.hpp cpu_thread_target.hpp
 FOG_REL_HEADERS = $(addprefix $(HEADERS_PATH)/, $(FOG_HEADERS))
 FOG_OBJS= $(addprefix $(OBJECT_DIR)/, $(FOG_SRC))
 FOG_TARGET = $(BINARY_DIR)/fog
@@ -93,4 +94,5 @@ clean:
 	rm -f $(FOG_TARGET) $(FOG_OBJS)
 	rm -f $(BINARY_DIR)/*
 	rm -f cscope.*
+	rm -rf *sched_strip*
 

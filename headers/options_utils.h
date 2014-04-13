@@ -53,7 +53,7 @@ static void setup_options_fog(int argc, const char* argv[])
     ("pagerank::niters", boost::program_options::value<unsigned long>()->default_value(4),
      "number of iterations for pagerank.")
 	// sssp
-    ("sssp::source", boost::program_options::value<unsigned long>()->default_value(0),
+    ("sssp::source", boost::program_options::value<unsigned long>()->default_value(12),
      "source vertex id for sssp")
 	// belief propagation
     ("bp::niters", boost::program_options::value<unsigned long>()->default_value(5),

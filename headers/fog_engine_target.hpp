@@ -8,6 +8,12 @@
 #ifndef __FOG_ENGINE_TARGET_H__
 #define __FOG_ENGINE_TARGET_H__
 
+#include <sstream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
@@ -20,20 +26,21 @@
 #include "print_debug.hpp"
 #include "cpu_thread_target.hpp"
 
+int init_current_fd;
 //A stands for the algorithm (i.e., ???_program)
 //VA stands for the vertex attribute
 template <typename A, typename VA>
 class fog_engine_target{
 		static index_vert_array* vert_index;
 
-		static segment_config<VA> *seg_config;
+		static segment_config<VA, sched_bitmap_manager> *seg_config;
         char * buf_for_write;
 
         static u32_t fog_engine_target_state;
         static u32_t current_attr_segment;
 
         //io work queue
-        io_queue_target* fog_io_queue;
+        static io_queue_target* fog_io_queue;
 
         cpu_thread_target<A,VA> ** pcpu_threads;
         boost::thread ** boost_pcpu_threads;
@@ -41,9 +48,6 @@ class fog_engine_target{
         int attr_fd;
         u64_t attr_file_length;
         VA *attr_array_header;
-
-        //test bitmap
-        static bitmap* p_bitmap;
 
 	public:
 
@@ -56,21 +60,21 @@ class fog_engine_target{
             buf_for_write = (char *)map_anon_memory(gen_config.memory_size, true, true );
 
             //config the buffer for writting
-            seg_config = new segment_config<VA>((const char *)buf_for_write);
+            seg_config = new segment_config<VA, sched_bitmap_manager>((const char *)buf_for_write);
 
             //create io queue
             fog_io_queue = new io_queue_target;
 
             //test bitmap
-            u32_t a[] ={2, 3, 45, 64, 23, 53, 46, 7, 8, 11, 99, 0};
+            /*u32_t a[] ={2, 3, 45, 64, 23, 53, 46, 7, 8, 11, 99, 0};
             p_bitmap = new bitmap(64); 
             PRINT_DEBUG("Create the bitmap class\n");
-            for (int z = 0; z < sizeof(a)/sizeof(u32_t); z++)
+            for (u32_t z = 0; z < sizeof(a)/sizeof(u32_t); z++)
             {
-                p_bitmap->set_value(z);
+              p_bitmap->set_value(z);
             }
             PRINT_DEBUG("Test for bitmap:");
-            p_bitmap->print_binary();           
+            p_bitmap->print_binary();*/           
 
 
             //create cpu threads
@@ -153,12 +157,14 @@ class fog_engine_target{
 				}
 
 				if( i != (seg_config->num_segments-1) ){
-					init_io_work = new io_work_target( FILE_WRITE, 
+					init_io_work = new io_work_target( gen_config.attr_file_name.c_str(),
+                        FILE_WRITE, 
 						buf_to_dump, 
 						(u64_t)i*seg_config->segment_cap*sizeof(VA),
 						(u64_t)seg_config->segment_cap*sizeof(VA) );
 				}else{
-					init_io_work = new io_work_target( FILE_WRITE, 
+					init_io_work = new io_work_target( gen_config.attr_file_name.c_str(),
+                        FILE_WRITE, 
 						buf_to_dump, 
 						(u64_t)i*seg_config->segment_cap*sizeof(VA),
 						(u64_t)(gen_config.max_vert_id%seg_config->segment_cap)*sizeof(VA) );
@@ -193,23 +199,32 @@ class fog_engine_target{
         //-1:failure
         int scatter_updates()
         {
-            int ret, unemployed; 
+            u32_t ret, unemployed ; 
             cpu_work_target<A,VA>* scatter_cpu_work = NULL;
-            scatter_param * p_scatter_param = new scatter_param;
+            scatter_param_target * p_scatter_param = new scatter_param_target;
 
-            if (remap_attr_file() < 0)
+            if (seg_config->num_attr_buf == 1)
             {
-                PRINT_ERROR("FOG_ENGINE::scatter_updates failed!\n");
-                return -1;
+                p_scatter_param->attr_array_head = (void*)seg_config->attr_buf0;
             }
-            p_scatter_param->attr_array_head = (void *)attr_array_header;
+            else
+            {
+                if (remap_attr_file() < 0)
+                {
+                    PRINT_ERROR("FOG_ENGINE::scatter_updates failed!\n");
+                    return -1;
+                }
+                p_scatter_param->attr_array_head = (void *)attr_array_header;
+            }
+            scatter_cpu_work = new cpu_work_target<A, VA>(SCATTER, (void *)p_scatter_param);
             pcpu_threads[0]->work_to_do = scatter_cpu_work;
             (*pcpu_threads[0])();
+
             delete scatter_cpu_work;
             scatter_cpu_work = NULL;
 
             PRINT_DEBUG("After scatter computation!\n");
-            /*ret = 0;
+            ret = 0;
             unemployed = 0;
             for (u32_t i = 0; i < gen_config.num_processors; i++)
             {
@@ -223,8 +238,10 @@ class fog_engine_target{
             if (0 == ret )
                 return ret;
 
-                */
-
+            if (unemployed)
+                rebalance_sched_tasks();
+            //return ret;
+            return 0;
         }
 
         //map the attribute file
@@ -278,39 +295,96 @@ class fog_engine_target{
             return 0;
         }
 
-
-        static bool add_sched_task_to_ring_buf(sched_list_manager * sched_manager, sched_task * task)
+        void rebalance_sched_tasks()
         {
-            if ((sched_manager->sched_task_counter + 1) > sched_manager->sched_buf_size)
-                return false;
-            *(sched_manager->tail) = *task;
-            //moving rounds
-            //remember:sched_mamager->pointers(sched_buf_head, tail, etc)are sched_tasks
-            if (sched_manager->tail >= (sched_manager->sched_buf_head + sched_manager->sched_buf_size)) 
-                sched_manager->tail = sched_manager->sched_buf_head;
-            else
-                sched_manager->tail++;
-            sched_manager->sched_task_counter++;
-            return true;
+            PRINT_DEBUG("I am here!\n");
         }
 
-        static void add_sched_task_to_processor(u32_t processor_id, sched_task *task)
+        static void write_one_vertex_to_bitmap_file(char * current_write_buf, std::string current_file_name , u32_t write_size)
         {
-            assert(processor_id < gen_config.num_processors);
-            if (!add_sched_task_to_ring_buf(seg_config->per_cpu_info_list[processor_id]->sched_manager, task))
-                PRINT_ERROR("add_sched_task_to_processor failed on adding the task to ring buffer!\n");
-            delete task;
+            io_work_target * write_bitmap_io_work = NULL;
+            write_bitmap_io_work = new io_work_target( current_file_name.c_str(),
+                FILE_WRITE, 
+                current_write_buf,
+                0,
+                write_size);
+            
+            fog_io_queue->add_io_task( write_bitmap_io_work );
+			fog_io_queue->wait_for_io_task( write_bitmap_io_work);
+			fog_io_queue->del_io_task( write_bitmap_io_work );
         }
-        static void add_schedule(sched_task * task)
+
+        //for exp
+        static void read_bitmap_file_to_buf(char * current_read_buf, std::string current_file_name, u32_t read_size )
         {
-            PRINT_DEBUG("I am here in add_schedule in the first time!\n");
-            assert(task->start !=  -1);
-            assert(task->term == -1);
+            io_work_target * read_bitmap_io_work = NULL;
+            read_bitmap_io_work = new io_work_target( current_file_name.c_str(),
+                FILE_READ, 
+                current_read_buf,
+                0,
+                read_size);
+            
+            fog_io_queue->add_io_task( read_bitmap_io_work );
+			fog_io_queue->wait_for_io_task( read_bitmap_io_work);
+			fog_io_queue->del_io_task( read_bitmap_io_work );
+        }
+
+        static void add_sched_task_to_bitmap_buffer(u32_t task_vid, u32_t partition_id, 
+                u32_t segment_id, u32_t set_id, bitmap * current_write_buf)
+        {
+            assert(partition_id < gen_config.num_processors);
+            PRINT_DEBUG( "VID = %u, the SEGMENT ID=%d, CPU = %d\n", partition_id, segment_id, task_vid );
+            //std::string current_write_file_name = get_current_file_name(partition_id, , segment_id); 
+        }
+        static void add_schedule(u32_t task_vid, u32_t PHASE)
+        {
+            u32_t segment_id, partition_id;
+            segment_id = VID_TO_SEGMENT(task_vid);
+            char /** current_read_buf,*/ * current_write_buf;
+            partition_id = VID_TO_PARTITION(task_vid);
+            //assert(gen_config.min_vert_id <= task_vid);
+            assert(task_vid <= gen_config.max_vert_id);
+            assert(partition_id < gen_config.num_processors);
             //now just test for the first vertex
-            int sched_processor_id = task->start%4;
-            PRINT_DEBUG("PROCESSOR_ID = %d\n", sched_processor_id);
+            PRINT_DEBUG( "VID = %u, the SEGMENT ID=%d, CPU = %d\n", task_vid, VID_TO_SEGMENT(task_vid), VID_TO_PARTITION(task_vid) );
+            if (seg_config->per_cpu_info_list[partition_id]->sched_manager->num_of_bufs == 2)
+            {
+            }
+            else
+            {
+                current_write_buf = seg_config->per_cpu_info_list[partition_id]->sched_manager->sched_bitmap_head
+                    + seg_config->per_cpu_info_list[partition_id]->sched_manager->bitmap_file_size * 2;
+                bitmap * new_write_bitmap = new bitmap(seg_config->per_cpu_info_list[partition_id]->sched_manager->bitmap_file_size,
+                        seg_config->partition_cap,
+                        (bitmap_t)current_write_buf, 0);
+                new_write_bitmap->set_value(task_vid);
+                new_write_bitmap->print_binary(0,100);
+                std::string current_write_file_name = get_current_file_name(partition_id, 1-PHASE, segment_id);
+                PRINT_DEBUG("current_file_name = %s\n", current_write_file_name.c_str());
 
-            add_sched_task_to_processor(sched_processor_id, task);
+                if (fog_engine_target_state == INIT)
+                {
+                    PRINT_DEBUG("Will dump the buf to file\n");
+                    write_one_vertex_to_bitmap_file(current_write_buf, current_write_file_name,
+                           seg_config->per_cpu_info_list[partition_id]->sched_manager->bitmap_file_size);
+                }
+                //for exp
+                /*std::string current_read_file_name = get_current_file_name(partition_id, 1-PHASE, segment_id);
+                PRINT_DEBUG("current_file_name = %s\n", current_read_file_name.c_str());
+                current_read_buf = seg_config->per_cpu_info_list[partition_id]->sched_manager->sched_bitmap_head;
+                bitmap * new_read_bitmap = new bitmap(seg_config->per_cpu_info_list[partition_id]->sched_manager->bitmap_file_size,
+                        seg_config->partition_cap,
+                        (bitmap_t)current_read_buf);
+                if (fog_engine_target_state == INIT)
+                {
+                    read_bitmap_file_to_buf(current_read_buf, current_read_file_name, 
+                            seg_config->per_cpu_info_list[partition_id]->sched_manager->bitmap_file_size);
+
+                    new_read_bitmap->print_binary(0,100);
+                }*/
+
+            }
+
 
         }
 		void reclaim_everything()
@@ -337,30 +411,21 @@ class fog_engine_target{
 			delete vert_index;
 
 			delete seg_config;
+
 			PRINT_DEBUG( "everything reclaimed!\n" );
 		}
 
 
-		void show_sched_list_tasks( sched_list_manager *sched_manager )
+		void show_sched_bitmap_tasks( sched_bitmap_manager *sched_manager )
 		{
-			sched_task* head = sched_manager->head;
-			sched_task* p_task = head;
-
-			for( u32_t i=0; i<sched_manager->sched_task_counter; i++ ){
-				PRINT_DEBUG( "Task %d: Start from :%d to:%d\n", i, p_task->start, p_task->term );
-				if( (p_task - sched_manager->sched_buf_head) > sched_manager->sched_buf_size )
-					p_task = sched_manager->sched_buf_head;
-				else
-					p_task++;
-			}
 		}
 
 
 
 		//will browse all sched_lists and list the tasks.
-		void show_all_sched_tasks()
+		/*void show_all_sched_tasks()
 		{
-			sched_list_manager* sched_manager;
+			sched_bitmap_manager* sched_manager;
 
 			PRINT_DEBUG( "==========================	Browse all scheduled tasks	==========================\n" );
 			//browse all cpus
@@ -371,7 +436,7 @@ class fog_engine_target{
 				show_sched_list_tasks( sched_manager );
 			}
 			PRINT_DEBUG( "==========================	That's All	==========================\n" );
-		}
+		}*/
 	
 
 
@@ -382,7 +447,7 @@ class fog_engine_target{
 		void show_sched_update_buf()
 		{
 			PRINT_DEBUG( "===============\tsched_update buffer for each CPU begin\t=============\n" );
-			PRINT_DEBUG( "CPU\tSched_list_man\tUpdate_map_man\tAux_update_man\n" );
+			PRINT_DEBUG( "CPU\tSched_bitmap_man\tUpdate_map_man\tAux_update_man\n" );
 			for( u32_t i=0; i<gen_config.num_processors; i++ )
 				PRINT_DEBUG( "%d\t0x%llx\t0x%llx\t0x%llx\n", 
 					i,
@@ -391,12 +456,17 @@ class fog_engine_target{
 					(u64_t)seg_config->per_cpu_info_list[i]->aux_manager );
 
 			PRINT_DEBUG( "------------------\tschedule manager\t---------------\n" );
-			PRINT_DEBUG( "CPU\tSched_list_head\tSched_list_tail\tSched_list_current\n" );
+			PRINT_DEBUG( "CPU\tSched_bitmap_read0\tSched_bitmap_write0\tSched_bitmap_read1\tSched_bitmap_write1\n" );
 			for( u32_t i=0; i<gen_config.num_processors; i++ )
-				PRINT_DEBUG( "%d\t0x%llx\t0x%llx\t0x%llx\n", i,
-					(u64_t)seg_config->per_cpu_info_list[i]->sched_manager->head,
-					(u64_t)seg_config->per_cpu_info_list[i]->sched_manager->tail,
-					(u64_t)seg_config->per_cpu_info_list[i]->sched_manager->current);
+				PRINT_DEBUG( "%d\t0x%llx\t0x%llx\t0x%llx\t0x%llx\n", i,
+                        (u64_t)seg_config->per_cpu_info_list[i]->sched_manager->sched_bitmap_head,
+                        (u64_t)(seg_config->per_cpu_info_list[i]->sched_manager->sched_bitmap_head 
+                        + seg_config->per_cpu_info_list[i]->sched_manager->sched_bitmap_size/2),
+                        (u64_t)(seg_config->per_cpu_info_list[i]->sched_manager->sched_bitmap_head  
+                        + seg_config->per_cpu_info_list[i]->sched_manager->sched_bitmap_size/4),
+                        (u64_t)(seg_config->per_cpu_info_list[i]->sched_manager->sched_bitmap_head 
+                        + seg_config->per_cpu_info_list[i]->sched_manager->sched_bitmap_size*3/4)
+                        );
 
 			PRINT_DEBUG( "------------------\tupdate manager\t---------------\n" );
 			PRINT_DEBUG( "CPU\tUpdate_map_address\tUpdate_map_size\n" );
@@ -430,51 +500,72 @@ class fog_engine_target{
 			PRINT_DEBUG( "===============\tsched_update buffer for each CPU end\t=============\n" );
 		}
 
+        //get file name for current segment
+        static std::string get_current_file_name(u32_t processor_id, u32_t set_id, u32_t strip_id)
+        {
+            std::stringstream str_strip, str_procs, str_set;
+            str_strip << strip_id;
+            str_set << set_id;
+            str_procs << processor_id;
+            std::string current_file_name = "CPU"+str_procs.str()+"_"+str_set.str()+"_sched_strip"+str_strip.str();
+            return current_file_name;
+        }
 
-		//Initialize the sched_update buffer for all processors.
-		//Embed the data structure in the buffer, 
-		//	seg_config->per_cpu_info_list[i] only stores the pointers of the 
-		//	managment data structure, which is stored at the beginning of
-		//	the sched_update buffer.
-		//Layout of the management data structure at the beginning of sched_update buffer:
+
+        //LATOUT of the management data structure of fog_engine_target at the beginning of sched_update buffer;
+        //designed by hejian
 		//	(ordered by logical address)
-		//	---------------------------------
-		//	| sched_list_manager			|
-		//	---------------------------------
-		//	| update_map_manager			|
-		//	---------------------------------
-		//	| aux_update_buf_manager		|
-		//	---------------------------------
-		//	| update_map(update_map_size)	|
-		//	---------------------------------
-		//	| sched_list(sched_list_size)	|
-		//	---------------------------------
-		//	| update_buffer(strips)			|
-		//	---------------------------------
+		//	----------------------
+		//	| sched_bitmap_manager          |
+        //	---------------------------------
+		//	| update_map_manager	        |
+		//	----------------------------
+		//	| aux_update_buf_manager	    |
+		//	--------------------------------
+		//	| update_map(update_map_size)   |
+		//	------------------------------
+		//	| sched_bitmap_buffer(sched_bitmap_size)	|
+		//	------------------------------
+		//	| update_buffer(strips)		    |
+		//	-------------------------------
 		
+
 		void init_sched_update_buf()
 		{
-			u32_t update_map_size, sched_list_size, total_header_len;
+			u32_t update_map_size, sched_bitmap_size, total_header_len;
 			u64_t strip_buf_size, strip_size, aux_update_buf_len;
 			u32_t strip_cap;
+			u32_t num_bufs;
+            u32_t bitmap_file_size; //bitmap_max_size;
+            //io_work_target* init_bitmap_io_work = NULL;
+            int init_fd;
 
+
+            if (seg_config->num_segments == 1) // small graph, two buffers are enough. One for READ and the other for WRITE
+                num_bufs = 2; 
+            else // big graph, four buffers. Just like the dual buffer of the attribute file 
+                num_bufs = 4;
 			update_map_size = seg_config->num_segments 
 					* gen_config.num_processors 
 					* sizeof(u32_t);
 
-			sched_list_size = SCHED_BUFFER_LEN * sizeof(sched_task);
-			
-			total_header_len = sizeof(sched_list_manager) 
+            bitmap_file_size = (u32_t)((ROUND_UP(seg_config->partition_cap, 8))/8);
+            //bitmap_max_size = seg_config->partition_cap;
+            PRINT_DEBUG("the seg_config->partition_cap is %d, the origin bitmap_file_size is %lf\n", seg_config->partition_cap, (double)(seg_config->partition_cap)/8);
+            PRINT_DEBUG("the bitmap_file_size is %d\n", bitmap_file_size);
+			sched_bitmap_size = num_bufs * (u32_t)((ROUND_UP(seg_config->partition_cap, 8))/8);//bytes
+
+			total_header_len = sizeof(sched_bitmap_manager) 
 					+ sizeof(update_map_manager)
 					+ sizeof(aux_update_buf_manager<VA>)
 					+ update_map_size
-					+ sched_list_size;
+					+ sched_bitmap_size;
 
-			PRINT_DEBUG( "init_sched_update_buffer--size of sched_list_manager:%lu, size of update map manager:%lu, size of aux_update buffer manager:%lu\n", 
-				sizeof(sched_list_manager), sizeof(update_map_manager), sizeof(aux_update_buf_manager<VA>) );
-			PRINT_DEBUG( "init_sched_update_buffer--update_map_size:%u, sched_list_size:%u, total_head_len:%u\n", 
-				update_map_size, sched_list_size, total_header_len );
-/*
+			PRINT_DEBUG( "init_sched_update_buffer of fog_engine_target--size of sched_bitmap_manager:%lu,  size of update map manager:%lu, size of aux_update buffer manager:%lu\n", 
+				sizeof(sched_bitmap_manager), sizeof(update_map_manager), sizeof(aux_update_buf_manager<VA>) );
+			PRINT_DEBUG( "init_sched_update_buffer--update_map_size:%u, sched_bitmap_size:%u, total_head_len:%u\n", 
+				update_map_size, sched_bitmap_size, total_header_len );
+
 			//total_header_length should be round up according to the size of updates.
 			total_header_len = ROUND_UP( total_header_len, sizeof(update<VA>) );
 
@@ -487,23 +578,23 @@ class fog_engine_target{
 			strip_size = ROUND_DOWN( strip_size, (sizeof(update<VA>)*gen_config.num_processors) );
 			strip_cap = (u32_t)(strip_size / sizeof(update<VA>));
 
-*/
+
 			aux_update_buf_len = seg_config->aux_update_buf_len / gen_config.num_processors;
 			//populate the buffer managers
 			for(u32_t i=0; i<gen_config.num_processors; i++){
 				//headers
 				seg_config->per_cpu_info_list[i]->sched_manager = 
-					(sched_list_manager*)seg_config->per_cpu_info_list[i]->buf_head;
+					(sched_bitmap_manager*)seg_config->per_cpu_info_list[i]->buf_head;
 
 				seg_config->per_cpu_info_list[i]->update_manager = 
 					(update_map_manager*)(
 								(u64_t)seg_config->per_cpu_info_list[i]->buf_head 
-								+ sizeof(sched_list_manager) );
+								+ sizeof(sched_bitmap_manager) );
 
 				seg_config->per_cpu_info_list[i]->aux_manager = 
 					(aux_update_buf_manager<VA>*)(
 								(u64_t)seg_config->per_cpu_info_list[i]->buf_head 
-								+ sizeof(sched_list_manager)
+								+ sizeof(sched_bitmap_manager)
 								+ sizeof(update_map_manager) );
 
 				//build the strips
@@ -530,27 +621,47 @@ class fog_engine_target{
 
 				seg_config->per_cpu_info_list[i]->update_manager->update_map_size =
 					update_map_size;
+                //PRINT_DEBUG("Here update_map_size:%u\n", seg_config->per_cpu_info_list[i]->update_manager->update_map_size);
 	
-				//populate sched_manager, refer to types.hpp
-				seg_config->per_cpu_info_list[i]->sched_manager->sched_buf_head =
-					(sched_task*)(
-								(u64_t)seg_config->per_cpu_info_list[i]->aux_manager
-								+ sizeof(aux_update_buf_manager<VA>) 
-								+ update_map_size );
+				//populate sched_manager, refer to types.hpp, new struct for fog_engine_target-by hejian
+                //also initilization the bitmap buffer
+                char * bitmap_head_addr =(char *)( (u64_t)seg_config->per_cpu_info_list[i]->aux_manager
+                    +sizeof(aux_update_buf_manager<VA>)+ update_map_size);
+                     
+                seg_config->per_cpu_info_list[i]->sched_manager->sched_bitmap_head = bitmap_head_addr;
+                            
 
-				seg_config->per_cpu_info_list[i]->sched_manager->sched_buf_size = 
-								SCHED_BUFFER_LEN;
+                seg_config->per_cpu_info_list[i]->sched_manager->num_of_bufs = 2; 
+                seg_config->per_cpu_info_list[i]->sched_manager->bitmap_file_size = bitmap_file_size; 
+                seg_config->per_cpu_info_list[i]->sched_manager->sched_bitmap_size = sched_bitmap_size; 
 
-				seg_config->per_cpu_info_list[i]->sched_manager->sched_task_counter = 0;
-				seg_config->per_cpu_info_list[i]->sched_manager->head = 
-				seg_config->per_cpu_info_list[i]->sched_manager->tail = 
-				seg_config->per_cpu_info_list[i]->sched_manager->current = 
-					seg_config->per_cpu_info_list[i]->sched_manager->sched_buf_head;
+                if (num_bufs == 4)
+                {
+                    seg_config->per_cpu_info_list[i]->sched_manager->num_of_bufs = 4; 
+                }
 
+				seg_config->per_cpu_info_list[i]->sched_manager->sched_buf_size = sched_bitmap_size/num_bufs;
+
+                //create new file for bitmap
+                for (u32_t set_num = 0; set_num < 2; set_num++ )
+                    for(u32_t strip_num = 0; strip_num < seg_config->num_segments; strip_num++) 
+                    {
+                        std::string current_file_name = get_current_file_name(i, set_num, strip_num); 
+                        //PRINT_DEBUG("current_file_name = %s\n", current_file_name.c_str());
+
+                        init_fd = open( current_file_name.c_str(), O_CREAT  , S_IRUSR | S_IRGRP | S_IROTH );
+                        if (init_fd < 0)
+                            PRINT_ERROR("Generate file %s failed\n", current_file_name.c_str());
+                        close(init_fd);
+                        //WRITE SOMETHING to the file!--for initilization  
+                    }
+
+
+                //There is a BIG bug for me
 				//zero out the update buffer and sched list buffer
-				memset( seg_config->per_cpu_info_list[i]->update_manager->update_map_head, 
-					0, 
-					update_map_size + sched_list_size );
+				//memset( seg_config->per_cpu_info_list[i]->update_manager->update_map_head, 
+				//	0,
+				//	update_map_size + sched_bitmap_size + 1 );
 	
 				//populate the auxiliary update buffer manager
 				seg_config->per_cpu_info_list[i]->aux_manager->buf_head =
@@ -566,8 +677,9 @@ class fog_engine_target{
 				seg_config->per_cpu_info_list[i]->aux_manager->buf_cap =
 					(u32_t)(aux_update_buf_len/sizeof( update<VA> ));
 				seg_config->per_cpu_info_list[i]->aux_manager->num_updates = 0;
+                //wait the write process
 			}
-			//show_sched_update_buf();
+			show_sched_update_buf();
 		}
 
 
@@ -606,9 +718,10 @@ template <typename A, typename VA>
 u32_t fog_engine_target<A, VA>::current_attr_segment;
 
 template <typename A, typename VA>
-segment_config<VA> * fog_engine_target<A, VA>::seg_config;
+segment_config<VA, sched_bitmap_manager> * fog_engine_target<A, VA>::seg_config;
 
 template <typename A, typename VA>
-bitmap * fog_engine_target<A,VA>::p_bitmap;
+io_queue_target* fog_engine_target<A, VA>::fog_io_queue;
+
 
 #endif

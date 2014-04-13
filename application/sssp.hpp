@@ -14,14 +14,10 @@ class sssp_program{
 		static unsigned int start_vid;
 		//init the vid-th vertex
 		static void init(unsigned int vid, sssp_vert_attr* va){
-			sched_task* t_task;
 			if ( vid == start_vid ){
 				va->value = 0;
-				t_task = new sched_task;
-                t_task->start = vid;
                 //PRINT_DEBUG("VID = %d\n", vid);
-                t_task->term = -1;
-				fog_engine_target<sssp_program, sssp_vert_attr>::add_schedule( t_task );
+				fog_engine_target<sssp_program, sssp_vert_attr>::add_schedule( vid, 0 /*phase:decide which file to read and write */);
 				//should add schedule of vid, need api from engine
 			}else
 				va->value = INFINITY;

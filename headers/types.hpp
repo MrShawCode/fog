@@ -1,6 +1,7 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
+#include "bitmap.hpp"
 typedef unsigned int u32_t;
 typedef unsigned long long u64_t;
 
@@ -37,6 +38,19 @@ struct sched_list_manager{
 	//fields that define the list
     u32_t sched_task_counter;   //remember the number of tasks.
     sched_task *head, *tail, *current;
+}__attribute__ ((aligned(8)));
+
+
+//manage the bitmap buffer, add by hejian
+struct sched_bitmap_manager{
+    //four buffers for big graph. BUT there are only two AVAILABLE buffers if the graph is small 
+    u32_t num_of_bufs; //2 or 4
+    u32_t bitmap_file_size;
+    u32_t sched_bitmap_size;
+    char * sched_bitmap_head;
+
+    //all the buffer has the same size
+    u32_t sched_buf_size; 
 }__attribute__ ((aligned(8)));
 
 //manage the update buffer.

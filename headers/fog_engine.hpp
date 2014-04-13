@@ -24,7 +24,7 @@
 template <typename A, typename VA>
 class fog_engine{
 		//global variables
-		static segment_config<VA> *seg_config;
+		static segment_config<VA, sched_list_manager> *seg_config;
 		static index_vert_array* vert_index;
 		char* buf_for_write;
 
@@ -64,7 +64,7 @@ class fog_engine{
 			buf_for_write = (char*)map_anon_memory( gen_config.memory_size, true, true );
 
 			//config the buffer for writting
-			seg_config = new segment_config<VA>( (const char*)buf_for_write );
+			seg_config = new segment_config<VA, sched_list_manager>( (const char*)buf_for_write );
 
 			//create io queue
 			fog_io_queue = new io_queue;
@@ -972,6 +972,6 @@ template <typename A, typename VA>
 u32_t fog_engine<A,VA>::current_attr_segment;
 
 template <typename A, typename VA>
-segment_config<VA> * fog_engine<A,VA>::seg_config;
+segment_config<VA, sched_list_manager> * fog_engine<A,VA>::seg_config;
 
 #endif

@@ -21,12 +21,13 @@ struct io_work_target{
 	u64_t offset,size;
 	bool someone_work_on_it;
 	int fd;
+    const char * io_file_name;
 	//mutex that control the accesses to the disk task queue
 	boost::interprocess::interprocess_mutex work_mutex;
 
-	io_work_target( u32_t oper, char* buf, u64_t offset_in, u64_t size_in )
+	io_work_target( const char *file_name_in, u32_t oper, char* buf, u64_t offset_in, u64_t size_in )
 		:operation(oper), finished(0), buffer(buf), offset(offset_in), 
-		 size(size_in), someone_work_on_it( false )
+		 size(size_in), someone_work_on_it( false ), io_file_name(file_name_in)
 	{}
 
     void operator() (u32_t disk_thread_id)
@@ -41,7 +42,8 @@ struct io_work_target{
                 int finished=0, remain=size, res;
 
                 //the file should exist now
-                fd = open( gen_config.attr_file_name.c_str(), O_RDWR, S_IRUSR | S_IRGRP | S_IROTH );
+                //fd = open( gen_config.attr_file_name.c_str(), O_RDWR, S_IRUSR | S_IRGRP | S_IROTH );
+                fd = open( io_file_name, O_RDWR, S_IRUSR | S_IRGRP | S_IROTH );
                 if( fd < 0 ){
                     PRINT_ERROR( "Cannot open attribute file for writing!\n");
                     exit( -1 );
@@ -63,13 +65,16 @@ struct io_work_target{
 			}
 			case FILE_WRITE:
 			{
-//				PRINT_DEBUG( "dump to disk tasks is received by disk thread, buffer:0x%llx, offset:%llu, size:%llu\n", 
-//					(u64_t)buffer, offset, size );
+				//PRINT_DEBUG( "dump to disk tasks is received by disk thread, buffer:0x%llx, offset:%llu, size:%llu\n", 
+				//	(u64_t)buffer, offset, size );
 					
 				int written=0, remain=size, res;
 
 				//the file should exist now
-				fd = open( gen_config.attr_file_name.c_str(), O_RDWR, S_IRUSR | S_IRGRP | S_IROTH );
+				//fd = open( gen_config.attr_file_name.c_str(), O_RDWR, S_IRUSR | S_IRGRP | S_IROTH );
+				//fd = open( io_file_name, O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH );
+				fd = open( io_file_name, O_RDWR , S_IRUSR | S_IRGRP | S_IROTH );
+                PRINT_DEBUG("io_file_name:%s\n", io_file_name);
 				if( fd < 0 ){
 					PRINT_ERROR( "Cannot open attribute file for writing!\n");
 					exit( -1 );

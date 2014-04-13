@@ -4,6 +4,7 @@
 #include "types.hpp"
 #include "print_debug.hpp"
 
+
 //general config stores the general configuration information, such as number of processors,
 // description of the original graph.
 struct general_config{
@@ -17,6 +18,10 @@ struct general_config{
 		u32_t num_io_threads;
 		u32_t num_processors;
 		u64_t memory_size;
+
+        //u32_t scope_of_attr;//add by hejian. In order to get the scope of the attribute 
+        //0 -> small graph 
+        //1-> big graph
 
 		//input & output
 		std::string graph_path;
@@ -47,11 +52,11 @@ extern general_config gen_config;
 #define ROUND_UP(x, y)		(((x+(y-1))/y)*y)
 
 //per-cpu data, arranged by address-increasing order
-template <typename VA>
+template <typename VA, typename S>
 struct per_cpu_data{
 	char* buf_head;
 	u64_t buf_size;
-	sched_list_manager* sched_manager;
+	S * sched_manager;
 	update_map_manager* update_manager;
 	aux_update_buf_manager<VA>* aux_manager;
 	char* aux_update_buf_head;
@@ -60,7 +65,7 @@ struct per_cpu_data{
 	u32_t strip_cap;		//how many updates will a (whole) strip store?
 }__attribute__ ((aligned(8)));
 
-template <typename VA>
+template <typename VA, typename S>
 class segment_config{
 	public:
 		//in theory, fog will divide the buffer into 5 pieces, however, 
@@ -99,7 +104,7 @@ class segment_config{
 		u64_t attr_buf_len;
 
 		//per-cpu data, a list with gen_config.num_processors elements.
-		per_cpu_data<VA>** per_cpu_info_list;
+		per_cpu_data<VA, S>** per_cpu_info_list;
 
         //Note:
         // Should show this configuration information at each run, especially when
@@ -177,6 +182,8 @@ class segment_config{
 
 			if( graph_attr_size < (2*theory_per_slice_size) ){	//small graph, only give one attr_buffer
 				num_attr_buf = 1;
+                //gen_config.scope_of_attr = 0;
+                PRINT_DEBUG("This is a small graph!\n");
 				attr_buf_len = graph_attr_size;
 				attr_buf0 = (char*)((u64_t)buf_head + (gen_config.memory_size - graph_attr_size ) );
 
@@ -208,6 +215,7 @@ class segment_config{
 				}
 
 				num_attr_buf = 2;
+                //gen_config.scope_of_attr = 1;
 				attr_buf_len = segment_size;
 				attr_buf0 = (char*)((u64_t)buf_head + (gen_config.memory_size - 2*segment_size ) );
 				attr_buf1 = (char*)((u64_t)attr_buf0 + segment_size );
@@ -231,9 +239,9 @@ class segment_config{
 			//	headers will be stored here, and they are aligned by 8 bytes
 			u64_t per_cpu_buf_size = ROUND_UP( (sched_update_buf_len / gen_config.num_processors), 8 );
 
-			per_cpu_info_list = new per_cpu_data<VA>*[gen_config.num_processors];
+			per_cpu_info_list = new per_cpu_data<VA, S>*[gen_config.num_processors];
 			for( u32_t i=0; i<gen_config.num_processors; i++ ){
-				per_cpu_info_list[i] = new per_cpu_data<VA>;
+				per_cpu_info_list[i] = new per_cpu_data<VA, S>;
 				per_cpu_info_list[i]->buf_head = (char*)((u64_t)buf_head+i*per_cpu_buf_size);
 				per_cpu_info_list[i]->buf_size = per_cpu_buf_size;
 			}
