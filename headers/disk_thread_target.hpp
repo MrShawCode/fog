@@ -9,6 +9,7 @@
 #include "print_debug.hpp"
 #include "disk_thread.hpp"
 
+#include <sys/stat.h>
 /*enum{
 	FILE_READ = 0,
 	FILE_WRITE

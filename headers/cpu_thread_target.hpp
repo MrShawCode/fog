@@ -4,6 +4,7 @@
 #include "cpu_thread.hpp"
 #include "bitmap.hpp"
 #include "disk_thread_target.hpp"
+#include <cassert>
 
 #include "config.hpp"
 #include "print_debug.hpp"
@@ -65,11 +66,11 @@ class cpu_thread_target;
 //    friend class cpu_thread_target<A,VA>;
 };*/
 
-/*struct init_param{
+struct init_param_target{
 	char* attr_buf_head;
 	u32_t start_vert_id;
 	u32_t num_of_vertices;
-};*/
+};
 
 struct scatter_param_target{
 	void* attr_array_head;
@@ -85,10 +86,10 @@ struct cpu_work_target{
 	void* state_param;
     static io_queue_target* thread_io_queue;
 
-	cpu_work_target( u32_t state, void* state_param_in )
+	cpu_work_target( u32_t state, void* state_param_in, io_queue_target * thread_io_queue_in )
 		:engine_state(state), state_param(state_param_in)
 	{
-        thread_io_queue = new io_queue_target;
+        thread_io_queue = thread_io_queue_in;
     }
 	
          //get file name for current segment
@@ -115,6 +116,7 @@ struct cpu_work_target{
          thread_io_queue->add_io_task( read_bitmap_io_work );        
          thread_io_queue->wait_for_io_task( read_bitmap_io_work);    
          thread_io_queue->del_io_task( read_bitmap_io_work );        
+         PRINT_DEBUG("true_size of current_read_buf is %d\n", (u32_t)*current_read_buf);
      }
 	void operator() ( u32_t processor_id, barrier *sync, index_vert_array *vert_index, 
 		segment_config<VA, sched_bitmap_manager>* seg_config, int *status )
@@ -125,7 +127,7 @@ struct cpu_work_target{
 		switch( engine_state ){
 			case INIT:
 			{	//add {} to prevent "error: jump to case label" error. Cann't believe that!
-				init_param* p_init_param = (init_param*) state_param;
+				init_param_target* p_init_param = (init_param_target*) state_param;
 
 				if( processor_id*seg_config->partition_cap > p_init_param->num_of_vertices ) break;
 
@@ -152,7 +154,7 @@ struct cpu_work_target{
 			}
 			case SCATTER:
 			{
-                /*scatter_param_target * p_scatter_param = (scatter_param_target *)state_param; 
+                scatter_param_target * p_scatter_param = (scatter_param_target *)state_param; 
                 sched_bitmap_manager * my_sched_bitmap_manager;
                 update_map_manager * my_update_map_manager;
                 aux_update_buf_manager<VA> * my_aux_manager;
@@ -162,10 +164,10 @@ struct cpu_work_target{
                 VA * attr_array_head;
                 update<VA> * my_update_buf_head;
 
-                bitmap * p_bitmap;
+                //bitmap * p_bitmap;
                 edge * t_edge;
                 update<VA> * t_update;
-                u32_t num_out_edges, i, temp_laxity;
+                u32_t num_out_edges,  temp_laxity;
                 u32_t strip_num, cpu_offset, map_value, update_buf_offset;
 
                 PRINT_DEBUG("processor : %d, parameter address:%llx\n", processor_id, (u64_t)p_scatter_param);
@@ -185,28 +187,106 @@ struct cpu_work_target{
                 for (u32_t strip_id = 0; strip_id < seg_config->num_segments; strip_id++)
                 {
                     std::string current_bitmap_file_name = get_current_bitmap_file_name(processor_id, 1, strip_id);
-                    PRINT_DEBUG("current_bitmap_file_name = %s\n", current_bitmap_file_name.c_str());
+                    //PRINT_DEBUG("current_bitmap_file_name = %s\n", current_bitmap_file_name.c_str());
                     struct stat st;
 
                     current_bitmap_file_fd = open(current_bitmap_file_name.c_str(), O_RDONLY);
                     fstat(current_bitmap_file_fd, &st);
                     if (st.st_size != 0)
                     {
-                        char *current_read_buf = seg_config->per_cpu_info_list[processor_id]->sched_manager->sched_bitmap_head; 
-                        bitmap * new_read_bitmap = new bitmap(
-                                seg_config->per_cpu_info_list[processor_id]->sched_manager->bitmap_file_size,
-                                seg_config->partition_cap,
-                                (bitmap_t)current_read_buf,
-                                (u32_t)1);
-
+                        char * current_read_buf = my_sched_bitmap_manager->sched_bitmap_head;
+                        memset(current_read_buf, 0, 
+                                my_sched_bitmap_manager->bitmap_file_size);
                         read_bitmap_file_to_buf(
                                 current_read_buf, 
                                 current_bitmap_file_name,
-                                seg_config->per_cpu_info_list[processor_id]->sched_manager->bitmap_file_size);
+                                my_sched_bitmap_manager->bitmap_file_size);
+                        bitmap * new_read_bitmap = new bitmap(
+                                seg_config->partition_cap,
+                                my_sched_bitmap_manager->bitmap_file_size,
+                                START_VID(strip_id, processor_id), TERM_VID(strip_id, processor_id),
+                                (u32_t)1,
+                                (bitmap_t)current_read_buf);
+
                         new_read_bitmap->print_binary(0,100);            
-                        PRINT_DEBUG("STRIP_ID = %d, PROCESSOR_ID = %d\n", processor_id, strip_id);
+                        //PRINT_DEBUG("STRIP_ID = %d, PROCESSOR_ID = %d\n", processor_id, strip_id);
+
+                        u32_t num_of_vert_to_scatter = new_read_bitmap->get_bits_true_size();
+                        PRINT_DEBUG("num_of_vert_to_scatter = %d\n", num_of_vert_to_scatter);
+
+                        u32_t max_vert = new_read_bitmap->get_max_vert();
+                        u32_t min_vert = new_read_bitmap->get_min_vert();
+                        //a funny way to get the private value
+                        //u32_t max_vert = *((u32_t *)new_read_bitmap + 5);
+                        //u32_t min_vert = *((u32_t *)new_read_bitmap + 6);
+                        //Traversal the bitmap to find ...
+                        for (u32_t i = min_vert; i <= max_vert; i++)
+                        {
+                            if (new_read_bitmap->get_value(i) == 0)
+                                continue;
+
+                            if (max_vert == min_vert)
+                            {
+                                PRINT_DEBUG("Only a vertex in this bitmap file!\n");
+                                assert(new_read_bitmap->get_value(i));
+                            }
+                            num_out_edges = vert_index->num_out_edges(i);
+                            PRINT_DEBUG("num_out_edges = %d\n", num_out_edges);
+                            if (num_out_edges == 0 ) continue;
+
+                            //tell if the remaining space in update buffer is enough to store the updates?
+                            //since we add an auxiliary update buffer
+                            temp_laxity = my_aux_manager->buf_cap - my_aux_manager->num_updates;
+
+                            if (temp_laxity < num_out_edges)
+                            {
+                                PRINT_DEBUG("Processor %d: laxity=%u, current out edges=%u, i = %u\n", processor_id, temp_laxity, num_out_edges, i);
+                                *status = UPDATE_BUF_FULL;
+                                //need to supplement
+                                return;
+                            }
+                            u32_t tmp;
+                            for (u32_t j = 0; j < num_out_edges; j++)
+                            {
+                                t_edge = vert_index->out_edge(i, j);
+                                assert(t_edge);//Make sure this edge existd!
+                                t_update = A::scatter_one_edge(i, (VA *)&attr_array_head[i], num_out_edges, t_edge);
+                                assert(t_update);
+
+                                strip_num = VID_TO_SEGMENT(t_update->dest_vert);
+                                cpu_offset = VID_TO_PARTITION(t_update->dest_vert );
+                                assert(strip_num < seg_config->num_segments);
+                                assert(cpu_offset < gen_config.num_processors);
+                                map_value = *(my_update_map_head + strip_num * gen_config.num_processors + cpu_offset);
+
+                                if (map_value < per_cpu_strip_cap)
+                                {
+                                    update_buf_offset = strip_num * my_strip_cap + map_value * gen_config.num_processors + cpu_offset;
+                                    *(my_update_buf_head + update_buf_offset) = *t_update;
+                                    //update the map
+                                    map_value++;
+                                    *(my_update_map_head + strip_num * gen_config.num_processors + cpu_offset) = map_value;
+                                }
+                                else
+                                {
+                                    //should add it to auxiliary update buffer
+                                    *(my_aux_manager->update_head + my_aux_manager->num_updates) = *t_update;
+                                    my_aux_manager->num_updates++;
+                                }
+                                delete t_edge;
+                                delete t_update;
+                                tmp = j;
+                            }
+                            PRINT_DEBUG("tmp = %d\n", tmp);
+                        }
                     }
-                }*/
+                    else continue;
+                    
+                }
+                if (my_aux_manager->num_updates > 0)
+                    *status = NO_MORE_SCHED;
+                else 
+                    *status = FINISHED_SCATTER;
                 break;
 			}
 			default:

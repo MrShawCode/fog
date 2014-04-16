@@ -118,7 +118,7 @@ class fog_engine_target{
 			cpu_work_target<A,VA>* new_cpu_work = NULL;
 			io_work_target* init_io_work = NULL;
 			char * buf_to_dump = NULL;
-			init_param* p_init_param=new init_param;
+			init_param_target * p_init_param=new init_param_target;
 
 			PRINT_DEBUG( "fog engine operator is called, conduct init phase for %d times.\n", seg_config->num_segments );
 			current_attr_segment = 0;
@@ -134,13 +134,13 @@ class fog_engine_target{
 					p_init_param->start_vert_id = seg_config->segment_cap*i;
 					p_init_param->num_of_vertices = seg_config->segment_cap;
 					new_cpu_work = new cpu_work_target<A,VA>( INIT, 
-						(void*)p_init_param );
+						(void*)p_init_param, fog_io_queue  );
 				}else{	//the last segment, should be smaller than a full segment
 					p_init_param->attr_buf_head = buf_to_dump;
 					p_init_param->start_vert_id = seg_config->segment_cap*i;
 					p_init_param->num_of_vertices = gen_config.max_vert_id%seg_config->segment_cap;
 					new_cpu_work = new cpu_work_target<A,VA>( INIT, 
-						(void*)p_init_param );
+						(void*)p_init_param, fog_io_queue );
 				}
 				pcpu_threads[0]->work_to_do = new_cpu_work;
 				(*pcpu_threads[0])();
@@ -216,7 +216,7 @@ class fog_engine_target{
                 }
                 p_scatter_param->attr_array_head = (void *)attr_array_header;
             }
-            scatter_cpu_work = new cpu_work_target<A, VA>(SCATTER, (void *)p_scatter_param);
+            scatter_cpu_work = new cpu_work_target<A, VA>(SCATTER, (void *)p_scatter_param, fog_io_queue);
             pcpu_threads[0]->work_to_do = scatter_cpu_work;
             (*pcpu_threads[0])();
 
@@ -308,6 +308,7 @@ class fog_engine_target{
                 current_write_buf,
                 0,
                 write_size);
+            PRINT_DEBUG("true_size of current_write_buf is %d\n", (u32_t)*current_write_buf);
             
             fog_io_queue->add_io_task( write_bitmap_io_work );
 			fog_io_queue->wait_for_io_task( write_bitmap_io_work);
@@ -354,9 +355,14 @@ class fog_engine_target{
             {
                 current_write_buf = seg_config->per_cpu_info_list[partition_id]->sched_manager->sched_bitmap_head
                     + seg_config->per_cpu_info_list[partition_id]->sched_manager->bitmap_file_size * 2;
-                bitmap * new_write_bitmap = new bitmap(seg_config->per_cpu_info_list[partition_id]->sched_manager->bitmap_file_size,
+                memset(current_write_buf, 0, 
+                        seg_config->per_cpu_info_list[partition_id]->sched_manager->bitmap_file_size);
+                bitmap * new_write_bitmap = new bitmap(
                         seg_config->partition_cap,
-                        (bitmap_t)current_write_buf, 0);
+                        seg_config->per_cpu_info_list[partition_id]->sched_manager->bitmap_file_size,
+                        START_VID(VID_TO_SEGMENT(task_vid), partition_id), TERM_VID(VID_TO_SEGMENT(task_vid), partition_id),
+                        0,
+                        (bitmap_t)current_write_buf);
                 new_write_bitmap->set_value(task_vid);
                 new_write_bitmap->print_binary(0,100);
                 std::string current_write_file_name = get_current_file_name(partition_id, 1-PHASE, segment_id);
@@ -549,11 +555,12 @@ class fog_engine_target{
 					* gen_config.num_processors 
 					* sizeof(u32_t);
 
-            bitmap_file_size = (u32_t)((ROUND_UP(seg_config->partition_cap, 8))/8);
+            bitmap_file_size = (u32_t)((ROUND_UP(seg_config->partition_cap, 8))/8 + 3*sizeof(u32_t));
             //bitmap_max_size = seg_config->partition_cap;
             PRINT_DEBUG("the seg_config->partition_cap is %d, the origin bitmap_file_size is %lf\n", seg_config->partition_cap, (double)(seg_config->partition_cap)/8);
             PRINT_DEBUG("the bitmap_file_size is %d\n", bitmap_file_size);
-			sched_bitmap_size = num_bufs * (u32_t)((ROUND_UP(seg_config->partition_cap, 8))/8);//bytes
+			sched_bitmap_size = num_bufs * (u32_t)((ROUND_UP(seg_config->partition_cap, 8))/8 + 3*sizeof(u32_t));//bytes
+            PRINT_DEBUG("the sched_bitmap_size is %d\n", sched_bitmap_size);
 
 			total_header_len = sizeof(sched_bitmap_manager) 
 					+ sizeof(update_map_manager)
