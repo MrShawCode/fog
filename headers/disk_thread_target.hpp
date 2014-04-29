@@ -239,6 +239,7 @@ void disk_thread_target::operator() ()
 			for( i=0; i<work_queue->io_work_queue.size(); i++ )
 			{
 				boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(work_queue->io_queue_mutex);
+                //PRINT_DEBUG("io_work_queue.size = %ld\n", work_queue->io_work_queue.size());
 				found = work_queue->io_work_queue.at(i);
 				if( found->finished ) continue;
 				if( found->someone_work_on_it ) continue;

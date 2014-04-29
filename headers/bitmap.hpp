@@ -53,9 +53,9 @@ bitmap::bitmap(u32_t max_size_in, u32_t buf_size_in, u32_t start_vert_in, u32_t 
                 bits_array(bitmap_buffer_head + 3*sizeof(u32_t)), 
                 buf_head(bitmap_buffer_head)
 {
-    PRINT_DEBUG("ADDRESS: BITMAP_BUFFER_HEAD\t TRUE_SIZE\tMIN_VALUE\tMAX_VALUE\tBITS_ARRAY\t\n");
-    PRINT_DEBUG("ADDRESS: 0x%llx\t 0x%llx\t0x%llx\t0x%llx\t0x%llx\n",
-            (u64_t)(bitmap_buffer_head), (u64_t)(buf_head), (u64_t)(buf_head+1), (u64_t)(buf_head+2), (u64_t)(buf_head+3));
+    //PRINT_DEBUG("ADDRESS: BITMAP_BUFFER_HEAD\t TRUE_SIZE\tMIN_VALUE\tMAX_VALUE\tBITS_ARRAY\t\n");
+    //PRINT_DEBUG("ADDRESS: 0x%llx\t 0x%llx\t0x%llx\t0x%llx\t0x%llx\n",
+      //      (u64_t)(bitmap_buffer_head), (u64_t)(buf_head), (u64_t)(buf_head+1), (u64_t)(buf_head+2), (u64_t)(buf_head+3));
     if (mode_t == 0)// means write a bitmap to a file
     {
         max_vert = start_vert;
@@ -68,8 +68,8 @@ bitmap::bitmap(u32_t max_size_in, u32_t buf_size_in, u32_t start_vert_in, u32_t 
         min_vert = (u32_t)*(buf_head + 1);
         max_vert = (u32_t)*(buf_head + 2);
         //memset(bits_array, 0, max_size/bit_num_bytes+1);
-        PRINT_DEBUG("bits_true_size = %d\n", (u32_t)*buf_head);
-        PRINT_DEBUG("MAX_READ = %d, MIN_READ = %d\n", max_vert, min_vert);
+       // PRINT_DEBUG("bits_true_size = %d\n", (u32_t)*buf_head);
+       // PRINT_DEBUG("MAX_READ = %d, MIN_READ = %d\n", max_vert, min_vert);
     }
 }
 bitmap::~bitmap()
@@ -83,7 +83,8 @@ void bitmap::set_value(u32_t index)
     bits_true_size++;
     assert(bits_true_size <= max_size);
     *buf_head = bits_true_size;
-    PRINT_DEBUG("size:%d\n", *buf_head);
+    //PRINT_DEBUG("size:%d\n", *buf_head);
+    //PRINT_DEBUG("max = %d, min = %d\n", max_vert, min_vert);
 
     if (index < min_vert)
         min_vert = index;
@@ -91,7 +92,7 @@ void bitmap::set_value(u32_t index)
     if (index > max_vert)
         max_vert = index;
 
-    PRINT_DEBUG("max = %d, min = %d\n", max_vert, min_vert);
+    //PRINT_DEBUG("max = %d, min = %d\n", max_vert, min_vert);
     bitmap_t  max_vert_buf = (buf_head + 2);
     bitmap_t  min_vert_buf = (buf_head + 1);
     if (mode_t == 0)

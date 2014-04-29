@@ -70,14 +70,19 @@ struct init_param_target{
 	char* attr_buf_head;
 	u32_t start_vert_id;
 	u32_t num_of_vertices;
+    u32_t PHASE;
 };
 
 struct scatter_param_target{
 	void* attr_array_head;
+    u32_t PHASE;
 };
 
 struct gather_param_target{
-
+    void * attr_array_head;
+    u32_t PHASE;
+    u32_t strip_id;
+    u32_t threshold;
 };
 
 template <typename A, typename VA>
@@ -114,8 +119,12 @@ struct cpu_work_target{
              read_size);
          
          thread_io_queue->add_io_task( read_bitmap_io_work );        
-         thread_io_queue->wait_for_io_task( read_bitmap_io_work);    
-         thread_io_queue->del_io_task( read_bitmap_io_work );        
+         if (read_bitmap_io_work != NULL)
+         {
+             thread_io_queue->wait_for_io_task( read_bitmap_io_work);    
+             thread_io_queue->del_io_task( read_bitmap_io_work );        
+             read_bitmap_io_work = NULL;
+         }
          PRINT_DEBUG("true_size of current_read_buf is %d\n", (u32_t)*current_read_buf);
      }
 	void operator() ( u32_t processor_id, barrier *sync, index_vert_array *vert_index, 
@@ -148,7 +157,7 @@ struct cpu_work_target{
 
 				//Note: for A::init, the vertex id and VA* address does not mean the same offset!
 				for (u32_t i=local_start_vert_off; i<=local_term_vert_off; i++ )
-					A::init( p_init_param->start_vert_id + i, (VA*)(p_init_param->attr_buf_head) + i );
+					A::init( p_init_param->start_vert_id + i, (VA*)(p_init_param->attr_buf_head) + i, p_init_param->PHASE);
 
 				break;
 			}
@@ -170,7 +179,7 @@ struct cpu_work_target{
                 u32_t num_out_edges,  temp_laxity;
                 u32_t strip_num, cpu_offset, map_value, update_buf_offset;
 
-                PRINT_DEBUG("processor : %d, parameter address:%llx\n", processor_id, (u64_t)p_scatter_param);
+                //PRINT_DEBUG("processor : %d, parameter address:%llx\n", processor_id, (u64_t)p_scatter_param);
 
                 my_sched_bitmap_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
                 my_update_map_manager = seg_config->per_cpu_info_list[processor_id]->update_manager;
@@ -186,7 +195,8 @@ struct cpu_work_target{
                 int current_bitmap_file_fd;
                 for (u32_t strip_id = 0; strip_id < seg_config->num_segments; strip_id++)
                 {
-                    std::string current_bitmap_file_name = get_current_bitmap_file_name(processor_id, 1, strip_id);
+                    std::string current_bitmap_file_name = 
+                        get_current_bitmap_file_name(processor_id, p_scatter_param->PHASE, strip_id);
                     //PRINT_DEBUG("current_bitmap_file_name = %s\n", current_bitmap_file_name.c_str());
                     struct stat st;
 
@@ -208,11 +218,11 @@ struct cpu_work_target{
                                 (u32_t)1,
                                 (bitmap_t)current_read_buf);
 
-                        new_read_bitmap->print_binary(0,100);            
+                        //new_read_bitmap->print_binary(0,100);            
                         //PRINT_DEBUG("STRIP_ID = %d, PROCESSOR_ID = %d\n", processor_id, strip_id);
 
-                        u32_t num_of_vert_to_scatter = new_read_bitmap->get_bits_true_size();
-                        PRINT_DEBUG("num_of_vert_to_scatter = %d\n", num_of_vert_to_scatter);
+                        //u32_t num_of_vert_to_scatter = new_read_bitmap->get_bits_true_size();
+                        //PRINT_DEBUG("num_of_vert_to_scatter = %d\n", num_of_vert_to_scatter);
 
                         u32_t max_vert = new_read_bitmap->get_max_vert();
                         u32_t min_vert = new_read_bitmap->get_min_vert();
@@ -231,7 +241,7 @@ struct cpu_work_target{
                                 assert(new_read_bitmap->get_value(i));
                             }
                             num_out_edges = vert_index->num_out_edges(i);
-                            PRINT_DEBUG("num_out_edges = %d\n", num_out_edges);
+                            //PRINT_DEBUG("num_out_edges = %d\n", num_out_edges);
                             if (num_out_edges == 0 ) continue;
 
                             //tell if the remaining space in update buffer is enough to store the updates?
@@ -245,7 +255,7 @@ struct cpu_work_target{
                                 //need to supplement
                                 return;
                             }
-                            u32_t tmp;
+                            //u32_t tmp;
                             for (u32_t j = 0; j < num_out_edges; j++)
                             {
                                 t_edge = vert_index->out_edge(i, j);
@@ -275,9 +285,9 @@ struct cpu_work_target{
                                 }
                                 delete t_edge;
                                 delete t_update;
-                                tmp = j;
+                                //tmp = j;
                             }
-                            PRINT_DEBUG("tmp = %d\n", tmp);
+                            //PRINT_DEBUG("tmp = %d\n", tmp);
                         }
                     }
                     else continue;
@@ -289,6 +299,87 @@ struct cpu_work_target{
                     *status = FINISHED_SCATTER;
                 break;
 			}
+            case GATHER:
+            {                
+                gather_param_target * p_gather_param = (gather_param_target *)state_param; 
+                //sched_bitmap_manager * my_sched_bitmap_manager;
+                update_map_manager * my_update_map_manager;
+                //aux_update_buf_manager<VA> * my_aux_manager;
+                u32_t my_strip_cap/*,per_cpu_strip_cap*/;
+                u32_t * my_update_map_head;
+
+                u32_t new_signal = 0;
+
+                VA * attr_array_head;
+                update<VA> * my_update_buf_head;
+
+                update<VA> * t_update;
+                u32_t map_value, update_buf_offset;
+                u32_t dest_vert;
+                u32_t strip_id;
+                u32_t threshold;
+                u32_t vert_index;
+
+                //PRINT_DEBUG("processor : %d, parameter address:%llx\n", processor_id, (u64_t)p_gather_param);
+
+
+                my_strip_cap = seg_config->per_cpu_info_list[processor_id]->strip_cap;
+                attr_array_head = (VA *)p_gather_param->attr_array_head;
+                strip_id = p_gather_param->strip_id;
+                threshold = p_gather_param->threshold;
+
+
+                //int current_bitmap_file_fd;
+                //Traversal all the buffers of each cpu to find the corresponding UPDATES
+                for (u32_t buf_id = 0; buf_id < gen_config.num_processors; buf_id++)
+                {
+                    //PRINT_DEBUG("I(%d) am checking the %d's buffer\n", processor_id, buf_id);
+                    my_update_map_manager = seg_config->per_cpu_info_list[buf_id]->update_manager;
+                    my_update_map_head = my_update_map_manager->update_map_head;
+                    my_update_buf_head = (update<VA> *)(seg_config->per_cpu_info_list[buf_id]->strip_buf_head);
+                    //For each buf, traversal each strip to find UPDATES
+                    //for (u32_t strip_id = 0; strip_id < seg_config->num_segments; strip_id++)
+                   // {
+                        //PRINT_DEBUG("I(%d) am checking the %d's buffer, and now in the %d strip\n", 
+                          //      processor_id, buf_id, strip_id);
+                        map_value = *(my_update_map_head + strip_id * gen_config.num_processors + processor_id);
+                        if (map_value == 0)
+                            continue;
+
+                        //PRINT_DEBUG("I(%d) am checking the %d's buffer, and now in the %d strip,and the num of this strip is %d\n", 
+                          //      processor_id, buf_id, strip_id, map_value);
+                        for (u32_t update_id = 0; update_id < map_value; update_id++)
+                        {
+                            if (update_id == 0 )
+                                new_signal = 0; //will  init a new buffer to store the gather info
+                            else if (update_id == map_value - 1)
+                                new_signal = 2; // will write the buffer to bitmap file
+                            else
+                                new_signal = 1; // will wirte info to buffer
+
+                            update_buf_offset = strip_id * my_strip_cap + update_id * gen_config.num_processors + processor_id;
+                            //PRINT_DEBUG("update_buf_offset = %d\n", update_buf_offset);
+                            t_update = (my_update_buf_head + update_buf_offset);
+                            //PRINT_DEBUG("dest_vert = %d\n", my_update_buf_head->dest_vert);
+                            assert(t_update);
+                            dest_vert = t_update->dest_vert;
+                            if (threshold == 1) 
+                                vert_index = dest_vert%seg_config->segment_cap;
+                            else
+                                vert_index = dest_vert;
+                                
+                            //PRINT_DEBUG("dest_vert = %d\n", dest_vert);
+                            A::gather_one_update(dest_vert, 
+                                    (VA *)&attr_array_head[vert_index], 
+                                    t_update, 
+                                    p_gather_param->PHASE,
+                                    new_signal);
+
+                        }
+                    //}
+                }
+                break;
+            }
 			default:
 				printf( "Unknow fog engine state is encountered\n" );
 		}
