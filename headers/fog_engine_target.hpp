@@ -222,6 +222,7 @@ class fog_engine_target{
             {
                 p_scatter_param->attr_array_head = (void*)seg_config->attr_buf0;
                 p_scatter_param->PHASE = PHASE;
+                p_scatter_param->old_signal = 0;
             }
             else
             {
@@ -232,33 +233,36 @@ class fog_engine_target{
                 }
                 p_scatter_param->attr_array_head = (void *)attr_array_header;
                 p_scatter_param->PHASE = PHASE;
-            }
-            scatter_cpu_work = new cpu_work_target<A, VA>(SCATTER, (void *)p_scatter_param, fog_io_queue);
-            pcpu_threads[0]->work_to_do = scatter_cpu_work;
-            (*pcpu_threads[0])();
-
-            delete scatter_cpu_work;
-            scatter_cpu_work = NULL;
-
-            PRINT_DEBUG("After scatter computation!\n");
-            ret = 0;
-            unemployed = 0;
-            for (u32_t i = 0; i < gen_config.num_processors; i++)
-            {
-                PRINT_DEBUG("Processor %d status %d\n", i, pcpu_threads[i]->status);
-                if(pcpu_threads[i]->status != FINISHED_SCATTER)
-                    ret = 1;
-                if (pcpu_threads[i]->status != UPDATE_BUF_FULL)
-                    unemployed = 1;
+                p_scatter_param->old_signal = 0;
             }
 
-            if (0 == ret )
-                return ret;
+            do{
+                p_scatter_param->old_signal = 1;
+                scatter_cpu_work = new cpu_work_target<A, VA>(SCATTER, (void *)p_scatter_param, fog_io_queue);
+                pcpu_threads[0]->work_to_do = scatter_cpu_work;
+                (*pcpu_threads[0])();
 
-            if (unemployed)
-                rebalance_sched_tasks();
+                delete scatter_cpu_work;
+                scatter_cpu_work = NULL;
+
+                PRINT_DEBUG("After scatter computation!\n");
+                ret = 0;
+                unemployed = 0;
+                for (u32_t i = 0; i < gen_config.num_processors; i++)
+                {
+                    PRINT_DEBUG("Processor %d status %d\n", i, pcpu_threads[i]->status);
+                    if(pcpu_threads[i]->status != FINISHED_SCATTER)
+                        ret = 1;
+                    if (pcpu_threads[i]->status != UPDATE_BUF_FULL)
+                        unemployed = 1;
+                }
+
+                if (unemployed)
+                    gather_updates(1-PHASE);
+
+            }while(unemployed == 1);
             //return ret;
-            return 0;
+            return ret;
         }
 
         //gather all updates in the update buffer.
@@ -550,13 +554,15 @@ class fog_engine_target{
             assert(partition_id < gen_config.num_processors);
             //now just test for the first vertex
             //PRINT_DEBUG( "VID = %u, the SEGMENT ID=%d, CPU = %d\n", task_vid, VID_TO_SEGMENT(task_vid), VID_TO_PARTITION(task_vid) );
-            if (seg_config->per_cpu_info_list[partition_id]->sched_manager->num_of_bufs == 2)
-            {
-            }
-            else
-            {
+            //if (seg_config->per_cpu_info_list[partition_id]->sched_manager->num_of_bufs == 2)
+            //{
+            //}
+            //else
+            //{
                 current_write_buf = seg_config->per_cpu_info_list[partition_id]->sched_manager->sched_bitmap_head
-                    + seg_config->per_cpu_info_list[partition_id]->sched_manager->bitmap_file_size * 2;
+                    + seg_config->per_cpu_info_list[partition_id]->sched_manager->bitmap_file_size 
+                    * (seg_config->per_cpu_info_list[partition_id]->sched_manager->num_of_bufs/2); 
+                    //+ seg_config->per_cpu_info_list[partition_id]->sched_manager->bitmap_file_size * 2;
                 std::string current_write_file_name = get_current_file_name(partition_id, PHASE, segment_id);
 
                 if (fog_engine_target_state == INIT)
@@ -622,7 +628,7 @@ class fog_engine_target{
                     new_read_bitmap->print_binary(0,100);
                 }*/
 
-            }
+            //}
 
 
         }

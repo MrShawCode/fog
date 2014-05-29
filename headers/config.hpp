@@ -40,7 +40,8 @@ extern general_config gen_config;
 (_vid/seg_config->segment_cap)
 
 #define VID_TO_PARTITION(_vid) \
-((_vid%seg_config->segment_cap)/seg_config->partition_cap)
+    (_vid%gen_config.num_processors)
+//((_vid%seg_config->segment_cap)/seg_config->partition_cap)
 
 #define START_VID(_seg, _cpu)\
 (_seg*seg_config->segment_cap + _cpu*seg_config->partition_cap)
