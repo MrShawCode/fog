@@ -77,6 +77,8 @@ struct scatter_param_target{
 	void* attr_array_head;
     u32_t old_signal;
     u32_t PHASE;
+    struct callback_scatter_param_target * callback_scatter_param;
+    u32_t * p_num_vert_of_next_phase;
 };
 
 struct gather_param_target{
@@ -88,8 +90,8 @@ struct gather_param_target{
 
 struct callback_scatter_param_target
 {
-    u32_t strip_id;
     u32_t vertex_id;
+    u32_t edge_id;
     char * old_read_buf;
 };
 
@@ -136,7 +138,7 @@ struct cpu_work_target{
          PRINT_DEBUG("true_size of current_read_buf is %d\n", (u32_t)*current_read_buf);
      }
 	void operator() ( u32_t processor_id, barrier *sync, index_vert_array *vert_index, 
-		segment_config<VA, sched_bitmap_manager>* seg_config, int *status, callback_scatter_param_target * callback_scatter_param)
+		segment_config<VA, sched_bitmap_manager>* seg_config, int *status )
 	{
 		u32_t local_start_vert_off, local_term_vert_off;
         sync->wait();
@@ -187,7 +189,9 @@ struct cpu_work_target{
                 u32_t num_out_edges,  temp_laxity;
                 u32_t strip_num, cpu_offset, map_value, update_buf_offset;
 
-                //PRINT_DEBUG("processor : %d, parameter address:%llx\n", processor_id, (u64_t)p_scatter_param);
+                u32_t num_vert_of_this_phase = 0;
+
+                PRINT_DEBUG("processor : %d, parameter address:%llx\n", processor_id, (u64_t)p_scatter_param);
 
                 my_sched_bitmap_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
                 my_update_map_manager = seg_config->per_cpu_info_list[processor_id]->update_manager;
@@ -201,26 +205,28 @@ struct cpu_work_target{
 
 
                 int current_bitmap_file_fd;
-                u32_t old_strip_id;
                 u32_t old_vertex_id;
+                u32_t old_strip_id; 
+                u32_t old_edge_id;
                 u32_t max_vert, min_vert;
                 bitmap *new_read_bitmap;
                 char * old_read_buf;
                 char * current_read_buf;
+                callback_scatter_param_target * callback_scatter_param = p_scatter_param->callback_scatter_param + processor_id;
 
                 if (p_scatter_param->old_signal == 1)
                 {
-                    PRINT_DEBUG("We need to finish the last scatter of the bitmap_file:%s\n", 
-                            get_current_bitmap_file_name(processor_id, p_scatter_param->PHASE, callback_scatter_param->strip_id).c_str());
                     old_read_buf = callback_scatter_param->old_read_buf;
-                    old_strip_id = callback_scatter_param->strip_id;
                     old_vertex_id = callback_scatter_param->vertex_id;
+                    old_edge_id = callback_scatter_param->edge_id;
+                    old_strip_id = VID_TO_SEGMENT(old_vertex_id);
                 }
                 else
                 {
-                    old_strip_id = 0;
+                    old_edge_id = 0;
                     old_vertex_id = 0;
                     old_read_buf = NULL;
+                    old_strip_id = 0;
                 }
 
                 for (u32_t strip_id = old_strip_id; strip_id < seg_config->num_segments; strip_id++)
@@ -242,7 +248,7 @@ struct cpu_work_target{
                     {
                         std::string current_bitmap_file_name = 
                             get_current_bitmap_file_name(processor_id, p_scatter_param->PHASE, strip_id);
-                        //PRINT_DEBUG("current_bitmap_file_name = %s\n", current_bitmap_file_name.c_str());
+                        PRINT_DEBUG("In scatter, current_bitmap_file_name = %s\n", current_bitmap_file_name.c_str());
                         struct stat st;
 
                         current_bitmap_file_fd = open(current_bitmap_file_name.c_str(), O_RDWR);
@@ -269,7 +275,7 @@ struct cpu_work_target{
                         {
                             PRINT_ERROR("ftruncate bitmap_file error!\n");
                         }
-                        close(current_bitmap_file_fd);
+                        //close(current_bitmap_file_fd);
                     }
 
                     //new_read_bitmap->print_binary(0,100);            
@@ -305,8 +311,9 @@ struct cpu_work_target{
                             PRINT_DEBUG("Processor %d: laxity=%u, current out edges=%u, i = %u\n", processor_id, temp_laxity, num_out_edges, i);
                             *status = UPDATE_BUF_FULL;
                             //need to supplement
-                            callback_scatter_param->strip_id = strip_id;
+                            callback_scatter_param->edge_id = old_edge_id;
                             callback_scatter_param->vertex_id = i; 
+                            PRINT_DEBUG("the vertex_id = %d\n", i);
                             //store the memory address
                             callback_scatter_param->old_read_buf = current_read_buf ;
                             return;
@@ -314,6 +321,7 @@ struct cpu_work_target{
 
                         //set the 0 to the i-th pos 
                         new_read_bitmap->clear_value(VID_TO_BITMAP_INDEX(i, seg_config->partition_cap));
+                        num_vert_of_this_phase++;
 
                         //u32_t tmp;
                         for (u32_t j = 0; j < num_out_edges; j++)
@@ -352,18 +360,21 @@ struct cpu_work_target{
                     if (p_scatter_param->old_signal == 1)
                     {
                         p_scatter_param->old_signal = 0;
-                        callback_scatter_param->strip_id = 0;
+                        callback_scatter_param->edge_id = 0;
                         callback_scatter_param->vertex_id = 0; 
                         //store the memory address
                         callback_scatter_param->old_read_buf = NULL;
                     }
                             
                 }
+
+                *(p_scatter_param->p_num_vert_of_next_phase + processor_id) = (u32_t)num_vert_of_this_phase;
                     
                 if (my_aux_manager->num_updates > 0)
                     *status = NO_MORE_SCHED;
                 else 
                     *status = FINISHED_SCATTER;
+
                 break;
 			}
             case GATHER:
@@ -394,8 +405,7 @@ struct cpu_work_target{
                 strip_id = p_gather_param->strip_id;
                 threshold = p_gather_param->threshold;
 
-
-
+                u32_t tmp_num = 0;
                 //int current_bitmap_file_fd;
                 //Traversal all the buffers of each cpu to find the corresponding UPDATES
                 for (u32_t buf_id = 0; buf_id < gen_config.num_processors; buf_id++)
@@ -431,13 +441,14 @@ struct cpu_work_target{
                             vert_index = dest_vert;
                             
                         //PRINT_DEBUG("dest_vert = %d\n", dest_vert);
+                        //if (new_signal == 0 || new_signal == 2)
+                            //PRINT_DEBUG("PHASE = %d\n", p_gather_param->PHASE);
                         A::gather_one_update(dest_vert, 
                                 (VA *)&attr_array_head[vert_index], 
                                 t_update, 
                                 p_gather_param->PHASE,
                                 new_signal);
-
-
+                        tmp_num++;
                     }
                     map_value = 0;
                     *(my_update_map_head + strip_id * gen_config.num_processors + processor_id) = 0;
@@ -558,7 +569,6 @@ public:
 	index_vert_array* vert_index;
 	segment_config<VA, sched_bitmap_manager>* seg_config;
 	int status;
-    callback_scatter_param_target* callback_scatter_param;
 
 	//following members will be shared among all cpu threads
     static barrier *sync;
@@ -581,7 +591,7 @@ public:
 	            break;
             }
             else {
-	            (*work_to_do)(processor_id, sync, vert_index, seg_config, &status, callback_scatter_param );
+	            (*work_to_do)(processor_id, sync, vert_index, seg_config, &status);
 
             sync->wait(); // Must synchronize before p0 exits (object is on stack)
             }

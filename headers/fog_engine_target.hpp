@@ -51,12 +51,17 @@ class fog_engine_target{
         u64_t attr_file_length;
         VA *attr_array_header;
 
+        static u32_t num_vert_of_next_phase;
+
 	public:
 
 		fog_engine_target()
 		{
             //create the index array for indexing the out-going edges
             vert_index = new index_vert_array;
+
+            //
+            num_vert_of_next_phase = 0;
 
             //allocate buffer for writting
             buf_for_write = (char *)map_anon_memory(gen_config.memory_size, true, true );
@@ -100,7 +105,7 @@ class fog_engine_target{
 
 		void operator() ()
 		{
-            int ret, loop_counter = 0;
+            int  loop_counter = 0;
             u32_t PHASE = 0;
             init_phase(PHASE);
             while(1)
@@ -110,14 +115,16 @@ class fog_engine_target{
                 PHASE = (loop_counter%2);
                 //PRINT_DEBUG("PHASE = %d\n", PHASE);
 
-                ret = scatter_updates(1-PHASE);
+                PRINT_DEBUG("Before scatter_updates , there are %d vert to scatter!\n", num_vert_of_next_phase);
+                scatter_updates(1-PHASE);
+                PRINT_DEBUG("After scatter_updates, there are now %d vert to scatter!\n", num_vert_of_next_phase);
 
                 //PRINT_DEBUG("PHASE = %d\n", PHASE);
                 gather_updates(PHASE);
+                PRINT_DEBUG("After gather_updates, there are now %d vert to scatter!\n", num_vert_of_next_phase);
 
-                PRINT_DEBUG("ret = %d\n", ret);
-
-                //if (0 == ret) break;
+                if (num_vert_of_next_phase == 0)
+                    break;
             }
         }
 
@@ -216,13 +223,34 @@ class fog_engine_target{
             u32_t ret, unemployed ; 
             cpu_work_target<A,VA>* scatter_cpu_work = NULL;
             scatter_param_target * p_scatter_param = new scatter_param_target;
+            callback_scatter_param_target * callback_scatter_param;
+            u32_t * p_num_vert_of_next_phase;
 
 			fog_engine_target_state = SCATTER;
+            callback_scatter_param = (callback_scatter_param_target *)malloc(sizeof(struct callback_scatter_param_target) 
+                        * gen_config.num_processors);
+            p_num_vert_of_next_phase = (u32_t *)malloc(sizeof(u32_t) * gen_config.num_processors);
+            memset(p_num_vert_of_next_phase, 0, (sizeof(u32_t) * gen_config.num_processors) );
+            //initizition the callback param
+            for (u32_t i = 0; i < gen_config.num_processors; i++)
+            {
+                callback_scatter_param_target * tmp_callback_scatter_param = (callback_scatter_param + i) ;
+                tmp_callback_scatter_param->vertex_id = 0;
+                tmp_callback_scatter_param->edge_id = 0;
+                tmp_callback_scatter_param->old_read_buf = NULL;
+            }
+            /*for (u32_t i = 0; i < gen_config.num_processors; i++)
+            {
+                callback_scatter_param_target * tmp_callback_scatter_param = (callback_scatter_param + i) ;
+                PRINT_DEBUG("vertex_id = %d, edge_id = %d\n", tmp_callback_scatter_param->vertex_id, tmp_callback_scatter_param->edge_id);
+            }*/
             if (seg_config->num_attr_buf == 1)
             {
                 p_scatter_param->attr_array_head = (void*)seg_config->attr_buf0;
                 p_scatter_param->PHASE = PHASE;
                 p_scatter_param->old_signal = 0;
+                p_scatter_param->callback_scatter_param = callback_scatter_param;
+                p_scatter_param->p_num_vert_of_next_phase = p_num_vert_of_next_phase;
             }
             else
             {
@@ -234,11 +262,13 @@ class fog_engine_target{
                 p_scatter_param->attr_array_head = (void *)attr_array_header;
                 p_scatter_param->PHASE = PHASE;
                 p_scatter_param->old_signal = 0;
+                p_scatter_param->callback_scatter_param = callback_scatter_param;
+                p_scatter_param->p_num_vert_of_next_phase = p_num_vert_of_next_phase;
             }
 
             do{
-                p_scatter_param->old_signal = 1;
                 scatter_cpu_work = new cpu_work_target<A, VA>(SCATTER, (void *)p_scatter_param, fog_io_queue);
+                PRINT_DEBUG("here in scatter_updates, the p_scatter_param->old_signal = %d\n", p_scatter_param->old_signal);
                 pcpu_threads[0]->work_to_do = scatter_cpu_work;
                 (*pcpu_threads[0])();
 
@@ -251,17 +281,33 @@ class fog_engine_target{
                 for (u32_t i = 0; i < gen_config.num_processors; i++)
                 {
                     PRINT_DEBUG("Processor %d status %d\n", i, pcpu_threads[i]->status);
-                    if(pcpu_threads[i]->status != FINISHED_SCATTER)
+                    if(pcpu_threads[i]->status == FINISHED_SCATTER)
                         ret = 1;
-                    if (pcpu_threads[i]->status != UPDATE_BUF_FULL)
+                    if (pcpu_threads[i]->status == UPDATE_BUF_FULL)
                         unemployed = 1;
+
+                    PRINT_DEBUG("Processor %d has scatter %d vert!\n", i, (u32_t)*(p_num_vert_of_next_phase+i));
+                    num_vert_of_next_phase -= (u32_t)*(p_num_vert_of_next_phase + i); 
+                    if (num_vert_of_next_phase < 0)
+                    {
+                        PRINT_ERROR("There is something error here!\n");
+                    }
                 }
 
                 if (unemployed)
+                {
+                    PRINT_DEBUG("need to gather!\n");
+                    for (u32_t i = 0; i < gen_config.num_processors; i++)
+                    {
+                        callback_scatter_param_target * tmp_callback_scatter_param = (callback_scatter_param + i) ;
+                        PRINT_DEBUG("vertex_id = %d, edge_id = %d\n", tmp_callback_scatter_param->vertex_id, tmp_callback_scatter_param->edge_id);
+                    }
                     gather_updates(1-PHASE);
-
+                    p_scatter_param->old_signal = 1;
+                }
             }while(unemployed == 1);
             //return ret;
+            free(callback_scatter_param);
             return ret;
         }
 
@@ -363,6 +409,7 @@ class fog_engine_target{
                     {
                         p_gather_param->threshold = 0;
                         p_gather_param->strip_id = i;
+                        p_gather_param->PHASE = PHASE;
                         if (remap_attr_file() < 0)
                         {
                             PRINT_ERROR("FOG_ENGINE::gather_updates failed!\n");
@@ -559,6 +606,11 @@ class fog_engine_target{
             //}
             //else
             //{
+
+            //add++
+            num_vert_of_next_phase++;
+            //PRINT_DEBUG("In add_schedule, the num_vert_of_next_phase = %d\n", num_vert_of_next_phase);
+
                 current_write_buf = seg_config->per_cpu_info_list[partition_id]->sched_manager->sched_bitmap_head
                     + seg_config->per_cpu_info_list[partition_id]->sched_manager->bitmap_file_size 
                     * (seg_config->per_cpu_info_list[partition_id]->sched_manager->num_of_bufs/2); 
@@ -969,5 +1021,7 @@ segment_config<VA, sched_bitmap_manager> * fog_engine_target<A, VA>::seg_config;
 template <typename A, typename VA>
 io_queue_target* fog_engine_target<A, VA>::fog_io_queue;
 
+template <typename A, typename VA>
+u32_t fog_engine_target<A, VA>::num_vert_of_next_phase;
 
 #endif
