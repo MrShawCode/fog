@@ -11,95 +11,110 @@
 typedef unsigned int u32_t;
 typedef unsigned long long u64_t;
 
-#define bit_num_bytes sizeof(u32_t)
-#define BITS_SHIFT 5
-#define BITS_MASK 0x1f
+typedef unsigned char * bitmap_t;
 
-#define VID_TO_BITMAP_INDEX(_VID, _CAP) \
-    (_VID%_CAP)
+#define bit_num_bytes sizeof(unsigned char)
+#define BITS_SHIFT 3
+#define BITS_MASK 0x7
 
+#define VID_TO_BITMAP_INDEX(_VID, _PROC_ID, _NUM_PROCS) \
+    (_VID - _PROC_ID)/_NUM_PROCS
 
-typedef u32_t * bitmap_t;
+#define INDEX_TO_VID(_U32_INDEX, _U8_INDEX, _OFFSET, num_proc, proc_id) \
+    ((_U32_INDEX * sizeof(u32_t) * 8) + (_U8_INDEX * sizeof(char) * 8) + _OFFSET)*num_proc+ proc_id
+
 
 class bitmap
 {
     private:
-        u32_t max_size;
+        char *bitmap_buf_head;
+        char * bits_array;
+        u32_t buf_len_bytes;
+        u32_t buf_num_bits;
         u32_t bits_true_size;
-        u32_t buf_size;
         u32_t start_vert, term_vert;
         u32_t max_vert, min_vert;
-        u32_t mode_t;
-        bitmap_t bits_array;
-        bitmap_t buf_head;
+        u32_t start_index, term_index;
+        u32_t max_index, min_index; 
+        u32_t processor_id, num_processors;
+        u32_t edge_num;
 
     public:
-        bitmap(u32_t max_size_in, u32_t buf_size_in, u32_t start_vert_in, u32_t term_vert_in, u32_t mode_t, bitmap_t bitmap_buffer_head);
+        //bitmap(u32_t max_size_in, u32_t buf_size_in, u32_t start_vert_in, u32_t term_vert_in, u32_t mode_t, bitmap_t bitmap_buffer_head);
+        //new bitmap 
+        bitmap(char * bitmap_buf_head_in, u32_t buf_len_bytes_in, u32_t buf_num_bits_in, 
+                u32_t start_vert_in, u32_t term_vert_in, u32_t processor_id_in, u32_t num_processors_in);
         ~bitmap();
         void set_value(u32_t index); 
         void clear_value(u32_t index);
         u32_t get_value(u32_t index);
         u32_t get_bits_true_size();
+        u32_t ch_vid_to_bitmap_index(u32_t value);
         u32_t get_max_vert();
         u32_t get_min_vert();
+        u32_t get_index(u32_t index);
+        void set_max_value(u32_t index);
+        void set_min_value(u32_t index);
+        void set_edge_num(u32_t edge_num_in);
         void print_binary(u32_t start, u32_t stop);
+        void reset_value();
 
 };
 
-bitmap::bitmap(u32_t max_size_in, u32_t buf_size_in, u32_t start_vert_in, u32_t term_vert_in, u32_t mode_t, bitmap_t bitmap_buffer_head)
-                :max_size(max_size_in), buf_size(buf_size_in), 
-                start_vert(start_vert_in),term_vert(term_vert_in),
-                mode_t(mode_t),
-                bits_array(bitmap_buffer_head + 3*sizeof(u32_t)), 
-                buf_head(bitmap_buffer_head)
+//bitmap::bitmap(u32_t max_size_in, u32_t buf_size_in, u32_t start_vert_in, u32_t term_vert_in, u32_t mode_t, bitmap_t bitmap_buffer_head)
+
+bitmap::bitmap(char * bitmap_buf_head_in, u32_t buf_len_bytes_in, u32_t buf_num_bits_in, 
+        u32_t start_vert_in, u32_t term_vert_in, u32_t processor_id_in, u32_t num_processors_in)
+    :bitmap_buf_head(bitmap_buf_head_in),
+    bits_array(bitmap_buf_head_in),
+    buf_len_bytes(buf_len_bytes_in),
+    buf_num_bits(buf_num_bits_in),
+    bits_true_size(0), start_vert(start_vert_in), term_vert(term_vert_in), 
+    processor_id(processor_id_in), num_processors(num_processors_in)
 {
-    //PRINT_DEBUG("ADDRESS: BITMAP_BUFFER_HEAD\t TRUE_SIZE\tMIN_VALUE\tMAX_VALUE\tBITS_ARRAY\t\n");
-    //PRINT_DEBUG("ADDRESS: 0x%llx\t 0x%llx\t0x%llx\t0x%llx\t0x%llx\n",
-      //      (u64_t)(bitmap_buffer_head), (u64_t)(buf_head), (u64_t)(buf_head+1), (u64_t)(buf_head+2), (u64_t)(buf_head+3));
-    if (mode_t == 0)// means write a bitmap to a file
-    {
-        max_vert = start_vert;
-        min_vert = term_vert;
-    }
-        //memset(buf_head, 0, max_size/bit_num_bytes + 1 + sizeof(u32_t));
-    else
-    {
-        bits_true_size = (u32_t )*buf_head;
-        min_vert = (u32_t)*(buf_head + 1);
-        max_vert = (u32_t)*(buf_head + 2);
-        //memset(bits_array, 0, max_size/bit_num_bytes+1);
-       // PRINT_DEBUG("bits_true_size = %d\n", (u32_t)*buf_head);
-       // PRINT_DEBUG("MAX_READ = %d, MIN_READ = %d\n", max_vert, min_vert);
-    }
+    PRINT_DEBUG("Create a new bitmap for buf:0x%llx, the bitmap_buf_head is 0x%llx, the address of bits_array is 0x%llx.\nthe buf_len_bytes is %d,the buf_num_bits is %d, the bits_true_size is %d, the start_Vert is %d, the term_vert is %d\n", 
+            (u64_t)bitmap_buf_head_in, (u64_t)bitmap_buf_head, (u64_t)bits_array, buf_len_bytes,
+            buf_num_bits, bits_true_size, start_vert, term_vert);
+    max_vert = start_vert;
+    max_index = VID_TO_BITMAP_INDEX(start_vert, processor_id, num_processors);
+    min_vert = term_vert;
+    min_index = VID_TO_BITMAP_INDEX(term_vert, processor_id, num_processors);
+    PRINT_DEBUG("max_vert = %d, min_vert = %d\n", max_vert, min_vert);
+    PRINT_DEBUG("max_index= %d, min_index= %d\n", max_index, min_index);
+    start_index = 0;
+    term_index = buf_num_bits-1;
+    PRINT_DEBUG("start_index = %d, term_index = %d\n", start_index, term_index);
+    PRINT_DEBUG("processor_id = %d\n",processor_id);
 }
 bitmap::~bitmap()
 {
     //free(bits_array);
 }
-void bitmap::set_value(u32_t index)
+void bitmap::set_value(u32_t value)
 {
-    assert(index <= max_size);            
+    u32_t index = ch_vid_to_bitmap_index(value);
+
     bits_array[index >> BITS_SHIFT] |= 1 << (index & BITS_MASK);
     bits_true_size++;
-    assert(bits_true_size <= max_size);
-    *buf_head = bits_true_size;
-    //PRINT_DEBUG("size:%d\n", *buf_head);
-    //PRINT_DEBUG("max = %d, min = %d\n", max_vert, min_vert);
+    assert(bits_true_size <= buf_num_bits);
 
-    if (index < min_vert)
-        min_vert = index;
-
-    if (index > max_vert)
-        max_vert = index;
-
-    //PRINT_DEBUG("max = %d, min = %d\n", max_vert, min_vert);
-    bitmap_t  max_vert_buf = (buf_head + 2);
-    bitmap_t  min_vert_buf = (buf_head + 1);
-    if (mode_t == 0)
-    { 
-        *max_vert_buf = max_vert;
-        *min_vert_buf = min_vert;
+    if (value < min_vert)
+    {
+        min_index= index;
+        min_vert = value;
+        //if (value == 23 || value == 10)
+        //{
+          //  PRINT_DEBUG("min_vert = %d\n", min_vert);
+           // exit(-1);
+        //}
     }
+
+    if (value > max_vert)
+    {
+        max_index= index;
+        max_vert = value;
+    }
+
     /*
      * This code may equal the bellow:
      * int byte_index = index/bit_num_bytes // find the target BYTE
@@ -108,15 +123,71 @@ void bitmap::set_value(u32_t index)
      */
 }
 
-void bitmap::clear_value(u32_t index)
+void bitmap::clear_value(u32_t value)
 {
-    assert(index <= max_size);
+    if (value < min_vert)
+        PRINT_DEBUG("value = %d, min_vert = %d\n", value, min_vert);
+    assert(value <= max_vert);
+    assert(value >= min_vert);
+    u32_t index = ch_vid_to_bitmap_index(value);
+    //PRINT_DEBUG("herearaerae!\n");
+    bits_true_size--;
     bits_array[index >> BITS_SHIFT] &= ~(1 << (index & BITS_MASK));
 }
 
-u32_t bitmap::get_value(u32_t index)
+u32_t bitmap::get_value(u32_t value)
+{
+    u32_t index = ch_vid_to_bitmap_index(value);
+    return bits_array[index >> BITS_SHIFT] & (1 << (index & BITS_MASK));
+}
+
+u32_t bitmap::get_index(u32_t index)
 {
     return bits_array[index >> BITS_SHIFT] & (1 << (index & BITS_MASK));
+}
+
+u32_t bitmap::ch_vid_to_bitmap_index(u32_t value)
+{
+    if (value == 0)
+    {
+        u32_t index = 0;
+        return index;
+    }
+    u32_t index = VID_TO_BITMAP_INDEX(value, processor_id, num_processors);
+    if (value < processor_id)
+        PRINT_DEBUG("value = %d, processor_id = %d\n", value, processor_id);
+    //PRINT_DEBUG("Index = %d, term_index = %d\n", index, term_index);
+    assert(index <= term_index);
+    assert(index >= start_index);
+    assert(value <= term_vert);
+    assert(value >= start_vert);
+    return index;
+}
+void bitmap::set_max_value(u32_t value)
+{
+    u32_t index = ch_vid_to_bitmap_index(value);
+    max_index = index;
+    max_vert = value;
+}
+
+void bitmap::set_min_value(u32_t value)
+{
+    u32_t index = ch_vid_to_bitmap_index(value);
+    min_index = index;
+    min_vert = value;
+}
+
+void bitmap::set_edge_num(u32_t edge_num_in)
+{
+    edge_num = edge_num_in;
+}
+void bitmap::reset_value()
+{
+    max_vert = start_vert;
+    min_vert = term_vert;
+    max_index = VID_TO_BITMAP_INDEX(start_vert, processor_id, num_processors);
+    min_index = VID_TO_BITMAP_INDEX(term_vert, processor_id, num_processors);
+    edge_num = 0;
 }
 
 u32_t bitmap::get_bits_true_size()
@@ -137,7 +208,7 @@ void bitmap::print_binary(u32_t start, u32_t stop)
 {
     for(u32_t j = start; j <= stop; j++)
     {
-        if (get_value(j))
+        if (get_index(j))
         {
             PRINT_SHORT("1");
         }

@@ -43,14 +43,12 @@ struct sched_list_manager{
 
 //manage the bitmap buffer, add by hejian
 struct sched_bitmap_manager{
-    //four buffers for big graph. BUT there are only two AVAILABLE buffers if the graph is small 
-    u32_t num_of_bufs; //2 or 4
-    u32_t bitmap_file_size;
-    u32_t sched_bitmap_size;
-    char * sched_bitmap_head;
-
-    //all the buffer has the same size
-    u32_t sched_buf_size; 
+    bitmap * p_bitmap0, * p_bitmap1; 
+    char * per_bitmap_buf_head0, * per_bitmap_buf_head1;
+    u32_t per_bitmap_buf_size;
+    u32_t per_bits_true_size;
+    u32_t per_min_vert_id;
+    u32_t per_max_vert_id;
 }__attribute__ ((aligned(8)));
 
 //manage the update buffer.

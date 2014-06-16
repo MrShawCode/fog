@@ -18,8 +18,8 @@ class sssp_program{
 				va->value = 0;
                 PRINT_DEBUG("VID = %d\n", vid);
 				fog_engine_target<sssp_program, sssp_vert_attr>::add_schedule( vid, 
-                        PHASE /*phase:decide which file to read and write */,
-                        0);
+                        PHASE /*phase:decide which buf to read and write */
+                        );
 			}
             else
             { 
@@ -47,15 +47,18 @@ class sssp_program{
 		//gather one update "u" from outside
 		static void gather_one_update( u32_t vid, sssp_vert_attr* this_vert, 
                 struct update<sssp_vert_attr>* this_update, 
-                u32_t PHASE,
-                u32_t new_signal)
+                u32_t PHASE)
         {
-            //PRINT_DEBUG("IN gather, new_signal:%d\n", new_signal);
 			//compare the value of u, if it is smaller, absorb the update
+            if (PHASE == 0)
+            {
+           //     PRINT_DEBUG("this_update.value = %f, this_vert->value = %f\n", this_update->vert_attr.value, this_vert->value);
+            }
+                //PRINT_DEBUG("check in gather_one_update!\n");
 			if( this_update->vert_attr.value < this_vert->value ){
 				*this_vert = this_update->vert_attr;
 				//should add schedule of {vid,0}, need api from engine
-				fog_engine_target<sssp_program, sssp_vert_attr>::add_schedule( vid, PHASE, new_signal);
+				fog_engine_target<sssp_program, sssp_vert_attr>::add_schedule( vid, PHASE);
 			}
 		}
 };
