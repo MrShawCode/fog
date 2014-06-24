@@ -43,12 +43,27 @@ struct sched_list_manager{
 
 //manage the bitmap buffer, add by hejian
 struct sched_bitmap_manager{
-    bitmap * p_bitmap0, * p_bitmap1; 
-    char * per_bitmap_buf_head0, * per_bitmap_buf_head1;
+    struct context_data * p_context_data0;
+    struct context_data * p_context_data1;
+}__attribute__ ((aligned(8)));
+
+struct context_data{
+    bitmap * p_bitmap;
+    bitmap * p_bitmap_steal;
+    char * per_bitmap_buf_head;
     u32_t per_bitmap_buf_size;
     u32_t per_bits_true_size;
     u32_t per_min_vert_id;
     u32_t per_max_vert_id;
+    u32_t per_num_edges;
+    u32_t signal_to_scatter;// 0 stands for normal , 1 stands for the situation when update-buf is full, 2 stands for stealing from other processors 
+
+    //data for stealed-cpus
+    u32_t steal_max_vert_id;
+    u32_t steal_min_vert_id;
+    u32_t steal_virt_cpu_id;
+    u32_t steal_num_virt_cpus;
+    u32_t steal_bits_true_size;
 }__attribute__ ((aligned(8)));
 
 //manage the update buffer.

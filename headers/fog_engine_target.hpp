@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdarg.h>
 
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -103,6 +104,7 @@ class fog_engine_target{
 
                 PRINT_DEBUG("before scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-PHASE));
                 scatter_updates(1-PHASE);
+                cal_threshold();
                 PRINT_DEBUG("after scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-PHASE));
 
                 gather_updates(PHASE);
@@ -115,30 +117,17 @@ class fog_engine_target{
         }
         u32_t cal_true_bits_size(u32_t PHASE)
         {
-            bitmap * current_bitmap = NULL;
             u32_t num_vert_of_next_phase = 0;
+            struct context_data * my_context_data;
             for (u32_t i = 0; i < gen_config.num_processors; i++)
             {
-                current_bitmap = PHASE > 0 ? seg_config->per_cpu_info_list[i]->sched_manager->p_bitmap1
-                    :seg_config->per_cpu_info_list[i]->sched_manager->p_bitmap0;
-                num_vert_of_next_phase += current_bitmap->get_bits_true_size(); 
+                my_context_data = PHASE > 0 ? seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1
+                    : seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0;
+                num_vert_of_next_phase += my_context_data->per_bits_true_size; 
+                //PRINT_DEBUG("In bitmap buf:%d, Processor %d has %d bits !\n", PHASE, i, 
+                 //       my_context_data->per_bits_true_size);
             }
-            current_bitmap = NULL;
             return num_vert_of_next_phase;
-        }
-
-        void print_bitmap(u32_t PHASE)
-        {
-            bitmap * current_bitmap = NULL;
-            PRINT_DEBUG("PHASE in print_bitmap = %d\n", PHASE);
-            for(u32_t partition_id = 0; partition_id < gen_config.num_processors; partition_id++ )
-            {
-                PRINT_DEBUG("CPU %d's bitmap-buffer is :\n", partition_id);
-                current_bitmap = PHASE > 0 ? seg_config->per_cpu_info_list[partition_id]->sched_manager->p_bitmap1
-                    :seg_config->per_cpu_info_list[partition_id]->sched_manager->p_bitmap0;
-                current_bitmap->print_binary(0,200);
-                PRINT_DEBUG("\n");
-            }
         }
 
 		void init_phase(u32_t PHASE)
@@ -230,10 +219,21 @@ class fog_engine_target{
         //return values:
         //0:no more sched tasks
         //1:update buffer full
+        //2:steal work
         //-1:failure
+        void set_signal_to_scatter(u32_t signal, u32_t processor_id, u32_t PHASE)
+        {
+            sched_bitmap_manager * my_sched_bitmap_manager;
+            struct context_data * my_context_data;
+            my_sched_bitmap_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
+            my_context_data = PHASE > 0 ? my_sched_bitmap_manager->p_context_data1 : my_sched_bitmap_manager->p_context_data0;
+            my_context_data->signal_to_scatter = signal; 
+        }
         int scatter_updates(u32_t PHASE)
         {
-            u32_t ret, unemployed ; 
+            u32_t ret, unemployed=0; 
+            u32_t num_finished, num_not_finished;
+            u32_t *p_finished = NULL, *p_not_finished = NULL;
             cpu_work_target<A,VA>* scatter_cpu_work = NULL;
             scatter_param_target * p_scatter_param = new scatter_param_target;
 
@@ -255,6 +255,8 @@ class fog_engine_target{
             }
 
             do{
+                if (unemployed == 1)
+                    PRINT_DEBUG("before context scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(PHASE));
                 scatter_cpu_work = new cpu_work_target<A, VA>(SCATTER, (void *)p_scatter_param);
                 pcpu_threads[0]->work_to_do = scatter_cpu_work;
                 (*pcpu_threads[0])();
@@ -265,25 +267,270 @@ class fog_engine_target{
                 PRINT_DEBUG("After scatter computation!\n");
                 ret = 0;
                 unemployed = 0;
+                num_not_finished = 0;
+                num_finished = 0;
+                p_not_finished = NULL; 
+                p_finished = NULL;//remember free!!!
                 for (u32_t i = 0; i < gen_config.num_processors; i++)
                 {
                     PRINT_DEBUG("Processor %d status %d\n", i, pcpu_threads[i]->status);
-                    if(pcpu_threads[i]->status == FINISHED_SCATTER)
+                    if(pcpu_threads[i]->status != FINISHED_SCATTER)
+                    {
+                        num_not_finished++;
+                        p_not_finished = (u32_t *)realloc (p_not_finished, sizeof(u32_t) * num_not_finished);
+                        if (num_not_finished == 1)
+                        {
+                            *p_not_finished = i; //p_not_finished[0] = i;
+                        }
+                        else 
+                        {
+                            p_not_finished[num_not_finished-1] = i;
+                            //insertion sort
+                            u32_t tmp1 = PHASE > 0 ? seg_config->per_cpu_info_list[p_not_finished[num_not_finished-1]]->sched_manager->
+                                p_context_data1->per_bits_true_size : seg_config->per_cpu_info_list[p_not_finished[num_not_finished-1]]->sched_manager->
+                                p_context_data0->per_bits_true_size;
+                            u32_t tmp2 = PHASE > 0 ? seg_config->per_cpu_info_list[p_not_finished[num_not_finished-2]]->sched_manager->
+                                p_context_data1->per_bits_true_size : seg_config->per_cpu_info_list[p_not_finished[num_not_finished-2]]->sched_manager->
+                                p_context_data0->per_bits_true_size;
+                            if (tmp1 > tmp2)
+                            {
+                                p_not_finished[num_not_finished-1] = p_not_finished[num_not_finished-2];
+                                p_not_finished[num_not_finished-2] = i;
+                            }
+
+                        }
                         ret = 1;
-                    if (pcpu_threads[i]->status == UPDATE_BUF_FULL)
+                        PRINT_DEBUG("Processor:%d has not finished scatter!\n", i);
+                        set_signal_to_scatter(1, i, PHASE);
+                    }
+                    if (pcpu_threads[i]->status != UPDATE_BUF_FULL )
+                    {
+                        num_finished++;
+                        p_finished = (u32_t *)realloc (p_finished, sizeof(u32_t) * num_finished);
+                        p_finished[num_finished-1] = i;
                         unemployed = 1;
-
+                        PRINT_DEBUG("Processor: %d has finished scatter, and the update buffer is not full!\n", i);
+                        set_signal_to_scatter(0, i, PHASE);
+                    }
                 }
 
-                if (unemployed)
+                if ((num_finished + num_not_finished) != gen_config.num_processors)
+                    PRINT_ERROR("OH!NO!\n");
+
+                if (ret == 0 && unemployed == 1)
                 {
-                    PRINT_DEBUG("need to gather!\n");
-                    gather_updates(1-PHASE);
+                    //All cpus have finished scatter_updates! Now we just need to go back to normal gather.
+                    assert(num_finished == gen_config.num_processors);
+                    PRINT_DEBUG("All cpus have finished scatter\n");
+                    return ret;
                 }
-            }while(unemployed == 1);
+
+                if (ret == 1 && unemployed == 0)
+                {
+                    assert(num_not_finished == gen_config.num_processors);
+                    PRINT_DEBUG("ALL CPUS have not finished scatter beacuse the update_bufs are full!\n");
+                    PRINT_DEBUG("need to gather!\n");
+                    cal_threshold();
+                    gather_updates(1-PHASE);
+                    cal_threshold();
+                }
+                if (unemployed == 1 && ret == 1)
+                {
+                    PRINT_DEBUG("There are some cpus have finished! Others have not finished!\n");
+                    PRINT_DEBUG("Also need to gather!\n");
+                    cal_threshold();
+                    gather_updates(1-PHASE);
+                    cal_threshold();
+                    for (u32_t k = 0; k < num_not_finished; k++)
+                    {
+                        ret = 0;
+                        u32_t ret_value = rebalance_sched_bitmap(p_not_finished[k], PHASE);
+                        if (ret_value == 2)
+                            PRINT_ERROR("cpu-%d has so few bits to steal!To be continued\n", p_not_finished[k]);
+
+                        scatter_cpu_work = new cpu_work_target<A, VA>(SCATTER, (void *)p_scatter_param);
+                        pcpu_threads[0]->work_to_do = scatter_cpu_work;
+                        (*pcpu_threads[0])();
+
+                        delete scatter_cpu_work;
+                        scatter_cpu_work = NULL;
+
+                        PRINT_DEBUG("After steal scatter!\n");
+                        for (u32_t i = 0; i < gen_config.num_processors; i++)
+                        {
+                            PRINT_DEBUG("Steal processor %d status %d\n", i, pcpu_threads[i]->status);
+                            context_data * context_data_steal = PHASE > 0 ? 
+                                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1: 
+                                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0;
+                            context_data * context_data_not_finished = PHASE > 0 ?
+                                seg_config->per_cpu_info_list[p_not_finished[k]]->sched_manager->p_context_data1: 
+                                seg_config->per_cpu_info_list[p_not_finished[k]]->sched_manager->p_context_data0;
+                            
+                            context_data_not_finished->per_bits_true_size -= context_data_steal->steal_bits_true_size;
+                            context_data_steal->steal_bits_true_size = 0;
+                            if(pcpu_threads[i]->status != FINISHED_SCATTER)
+                            {
+                                PRINT_ERROR("Impossible, processor:%d has not finished scatter!\n", i);
+                            }
+                            if (pcpu_threads[i]->status != UPDATE_BUF_FULL )
+                            {
+                                PRINT_DEBUG("Steal round %d, Processor: %d has finished scatter, and the update buffer is not full!\n", k, i);
+                                set_signal_to_scatter(0, i, PHASE);
+                            }
+                        }
+                    }
+                    PRINT_DEBUG("After steal!\n");
+                    ret = 0;
+                }
+            }while(ret == 1);
             //return ret;
+            free(p_not_finished);
+            free(p_finished);
+            reset_manager(PHASE);
             return ret;
         }
+
+        void reset_manager(u32_t PHASE)
+        {
+            context_data * my_context_data;
+            for (u32_t i = 0 ; i < gen_config.num_processors; i++ )
+            {
+                my_context_data = PHASE > 0 ? seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1
+                    : seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0;
+                if(my_context_data->per_bits_true_size != 0)
+                    PRINT_ERROR("Per_bits_true_size != 0, impossible!\n");
+                my_context_data->per_bits_true_size = 0;
+                my_context_data->steal_min_vert_id = 0;
+                my_context_data->steal_max_vert_id = 0;
+                my_context_data->signal_to_scatter = 0;
+                my_context_data->p_bitmap_steal = NULL;
+                my_context_data->steal_virt_cpu_id = -1;
+                my_context_data->steal_num_virt_cpus = 0;
+                my_context_data->steal_bits_true_size = 0;
+            }
+        }
+
+        //return value: 
+        //1:success
+        //2: this (not_finished_cpu) cpu has few bits
+        u32_t rebalance_sched_bitmap(u32_t cpu_not_finished_id, u32_t PHASE)
+        {
+
+            u32_t cpu_id;
+            context_data * context_data_not_finished = PHASE > 0 ? seg_config->per_cpu_info_list[cpu_not_finished_id]->sched_manager->p_context_data1 : seg_config->per_cpu_info_list[cpu_not_finished_id]->sched_manager->p_context_data0;
+            u32_t min_vert = context_data_not_finished->per_min_vert_id;
+            u32_t max_vert = context_data_not_finished->per_max_vert_id;
+            u32_t average_num = (max_vert - min_vert)/(gen_config.num_processors);
+            PRINT_DEBUG("In cpu %d, min_vert = %d, max_vert = %d, average_num = %d\n",
+                            cpu_not_finished_id, min_vert, max_vert, average_num);
+                
+            if ((average_num/8) == 0)
+                return 2;
+
+            u32_t tmp_min_vert = 0;
+            u32_t tmp_max_vert = 0;
+            u32_t tmp_index = 0;
+            for (cpu_id = 0; cpu_id < gen_config.num_processors; cpu_id++)
+            {
+                //set STEAL signal to next scatter
+                set_signal_to_scatter(2, cpu_id, PHASE);
+                context_data * context_data_steal = PHASE > 0 ? seg_config->per_cpu_info_list[cpu_id]->sched_manager->p_context_data1 : seg_config->per_cpu_info_list[cpu_id]->sched_manager->p_context_data0;
+                context_data_steal->steal_virt_cpu_id = cpu_not_finished_id;
+                context_data_steal->p_bitmap_steal = context_data_not_finished->p_bitmap;
+
+                if (cpu_id == 0)
+                {
+                    tmp_min_vert = min_vert;
+                }
+                else
+                {
+                    tmp_min_vert = tmp_max_vert + gen_config.num_processors;
+                }
+                context_data_steal->steal_min_vert_id = tmp_min_vert; 
+                PRINT_DEBUG("Processor-%d's steal_min_vert = %d\n", cpu_id,tmp_min_vert);
+
+                if (cpu_id == gen_config.num_processors - 1)
+                {
+                    tmp_max_vert = max_vert;
+                }
+                else
+                {
+                    tmp_max_vert = tmp_min_vert + average_num;
+                    //PRINT_DEBUG("Origin tmp_min_vert = %d, tmp_max_vert = %d\n", tmp_min_vert, tmp_max_vert);
+                    tmp_index = (tmp_max_vert - cpu_not_finished_id)/(gen_config.num_processors);
+                    //PRINT_DEBUG("Origin tmp_index = %d\n", tmp_index);
+
+                    if ((tmp_index % 8) == 0)
+                        tmp_index--;
+                    else
+                    {
+                        u32_t tmp_val = tmp_index%8;
+                        //PRINT_DEBUG("tmp_val = %d\n", tmp_val);
+                        tmp_index += 8 - tmp_val - 1;
+                    }
+                    //PRINT_EDBUG("final tmp_index = %d\n", tmp_index);
+                    tmp_max_vert = tmp_index*(gen_config.num_processors) + cpu_not_finished_id;
+                }
+                context_data_steal->steal_max_vert_id = tmp_max_vert;
+                PRINT_DEBUG("Processor-%d's steal_max_vert = %d\n", cpu_id, tmp_max_vert);
+            }
+            return 1;
+            //resort p_not_finished array 
+/*            u32_t i, j;
+            u32_t tmp_sum = 0 ;
+            u32_t num_not_finished = gen_config.num_processors - num_finished;
+            context_data * context_data_finished;
+            context_data * context_data_not_finished;
+            if (num_finished <= num_not_finished)
+            {
+                for (i = 0; i < num_finished; i++)
+                {
+                    share_task(1, p_not_finished[i], p_finished[i]);
+                }
+            }
+            else 
+            {
+                //first, calculate the average num true_bits of all the not_finished cpus
+                for (j = 0; j < num_not_finished; j++ )
+                {
+                    context_data_not_finished = PHASE > 0 ? seg_config.per_cpu_info_list[p_not_finished[j]]->sched_manager->p_context_data1 : seg_config->per_cpu_info_list[p_not_finished[j]]->sched_manager->p_context_data0;
+                    tmp_sum += context_data_not_finished->per_bits_true_size;
+                }
+                PRINT_DEBUG("All the un-finished bits is %d\n", tmp_sum);
+
+                for (j = 0; j < num_not_finished; j++)
+                {
+                    context_data_not_finished = PHASE > 0 ? seg_config.per_cpu_info_list[p_not_finished[j]]->sched_manager->p_context_data1 : seg_config->per_cpu_info_list[p_not_finished[j]]->sched_manager->p_context_data0;
+                    context_data_not_finished->steal_num_virt_cpus = gen_config.num_processors * 
+                        (u32_t)(context_data_not_finished->per_bits_true_size / tmp_sum); //contain itself
+                    PRINT_DEBUG("processor %d has %d cpus to help!\n", p_not_finished[j], context_data_not_finished->steal_num_virt_cpus);
+                    if (context_data_not_finished->steal_num_virt_cpus == 0)
+                        context_data_not_finished->steal_num_virt_cpus = 1;
+                    context_data_not_finished->steal_virt_cpus_id = 0; //0
+                    share_task(context_data_not_finished, p_not_finished[j], p_finished);
+                            
+                }
+            }*/
+
+        }
+        
+
+        //share_task(u32_t num_cpus, u32_t not_finished_cpu_id, ...)
+        /*share_task(context_data * context_data_not_finished, u32_t not_finished_cpu_id, u32_t * p_finished) 
+        {
+            context_data * context_data_finished;
+            u32_t num_shared_cpus = context_data_not_finished->steal_num_virt_cpus;
+            //va_list arg_ptr;
+            //va_start(arg_ptr, not_finished_cpu_id);
+            PRINT_DEBUG("not_finished_cpu_id = %d, there are %d cpus to share tasks!\n", not_finished_cpu_id, num_share_cpus);
+
+            for (u32_t i = 0; i < num_share_cpus - 1 ; i++)
+            {
+                //u32_t cpu_id = va_arg(arg_ptr, u32_t);
+                u32_t cpu_id = p_finished[i];
+                printf("the %d cpu is %d\n", i, cpu_id);
+            }
+        }*/
 
         //gather all updates in the update buffer.
         void gather_updates(u32_t PHASE)
@@ -447,7 +694,7 @@ class fog_engine_target{
                 util_rate = (double)total_updates/((double)strip_cap*seg_config->num_segments);
                 //PRINT_DEBUG("THere are %u update in processor %d, utilization rate is %f\n", total_updates, i, (double)total_updates/((double)strip_cap*seg_config->num_segments));
                 PRINT_DEBUG("THere are %u update in processor %d, utilization rate is %f\n", total_updates, i, util_rate);
-                PRINT_DEBUG("THRESHOLD = %f\n", THRESHOLD );
+                //PRINT_DEBUG("THRESHOLD = %f\n", THRESHOLD );
 
                 if (util_rate > THRESHOLD)
                 {
@@ -535,16 +782,37 @@ class fog_engine_target{
         {
             u32_t  partition_id;
             bitmap * current_bitmap = NULL ;
+            u32_t max_vert = 0;
+            u32_t min_vert = 0;
+
             partition_id = VID_TO_PARTITION(task_vid);
             assert(task_vid <= gen_config.max_vert_id);
             assert(partition_id < gen_config.num_processors);
+            sched_bitmap_manager * my_sched_bitmap_manager;
+            struct context_data * my_context_data;
 
-            current_bitmap = PHASE > 0 ? seg_config->per_cpu_info_list[partition_id]->sched_manager->p_bitmap1
-                :seg_config->per_cpu_info_list[partition_id]->sched_manager->p_bitmap0;
-            if ((task_vid == 23 || task_vid == 10) /*&& PHASE == 0*/)
-                PRINT_DEBUG("task_vid = %d\n", task_vid);
+            my_sched_bitmap_manager = seg_config->per_cpu_info_list[partition_id]->sched_manager;
+            my_context_data = PHASE > 0 ? my_sched_bitmap_manager->p_context_data1 : my_sched_bitmap_manager->p_context_data0;
 
+            max_vert = my_context_data->per_max_vert_id;
+            min_vert = my_context_data->per_min_vert_id;
+            current_bitmap = my_context_data->p_bitmap;
+
+            if (current_bitmap->get_value(task_vid) == 0)
+            {
+                my_context_data->per_bits_true_size++;
                 current_bitmap->set_value(task_vid);
+                if (task_vid < min_vert)
+                {
+                    min_vert = task_vid;
+                    my_context_data->per_min_vert_id = min_vert;
+                }
+                if (task_vid > max_vert)
+                {
+                    max_vert = task_vid;
+                    my_context_data->per_max_vert_id = max_vert;
+                }
+            }
         }
 		void reclaim_everything()
 		{
@@ -552,6 +820,7 @@ class fog_engine_target{
 			//reclaim pre-allocated space
 			munlock( buf_for_write, gen_config.memory_size );
 			munmap( buf_for_write, gen_config.memory_size );
+
 			//terminate the cpu threads
 			pcpu_threads[0]->terminate = true;
 			pcpu_threads[0]->work_to_do = NULL;
@@ -562,6 +831,13 @@ class fog_engine_target{
 			}
 			for(u32_t i=0; i<gen_config.num_processors; i++)
 				delete pcpu_threads[i];
+
+			for(u32_t i=0; i<gen_config.num_processors; i++)
+            {
+                delete seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->p_bitmap;
+                delete seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->p_bitmap;
+                PRINT_DEBUG("Delete bitmap!\n");
+            }
 
 			//terminate the disk thread
 			delete fog_io_queue;
@@ -606,24 +882,36 @@ class fog_engine_target{
 		void show_sched_update_buf()
 		{
 			PRINT_DEBUG( "===============\tsched_update buffer for each CPU begin\t=============\n" );
-			PRINT_DEBUG( "CPU\tSched_bitmap_man\tUpdate_map_man\tAux_update_man\n" );
+			PRINT_DEBUG( "CPU\tSched_bitmap_manger\tUpdate_map_mangert\n");
 			for( u32_t i=0; i<gen_config.num_processors; i++ )
-				PRINT_DEBUG( "%d\t0x%llx\t0x%llx\t0x%llx\n", 
+				PRINT_DEBUG("%d\t0x%llx\t0x%llx\n",
 					i,
 					(u64_t)seg_config->per_cpu_info_list[i]->sched_manager,
-					(u64_t)seg_config->per_cpu_info_list[i]->update_manager,
-					(u64_t)seg_config->per_cpu_info_list[i]->aux_manager );
+					(u64_t)seg_config->per_cpu_info_list[i]->update_manager
+                    );
 
-			PRINT_DEBUG( "------------------\tschedule manager\t---------------\n" );
-			PRINT_DEBUG( "CPU\tbitmap_buf_head0\tbitmap_buf_head0 per_bitmap_buf_size per_bits_true_size max_id min_id\n" );
+			PRINT_DEBUG( "------------------\tschedule bitmap manager\t---------------\n" );
+			PRINT_DEBUG( "------------------\tcontext data0\t---------------\n" );
+			PRINT_DEBUG( "CPU\tbitmap_buf_head\tper_bitmap_buf_size per_bits_true_size edges max_id min_id\n" );
 			for( u32_t i=0; i<gen_config.num_processors; i++ )
-				PRINT_DEBUG( "%d\t0x%llx\t\t0x%llx\t%d\t%d\t%d\t%d\n", i,
-                        (u64_t)(seg_config->per_cpu_info_list[i]->sched_manager->per_bitmap_buf_head0),
-                        (u64_t)(seg_config->per_cpu_info_list[i]->sched_manager->per_bitmap_buf_head1), 
-                        seg_config->per_cpu_info_list[i]->sched_manager->per_bitmap_buf_size, 
-                        seg_config->per_cpu_info_list[i]->sched_manager->per_bits_true_size, 
-                        seg_config->per_cpu_info_list[i]->sched_manager->per_max_vert_id, 
-                        seg_config->per_cpu_info_list[i]->sched_manager->per_min_vert_id 
+				PRINT_DEBUG( "%d\t0x%llx\t\t%d\t%d\t%d\t%d\t%d\n", i,
+                        (u64_t)(seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->per_bitmap_buf_head),
+                        seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->per_bitmap_buf_size, 
+                        seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->per_bits_true_size, 
+                        seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->per_num_edges, 
+                        seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->per_max_vert_id, 
+                        seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->per_min_vert_id 
+                        );
+			PRINT_DEBUG( "------------------\tcontext data1\t---------------\n" );
+			PRINT_DEBUG( "CPU\tbitmap_buf_head\tper_bitmap_buf_size per_bits_true_size edges max_id min_id\n" );
+			for( u32_t i=0; i<gen_config.num_processors; i++ )
+				PRINT_DEBUG( "%d\t0x%llx\t\t%d\t%d\t%d\t%d\t%d\n", i,
+                        (u64_t)(seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->per_bitmap_buf_head),
+                        seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->per_bitmap_buf_size, 
+                        seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->per_bits_true_size, 
+                        seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->per_num_edges, 
+                        seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->per_max_vert_id, 
+                        seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->per_min_vert_id 
                         );
 
 			PRINT_DEBUG( "------------------\tupdate manager\t---------------\n" );
@@ -634,7 +922,7 @@ class fog_engine_target{
 					(u64_t)seg_config->per_cpu_info_list[i]->update_manager->update_map_head,
 					(u32_t)seg_config->per_cpu_info_list[i]->update_manager->update_map_size );
 
-			PRINT_DEBUG( "------------------\tauxiliary update buffer manager\t------------\n" );
+			/*PRINT_DEBUG( "------------------\tauxiliary update buffer manager\t------------\n" );
 			PRINT_DEBUG( "CPU\tBuffer_begin\tBuffer_size\tUpdate_head\tBuf_cap\tNum_updates\n" );
 			for( u32_t i=0; i<gen_config.num_processors; i++ )
 				PRINT_DEBUG( "%d\t0x%llx\t0x%llx\t0x%llx\t%u\t%u\n", 
@@ -643,7 +931,7 @@ class fog_engine_target{
 					(u64_t)seg_config->per_cpu_info_list[i]->aux_manager->buf_size,
 					(u64_t)seg_config->per_cpu_info_list[i]->aux_manager->update_head,
 					(u32_t)seg_config->per_cpu_info_list[i]->aux_manager->buf_cap,
-					(u32_t)seg_config->per_cpu_info_list[i]->aux_manager->num_updates );
+					(u32_t)seg_config->per_cpu_info_list[i]->aux_manager->num_updates );*/
 
 			PRINT_DEBUG( "------------------\tstrip buffer\t------------\n" );
 			PRINT_DEBUG( "CPU\tStrip_buffer\tBuffer_size\tStrip_cap\tPer_cpu_strip_cap\n" );
@@ -682,7 +970,6 @@ class fog_engine_target{
 		//	--------------------------------
 		//	| update_map(update_map_size)   |
 		//	------------------------------
-		//	| sched_bitmap_buffer(sched_bitmap_size)	|
 		//	------------------------------
 		//	| update_buffer(strips)		    |
 		//	-------------------------------
@@ -691,12 +978,11 @@ class fog_engine_target{
 		void init_sched_update_buf()
 		{
 			u32_t update_map_size, total_header_len;
-			u64_t strip_buf_size, strip_size, aux_update_buf_len;
+			u64_t strip_buf_size, strip_size/*, aux_update_buf_len*/;
 			u32_t strip_cap;
             u32_t bitmap_buf_size; //bitmap_max_size;
             //io_work_target* init_bitmap_io_work = NULL;
             u32_t total_num_vertices;
-            char * bitmap_buf_head0, *bitmap_buf_head1;
             u32_t per_bitmap_buf_size;
 
 
@@ -706,66 +992,75 @@ class fog_engine_target{
             total_num_vertices = gen_config.max_vert_id + 1;
 
             bitmap_buf_size = (u32_t)((ROUND_UP(total_num_vertices, 8))/8);
-            per_bitmap_buf_size = (u32_t)(ROUND_UP(((ROUND_UP(total_num_vertices, 8))/8), 4)/4);
+            per_bitmap_buf_size = (u32_t)(ROUND_UP(((ROUND_UP(total_num_vertices, 8))/8), gen_config.num_processors)/gen_config.num_processors);
             PRINT_DEBUG("num_vertices is %d, the origin bitmap_buf_size is %lf\n", total_num_vertices, (double)(total_num_vertices)/8);
             PRINT_DEBUG("After round up, the ROUND_UP(total_num_verttices,8) = %d\n", ROUND_UP(total_num_vertices, 8));
             PRINT_DEBUG("the bitmap_buf_size is %d, per_bitmap_buf_size is %d\n", bitmap_buf_size, per_bitmap_buf_size);
 
-            bitmap_buf_head0 = (char *)map_anon_memory(bitmap_buf_size, true, true );
-            bitmap_buf_head1 = (char *)map_anon_memory(bitmap_buf_size, true, true );
 
             //PRINT_DEBUG("the bitmap_file_size is %d\n", bitmap_file_size);
             //PRINT_DEBUG("the sched_bitmap_size is %d\n", sched_bitmap_size);
 
 			total_header_len = sizeof(sched_bitmap_manager) 
+                    + sizeof(context_data)*2
 					+ sizeof(update_map_manager)
-					+ sizeof(aux_update_buf_manager<VA>)
+					/*+ sizeof(aux_update_buf_manager<VA>)*/
 					+ update_map_size
 					;
 
-			PRINT_DEBUG( "init_sched_update_buffer of fog_engine_target--size of sched_bitmap_manager:%lu,  size of update map manager:%lu, size of aux_update buffer manager:%lu\n", 
-				sizeof(sched_bitmap_manager), sizeof(update_map_manager), sizeof(aux_update_buf_manager<VA>) );
+			//PRINT_DEBUG( "init_sched_update_buffer of fog_engine_target--size of sched_bitmap_manager:%lu,  size of update map manager:%lu, size of aux_update buffer manager:%lu\n", 
+			PRINT_DEBUG( "init_sched_update_buffer of fog_engine_target--size of sched_bitmap_manager:%lu,  size of update map manager:%lu\n", 
+				sizeof(sched_bitmap_manager), sizeof(update_map_manager));
 			PRINT_DEBUG( "init_sched_update_buffer--update_map_size:%u, bitmap_buf_size:%u, total_head_len:%u\n", 
 				update_map_size, bitmap_buf_size, total_header_len );
+            PRINT_DEBUG("sizeof(context_data) = %ld\n", sizeof(context_data));
 
 			//total_header_length should be round up according to the size of updates.
 			total_header_len = ROUND_UP( total_header_len, sizeof(update<VA>) );
 
 			//	CPU0 should always exist!
-			strip_buf_size = seg_config->per_cpu_info_list[0]->buf_size - total_header_len;
+			//strip_buf_size = seg_config->per_cpu_info_list[0]->buf_size - total_header_len;
+            //
 
 			//divide the update buffer to "strip"s
-			strip_size = strip_buf_size / seg_config->num_segments;
+			//strip_size = strip_buf_size / seg_config->num_segments;
 			//round down strip size
-			strip_size = ROUND_DOWN( strip_size, (sizeof(update<VA>)*gen_config.num_processors) );
-			strip_cap = (u32_t)(strip_size / sizeof(update<VA>));
+			//strip_size = ROUND_DOWN( strip_size, (sizeof(update<VA>)*gen_config.num_processors) );
+			//strip_cap = (u32_t)(strip_size / sizeof(update<VA>));
 
 
-			aux_update_buf_len = seg_config->aux_update_buf_len / gen_config.num_processors;
+			//aux_update_buf_len = seg_config->aux_update_buf_len / gen_config.num_processors;
 			//populate the buffer managers
 			for(u32_t i=0; i<gen_config.num_processors; i++){
 				//headers
 				seg_config->per_cpu_info_list[i]->sched_manager = 
 					(sched_bitmap_manager*)seg_config->per_cpu_info_list[i]->buf_head;
 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0 = 
+                    (context_data *)((u64_t)seg_config->per_cpu_info_list[i]->buf_head
+                            +sizeof(sched_bitmap_manager));
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1 = 
+                    (context_data *)((u64_t)seg_config->per_cpu_info_list[i]->buf_head
+                            +sizeof(sched_bitmap_manager) + sizeof(context_data));
+
 				seg_config->per_cpu_info_list[i]->update_manager = 
 					(update_map_manager*)(
 								(u64_t)seg_config->per_cpu_info_list[i]->buf_head 
-								+ sizeof(sched_bitmap_manager) );
+								+ sizeof(sched_bitmap_manager) + 2*sizeof(context_data) );
 
-				seg_config->per_cpu_info_list[i]->aux_manager = 
+			/*	seg_config->per_cpu_info_list[i]->aux_manager = 
 					(aux_update_buf_manager<VA>*)(
 								(u64_t)seg_config->per_cpu_info_list[i]->buf_head 
 								+ sizeof(sched_bitmap_manager)
-								+ sizeof(update_map_manager) );
+								+ sizeof(update_map_manager) );*/
 
 				//build the strips
 				seg_config->per_cpu_info_list[i]->strip_buf_head = //the first strip
 					(char*)(ROUND_UP( 
-						(u64_t)seg_config->per_cpu_info_list[i]->buf_head + total_header_len,
+						(u64_t)seg_config->per_cpu_info_list[i]->buf_head + total_header_len + per_bitmap_buf_size * 2,
 						sizeof(update<VA>) ));
 
-				strip_buf_size = seg_config->per_cpu_info_list[i]->buf_size - total_header_len;
+				strip_buf_size = seg_config->per_cpu_info_list[i]->buf_size - total_header_len - per_bitmap_buf_size * 2;
 
 				//divide the update buffer to "strip"s
 				//round down strip size
@@ -778,8 +1073,9 @@ class fog_engine_target{
 
 				//populate the update map manager, refer to types.hpp
 				seg_config->per_cpu_info_list[i]->update_manager->update_map_head = 
-					(u32_t*)((u64_t)seg_config->per_cpu_info_list[i]->aux_manager 
-						+ sizeof(aux_update_buf_manager<VA>));
+								(u32_t*)((u64_t)seg_config->per_cpu_info_list[i]->buf_head 
+								+ sizeof(sched_bitmap_manager) + 2*sizeof(context_data)
+								+ sizeof(update_map_manager) );
 
 				seg_config->per_cpu_info_list[i]->update_manager->update_map_size =
 					update_map_size;
@@ -787,34 +1083,63 @@ class fog_engine_target{
 	
 				//populate sched_manager, refer to types.hpp, new struct for fog_engine_target-by hejian
                 //also initilization the bitmap buffer
+                //bitmap address
                      
-                seg_config->per_cpu_info_list[i]->sched_manager->per_bitmap_buf_head0 = bitmap_buf_head0 + i * per_bitmap_buf_size;
-                seg_config->per_cpu_info_list[i]->sched_manager->per_bitmap_buf_head1 = bitmap_buf_head1 + i * per_bitmap_buf_size;
-                seg_config->per_cpu_info_list[i]->sched_manager->per_bitmap_buf_size = per_bitmap_buf_size;
-                seg_config->per_cpu_info_list[i]->sched_manager->per_bits_true_size = 0;
-                seg_config->per_cpu_info_list[i]->sched_manager->per_min_vert_id = 0;
-                seg_config->per_cpu_info_list[i]->sched_manager->per_max_vert_id = 0;
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->per_bitmap_buf_head = 
+					(char*)(ROUND_UP( 
+						(u64_t)seg_config->per_cpu_info_list[i]->buf_head + total_header_len,
+						sizeof(update<VA>) ));
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->per_bitmap_buf_head = 
+					(char*)(ROUND_UP( 
+						(u64_t)seg_config->per_cpu_info_list[i]->buf_head + total_header_len + per_bitmap_buf_size,
+						sizeof(update<VA>) ));
 
-                seg_config->per_cpu_info_list[i]->sched_manager->p_bitmap0 = new bitmap(
-                        bitmap_buf_head0 + i * per_bitmap_buf_size,
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->per_bitmap_buf_size = 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->per_bitmap_buf_size = per_bitmap_buf_size;
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->per_bits_true_size = 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->per_bits_true_size = 0;
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->steal_min_vert_id = 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->steal_min_vert_id = 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->steal_max_vert_id = 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->steal_max_vert_id = 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->per_min_vert_id = 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->per_min_vert_id = i + (per_bitmap_buf_size * 8 - 1) * gen_config.num_processors;
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->per_max_vert_id =
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->per_max_vert_id = i;
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->per_num_edges = 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->per_num_edges = 0;
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->signal_to_scatter = 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->signal_to_scatter = 0;
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->p_bitmap_steal = 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->p_bitmap_steal = NULL;
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->steal_virt_cpu_id = 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->steal_virt_cpu_id = -1;
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->steal_num_virt_cpus = 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->steal_num_virt_cpus = 0;
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->steal_bits_true_size = 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->steal_bits_true_size = 0;
+
+
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->p_bitmap = new bitmap(
+                        seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->per_bitmap_buf_head, 
                         per_bitmap_buf_size,
                         per_bitmap_buf_size*8,
                         i,
-                        i + (per_bitmap_buf_size*8 - 1)*4,
+                        i + (per_bitmap_buf_size*8 - 1)*gen_config.num_processors,
                         i,
                         gen_config.num_processors);
-                seg_config->per_cpu_info_list[i]->sched_manager->p_bitmap1 = new bitmap(
-                        bitmap_buf_head1 + i * per_bitmap_buf_size,
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->p_bitmap = new bitmap(
+                        seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->per_bitmap_buf_head, 
                         per_bitmap_buf_size,
                         per_bitmap_buf_size*8,
                         i,
-                        i + (per_bitmap_buf_size*8 - 1)*4,
+                        i + (per_bitmap_buf_size*8 - 1)*gen_config.num_processors,
                         i,
                         gen_config.num_processors);
 
 
 				//populate the auxiliary update buffer manager
-				seg_config->per_cpu_info_list[i]->aux_manager->buf_head =
+				/*seg_config->per_cpu_info_list[i]->aux_manager->buf_head =
 					seg_config->aux_update_buf + i* aux_update_buf_len;
 						
 				seg_config->per_cpu_info_list[i]->aux_manager->buf_size =
@@ -826,7 +1151,7 @@ class fog_engine_target{
 								sizeof( update<VA> ) );
 				seg_config->per_cpu_info_list[i]->aux_manager->buf_cap =
 					(u32_t)(aux_update_buf_len/sizeof( update<VA> ));
-				seg_config->per_cpu_info_list[i]->aux_manager->num_updates = 0;
+				seg_config->per_cpu_info_list[i]->aux_manager->num_updates = 0;*/
                 //wait the write process
 			}
 			show_sched_update_buf();
@@ -872,6 +1197,5 @@ segment_config<VA, sched_bitmap_manager> * fog_engine_target<A, VA>::seg_config;
 
 template <typename A, typename VA>
 io_queue_target* fog_engine_target<A, VA>::fog_io_queue;
-
 
 #endif

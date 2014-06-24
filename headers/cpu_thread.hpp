@@ -17,7 +17,7 @@ enum cpu_thread_status{
 	UPDATE_BUF_FULL = 100,	//Cannot scatter more updates, since my update buffer is full
 	NO_MORE_SCHED,			//I have no more sched tasks, but have updates in the auxiliary update buffer
 	FINISHED_SCATTER		//I have no more sched tasks, and no updates in auxiliary update buffer.
-							//	But still have updates in my strip update buffer. 
+	                        //	But still have updates in my strip update buffer. 
 };
 
 #define SCHED_BUFFER_LEN    1024

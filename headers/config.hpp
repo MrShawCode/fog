@@ -90,8 +90,9 @@ class segment_config{
 		char* sched_update_buf;
 		u64_t sched_update_buf_len;
 
-		char* aux_update_buf;
-		u64_t aux_update_buf_len;
+        //modified by hejian
+		char* aux_update_buf ;
+		u64_t aux_update_buf_len ;
 
 		//possible value for num_attr_buf: 1 or 2
 		//there are possibly two buffers (especially for large graph)
@@ -130,7 +131,7 @@ class segment_config{
                     i, (u64_t)per_cpu_info_list[i]->buf_head, per_cpu_info_list[i]->buf_size );
             }
 
-			PRINT_DEBUG( "Auxiliary update buffer:0x%llx, size:0x%llx\n", (u64_t)aux_update_buf, aux_update_buf_len );
+			//PRINT_DEBUG( "Auxiliary update buffer:0x%llx, size:0x%llx\n", (u64_t)aux_update_buf, aux_update_buf_len );
 
 			PRINT_DEBUG( "There are %u attribute buffer(s)\n", num_attr_buf );
 			switch( num_attr_buf ){
@@ -227,13 +228,15 @@ class segment_config{
 			}
 
 			//the auxiliary update buffer, occupies one slice (i.e., 1/5 of whole buffer)
-			aux_update_buf_len = ROUND_DOWN( theory_per_slice_size, (sizeof(update<VA>)*gen_config.num_processors) );
-			aux_update_buf = (char*)((u64_t)buf_head + 
-				(gen_config.memory_size - segment_cap*sizeof(VA)*num_attr_buf - aux_update_buf_len) );
+			//aux_update_buf_len = ROUND_DOWN( theory_per_slice_size, (sizeof(update<VA>)*gen_config.num_processors) );
+			//aux_update_buf = (char*)((u64_t)buf_head + 
+			//	(gen_config.memory_size - segment_cap*sizeof(VA)*num_attr_buf - aux_update_buf_len) );
+			aux_update_buf = (char*)NULL;
+            aux_update_buf_len = 0;
 
 			//sched_udate buffer, its length should be the same as the size of remaining buffer
 			sched_update_buf = (char*)buf_head;
-			sched_update_buf_len = gen_config.memory_size - segment_cap*sizeof(VA)*num_attr_buf - aux_update_buf_len;
+			sched_update_buf_len = gen_config.memory_size - segment_cap*sizeof(VA)*num_attr_buf /*- aux_update_buf_len*/;
 
 			//divide sched_update to each processor
 			//make sure per_cpu_buf_size is aligned to 8 bytes, since the future

@@ -31,7 +31,6 @@ class sssp_program{
 		//scatter updates at vid-th vertex 
 		static update<sssp_vert_attr> *scatter_one_edge(u32_t vid,
                 sssp_vert_attr * this_vert,
-                u32_t num_outedge,
                 edge * this_edge)
         {
             update<sssp_vert_attr> *ret;

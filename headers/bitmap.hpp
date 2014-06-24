@@ -52,10 +52,13 @@ class bitmap
         u32_t ch_vid_to_bitmap_index(u32_t value);
         u32_t get_max_vert();
         u32_t get_min_vert();
+        u32_t get_term_vert();
+        u32_t get_start_vert();
         u32_t get_index(u32_t index);
         void set_max_value(u32_t index);
         void set_min_value(u32_t index);
         void set_edge_num(u32_t edge_num_in);
+        u32_t get_edge_num();
         void print_binary(u32_t start, u32_t stop);
         void reset_value();
 
@@ -94,26 +97,27 @@ void bitmap::set_value(u32_t value)
 {
     u32_t index = ch_vid_to_bitmap_index(value);
 
+//    if ((bits_array[index >> BITS_SHIFT] & (1 << (index & BITS_MASK))) == 0)
+  //      bits_true_size++;
     bits_array[index >> BITS_SHIFT] |= 1 << (index & BITS_MASK);
-    bits_true_size++;
     assert(bits_true_size <= buf_num_bits);
 
-    if (value < min_vert)
-    {
-        min_index= index;
-        min_vert = value;
+//    if (value < min_vert)
+  //  {
+    //    min_index= index;
+      //  min_vert = value;
         //if (value == 23 || value == 10)
         //{
           //  PRINT_DEBUG("min_vert = %d\n", min_vert);
            // exit(-1);
         //}
-    }
+   // }
 
-    if (value > max_vert)
-    {
-        max_index= index;
-        max_vert = value;
-    }
+  //  if (value > max_vert)
+  //  {
+  //      max_index= index;
+  //      max_vert = value;
+  //  }
 
     /*
      * This code may equal the bellow:
@@ -125,13 +129,15 @@ void bitmap::set_value(u32_t value)
 
 void bitmap::clear_value(u32_t value)
 {
-    if (value < min_vert)
-        PRINT_DEBUG("value = %d, min_vert = %d\n", value, min_vert);
-    assert(value <= max_vert);
-    assert(value >= min_vert);
+    //if (value < min_vert)
+      //  PRINT_DEBUG("value = %d, min_vert = %d\n", value, min_vert);
+    //assert(value <= max_vert);
+    //assert(value >= min_vert);
+    assert(value <= term_vert);
+    assert(value >= start_vert);
     u32_t index = ch_vid_to_bitmap_index(value);
     //PRINT_DEBUG("herearaerae!\n");
-    bits_true_size--;
+    //bits_true_size--;
     bits_array[index >> BITS_SHIFT] &= ~(1 << (index & BITS_MASK));
 }
 
@@ -181,6 +187,11 @@ void bitmap::set_edge_num(u32_t edge_num_in)
 {
     edge_num = edge_num_in;
 }
+
+u32_t bitmap::get_edge_num()
+{
+    return edge_num;
+}
 void bitmap::reset_value()
 {
     max_vert = start_vert;
@@ -200,6 +211,14 @@ u32_t bitmap::get_max_vert()
     return max_vert;
 }
 
+u32_t bitmap::get_term_vert()
+{
+    return term_vert;
+}
+u32_t bitmap::get_start_vert()
+{
+    return start_vert;
+}
 u32_t bitmap::get_min_vert()
 {
     return min_vert;
