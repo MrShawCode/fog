@@ -1,0 +1,2046 @@
+File: fogsrc/main.cpp, Line: 00058: Graph name: /home/hejian/mmap_project/output_convert/twitter_rv.desc
+Application name:sssp
+File: fogsrc/main.cpp, Line: 00060: Configurations:
+File: fogsrc/main.cpp, Line: 00061: gen_config.memory_size = 0x100000000
+File: fogsrc/main.cpp, Line: 00062: gen_config.min_vert_id = 12
+File: fogsrc/main.cpp, Line: 00063: gen_config.max_vert_id = 61578414
+File: fogsrc/main.cpp, Line: 00064: gen_config.num_edges = 1468365182
+File: fogsrc/main.cpp, Line: 00065: gen_config.vert_file_name = /home/hejian/mmap_project/output_convert/twitter_rv.index
+File: fogsrc/main.cpp, Line: 00066: gen_config.edge_file_name = /home/hejian/mmap_project/output_convert/twitter_rv.edge
+File: fogsrc/main.cpp, Line: 00067: gen_config.attr_file_name(WRITE ONLY) = /home/hejian/mmap_project/output_convert/twitter_rv.attr
+File: fogsrc/main.cpp, Line: 00073: sssp_program start_vid = 12
+File: ./headers/index_vert_array.hpp, Line: 00059: vertex list file size:480(MBytes)
+File: ./headers/index_vert_array.hpp, Line: 00065: index array mmapped at virtual address:0x7f6754958000
+File: ./headers/index_vert_array.hpp, Line: 00072: edge list file size:11232(MBytes)
+File: ./headers/index_vert_array.hpp, Line: 00078: edge array mmapped at virtual address:0x7f6496958000
+File: ./headers/fog_engine_target.hpp, Line: 01168: Engine::map_anon_memory had allocated 0x100000000 bytes at 7f6396958000
+File: ./headers/config.hpp, Line: 00188: This is a small graph!
+File: ./headers/config.hpp, Line: 00117: ==========	Begin of segment configuration info	============
+File: ./headers/config.hpp, Line: 00119: (Whole) Buffer Head:0x7f6396958000, (Whole) Buffer Size:0x100000000
+File: ./headers/config.hpp, Line: 00120: Number of Vertices:61578415, Sizeof vertex attribute:8
+File: ./headers/config.hpp, Line: 00121: Number of segments:1
+File: ./headers/config.hpp, Line: 00122: Segment capacity:61578416(vertices)
+File: ./headers/config.hpp, Line: 00123: Number of Partitions:4
+File: ./headers/config.hpp, Line: 00124: Partition capacity:15394604(vertices)
+File: ./headers/config.hpp, Line: 00126: ----------	Addressing (ordered by logical address)	-------------
+File: ./headers/config.hpp, Line: 00127: Sched_update buffer:0x7f6396958000, size:0xe2a31a80
+File: ./headers/config.hpp, Line: 00128: PerCPU Buffer:
+File: ./headers/config.hpp, Line: 00131: CPU:0, sched_update buffer begins:0x7f6396958000, size:0x38a8c6a0
+File: ./headers/config.hpp, Line: 00131: CPU:1, sched_update buffer begins:0x7f63cf3e46a0, size:0x38a8c6a0
+File: ./headers/config.hpp, Line: 00131: CPU:2, sched_update buffer begins:0x7f6407e70d40, size:0x38a8c6a0
+File: ./headers/config.hpp, Line: 00131: CPU:3, sched_update buffer begins:0x7f64408fd3e0, size:0x38a8c6a0
+File: ./headers/config.hpp, Line: 00136: There are 1 attribute buffer(s)
+File: ./headers/config.hpp, Line: 00139: Attribute buffer:0x7f6479389a80, size:0x1d5ce580
+File: ./headers/config.hpp, Line: 00148: ==========	End of segment configuration info	============
+File: ./headers/fog_engine_target.hpp, Line: 00996: num_vertices is 61578415, the origin bitmap_buf_size is 7697301.875000
+File: ./headers/fog_engine_target.hpp, Line: 00997: After round up, the ROUND_UP(total_num_verttices,8) = 61578416
+File: ./headers/fog_engine_target.hpp, Line: 00998: the bitmap_buf_size is 7697302, per_bitmap_buf_size is 1924326
+File: ./headers/fog_engine_target.hpp, Line: 01013: init_sched_update_buffer of fog_engine_target--size of sched_bitmap_manager:16,  size of update map manager:16
+File: ./headers/fog_engine_target.hpp, Line: 01015: init_sched_update_buffer--update_map_size:16, bitmap_buf_size:7697302, total_head_len:192
+File: ./headers/fog_engine_target.hpp, Line: 01016: sizeof(context_data) = 72
+File: ./headers/bitmap.hpp, Line: 00080: Create a new bitmap for buf:0x7f63969580c4, the bitmap_buf_head is 0x7f63969580c4, the address of bits_array is 0x7f63969580c4.
+the buf_len_bytes is 1924326,the buf_num_bits is 15394608, the bits_true_size is 0, the start_Vert is 0, the term_vert is 61578428
+File: ./headers/bitmap.hpp, Line: 00085: max_vert = 0, min_vert = 61578428
+File: ./headers/bitmap.hpp, Line: 00086: max_index= 0, min_index= 15394607
+File: ./headers/bitmap.hpp, Line: 00089: start_index = 0, term_index = 15394607
+File: ./headers/bitmap.hpp, Line: 00090: processor_id = 0
+File: ./headers/bitmap.hpp, Line: 00080: Create a new bitmap for buf:0x7f6396b2ddb0, the bitmap_buf_head is 0x7f6396b2ddb0, the address of bits_array is 0x7f6396b2ddb0.
+the buf_len_bytes is 1924326,the buf_num_bits is 15394608, the bits_true_size is 0, the start_Vert is 0, the term_vert is 61578428
+File: ./headers/bitmap.hpp, Line: 00085: max_vert = 0, min_vert = 61578428
+File: ./headers/bitmap.hpp, Line: 00086: max_index= 0, min_index= 15394607
+File: ./headers/bitmap.hpp, Line: 00089: start_index = 0, term_index = 15394607
+File: ./headers/bitmap.hpp, Line: 00090: processor_id = 0
+File: ./headers/bitmap.hpp, Line: 00080: Create a new bitmap for buf:0x7f63cf3e4764, the bitmap_buf_head is 0x7f63cf3e4764, the address of bits_array is 0x7f63cf3e4764.
+the buf_len_bytes is 1924326,the buf_num_bits is 15394608, the bits_true_size is 0, the start_Vert is 1, the term_vert is 61578429
+File: ./headers/bitmap.hpp, Line: 00085: max_vert = 1, min_vert = 61578429
+File: ./headers/bitmap.hpp, Line: 00086: max_index= 0, min_index= 15394607
+File: ./headers/bitmap.hpp, Line: 00089: start_index = 0, term_index = 15394607
+File: ./headers/bitmap.hpp, Line: 00090: processor_id = 1
+File: ./headers/bitmap.hpp, Line: 00080: Create a new bitmap for buf:0x7f63cf5ba450, the bitmap_buf_head is 0x7f63cf5ba450, the address of bits_array is 0x7f63cf5ba450.
+the buf_len_bytes is 1924326,the buf_num_bits is 15394608, the bits_true_size is 0, the start_Vert is 1, the term_vert is 61578429
+File: ./headers/bitmap.hpp, Line: 00085: max_vert = 1, min_vert = 61578429
+File: ./headers/bitmap.hpp, Line: 00086: max_index= 0, min_index= 15394607
+File: ./headers/bitmap.hpp, Line: 00089: start_index = 0, term_index = 15394607
+File: ./headers/bitmap.hpp, Line: 00090: processor_id = 1
+File: ./headers/bitmap.hpp, Line: 00080: Create a new bitmap for buf:0x7f6407e70e04, the bitmap_buf_head is 0x7f6407e70e04, the address of bits_array is 0x7f6407e70e04.
+the buf_len_bytes is 1924326,the buf_num_bits is 15394608, the bits_true_size is 0, the start_Vert is 2, the term_vert is 61578430
+File: ./headers/bitmap.hpp, Line: 00085: max_vert = 2, min_vert = 61578430
+File: ./headers/bitmap.hpp, Line: 00086: max_index= 0, min_index= 15394607
+File: ./headers/bitmap.hpp, Line: 00089: start_index = 0, term_index = 15394607
+File: ./headers/bitmap.hpp, Line: 00090: processor_id = 2
+File: ./headers/bitmap.hpp, Line: 00080: Create a new bitmap for buf:0x7f6408046af0, the bitmap_buf_head is 0x7f6408046af0, the address of bits_array is 0x7f6408046af0.
+the buf_len_bytes is 1924326,the buf_num_bits is 15394608, the bits_true_size is 0, the start_Vert is 2, the term_vert is 61578430
+File: ./headers/bitmap.hpp, Line: 00085: max_vert = 2, min_vert = 61578430
+File: ./headers/bitmap.hpp, Line: 00086: max_index= 0, min_index= 15394607
+File: ./headers/bitmap.hpp, Line: 00089: start_index = 0, term_index = 15394607
+File: ./headers/bitmap.hpp, Line: 00090: processor_id = 2
+File: ./headers/bitmap.hpp, Line: 00080: Create a new bitmap for buf:0x7f64408fd4a4, the bitmap_buf_head is 0x7f64408fd4a4, the address of bits_array is 0x7f64408fd4a4.
+the buf_len_bytes is 1924326,the buf_num_bits is 15394608, the bits_true_size is 0, the start_Vert is 3, the term_vert is 61578431
+File: ./headers/bitmap.hpp, Line: 00085: max_vert = 3, min_vert = 61578431
+File: ./headers/bitmap.hpp, Line: 00086: max_index= 0, min_index= 15394607
+File: ./headers/bitmap.hpp, Line: 00089: start_index = 0, term_index = 15394607
+File: ./headers/bitmap.hpp, Line: 00090: processor_id = 3
+File: ./headers/bitmap.hpp, Line: 00080: Create a new bitmap for buf:0x7f6440ad3190, the bitmap_buf_head is 0x7f6440ad3190, the address of bits_array is 0x7f6440ad3190.
+the buf_len_bytes is 1924326,the buf_num_bits is 15394608, the bits_true_size is 0, the start_Vert is 3, the term_vert is 61578431
+File: ./headers/bitmap.hpp, Line: 00085: max_vert = 3, min_vert = 61578431
+File: ./headers/bitmap.hpp, Line: 00086: max_index= 0, min_index= 15394607
+File: ./headers/bitmap.hpp, Line: 00089: start_index = 0, term_index = 15394607
+File: ./headers/bitmap.hpp, Line: 00090: processor_id = 3
+File: ./headers/fog_engine_target.hpp, Line: 00884: ===============	sched_update buffer for each CPU begin	=============
+File: ./headers/fog_engine_target.hpp, Line: 00885: CPU	Sched_bitmap_manger	Update_map_mangert
+File: ./headers/fog_engine_target.hpp, Line: 00891: 0	0x7f6396958000	0x7f63969580a0
+File: ./headers/fog_engine_target.hpp, Line: 00891: 1	0x7f63cf3e46a0	0x7f63cf3e4740
+File: ./headers/fog_engine_target.hpp, Line: 00891: 2	0x7f6407e70d40	0x7f6407e70de0
+File: ./headers/fog_engine_target.hpp, Line: 00891: 3	0x7f64408fd3e0	0x7f64408fd480
+File: ./headers/fog_engine_target.hpp, Line: 00893: ------------------	schedule bitmap manager	---------------
+File: ./headers/fog_engine_target.hpp, Line: 00894: ------------------	context data0	---------------
+File: ./headers/fog_engine_target.hpp, Line: 00895: CPU	bitmap_buf_head	per_bitmap_buf_size per_bits_true_size edges max_id min_id
+File: ./headers/fog_engine_target.hpp, Line: 00904: 0	0x7f63969580c4		1924326	0	0	0	61578428
+File: ./headers/fog_engine_target.hpp, Line: 00904: 1	0x7f63cf3e4764		1924326	0	0	1	61578429
+File: ./headers/fog_engine_target.hpp, Line: 00904: 2	0x7f6407e70e04		1924326	0	0	2	61578430
+File: ./headers/fog_engine_target.hpp, Line: 00904: 3	0x7f64408fd4a4		1924326	0	0	3	61578431
+File: ./headers/fog_engine_target.hpp, Line: 00905: ------------------	context data1	---------------
+File: ./headers/fog_engine_target.hpp, Line: 00906: CPU	bitmap_buf_head	per_bitmap_buf_size per_bits_true_size edges max_id min_id
+File: ./headers/fog_engine_target.hpp, Line: 00915: 0	0x7f6396b2ddb0		1924326	0	0	0	61578428
+File: ./headers/fog_engine_target.hpp, Line: 00915: 1	0x7f63cf5ba450		1924326	0	0	1	61578429
+File: ./headers/fog_engine_target.hpp, Line: 00915: 2	0x7f6408046af0		1924326	0	0	2	61578430
+File: ./headers/fog_engine_target.hpp, Line: 00915: 3	0x7f6440ad3190		1924326	0	0	3	61578431
+File: ./headers/fog_engine_target.hpp, Line: 00917: ------------------	update manager	---------------
+File: ./headers/fog_engine_target.hpp, Line: 00918: CPU	Update_map_address	Update_map_size
+File: ./headers/fog_engine_target.hpp, Line: 00923: 0	0x7f63969580b0	16
+File: ./headers/fog_engine_target.hpp, Line: 00923: 1	0x7f63cf3e4750	16
+File: ./headers/fog_engine_target.hpp, Line: 00923: 2	0x7f6407e70df0	16
+File: ./headers/fog_engine_target.hpp, Line: 00923: 3	0x7f64408fd490	16
+File: ./headers/fog_engine_target.hpp, Line: 00936: ------------------	strip buffer	------------
+File: ./headers/fog_engine_target.hpp, Line: 00937: CPU	Strip_buffer	Buffer_size	Strip_cap	Per_cpu_strip_cap
+File: ./headers/fog_engine_target.hpp, Line: 00944: 0	0x7f6396d03a90	0x386e0bf0	78894676	19723669
+File: ./headers/fog_engine_target.hpp, Line: 00944: 1	0x7f63cf790130	0x386e0bf0	78894676	19723669
+File: ./headers/fog_engine_target.hpp, Line: 00944: 2	0x7f640821c7d0	0x386e0bf0	78894676	19723669
+File: ./headers/fog_engine_target.hpp, Line: 00944: 3	0x7f6440ca8e70	0x386e0bf0	78894676	19723669
+File: ./headers/fog_engine_target.hpp, Line: 00946: ===============	sched_update buffer for each CPU end	=============
+File: ./headers/fog_engine_target.hpp, Line: 00144: fog engine operator is called, conduct init phase for 1 times.
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: fogsrc/../application/sssp.hpp, Line: 00019: VID = 12
+File: ./headers/disk_thread_target.hpp, Line: 00078: io_file_name:/home/hejian/mmap_project/output_convert/twitter_rv.attr
+File: ./headers/fog_engine_target.hpp, Line: 00212: fog engine finished initializing attribute files!
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 1
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 12, max_vert= 12
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 0 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00324: All cpus have finished scatter
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		253598	247911	251206	248346	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 1001061 update in processor 0, utilization rate is 0.012689
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 0, the min_vert = 61578428
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 2, the min_vert = 61578430
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 1001061
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 2
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 1001061
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 16, max_vert= 61578044
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 15, max_vert= 61577371
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 13, max_vert= 61577965
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 14, max_vert= 61577666
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 2 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 0 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00324: All cpus have finished scatter
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		7860454	7300489	7757995	7341974	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		7645692	7168619	7547290	7202488	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		9507432	8917704	9400330	8970473	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		8516555	7994324	8408069	8030492	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 30260912 update in processor 0, utilization rate is 0.383561
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 29564089 update in processor 1, utilization rate is 0.374729
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 36795939 update in processor 2, utilization rate is 0.466393
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 32949440 update in processor 3, utilization rate is 0.417638
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 2, the min_vert = 61578430
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 0, the min_vert = 61578428
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 15938633
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 3
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 15938633
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 31, max_vert= 61578087
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 21, max_vert= 61578005
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 14, max_vert= 61578170
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 16, max_vert= 61578128
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 15183722, the edge_id is 200
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 2 has 3823381 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 15774008, the edge_id is 1273
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 0 has 3803012 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 16812787, the edge_id is 264634
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 3 has 3723399 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 17070757, the edge_id is 131
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 1 has 3706054 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:0 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:1 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:2 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:3 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00331: ALL CPUS have not finished scatter beacuse the update_bufs are full!
+File: ./headers/fog_engine_target.hpp, Line: 00332: need to gather!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	17582978	19596910	17632887	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	18091921	19652683	18119215	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	17815944	19617549	17861496	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	18093631	19638504	18122142	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 74536444 update in processor 0, utilization rate is 0.944759
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 75587488 update in processor 1, utilization rate is 0.958081
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 75018658 update in processor 2, utilization rate is 0.950871
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 75577946 update in processor 3, utilization rate is 0.957960
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 0, the min_vert = 61578428
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 2, the min_vert = 61578430
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 15774008, max_vert= 61578128
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 16812787, max_vert= 61578087
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 17070757, max_vert= 61578005
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 15183722, max_vert= 61578170
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 20023606, the edge_id is 12
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 2 has 3502687 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 21187956, the edge_id is 595
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 0 has 3414357 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 22650211, the edge_id is 423862
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 3 has 3267345 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 23019705, the edge_id is 78935
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 1 has 3231979 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:0 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:1 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:2 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:3 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00331: ALL CPUS have not finished scatter beacuse the update_bufs are full!
+File: ./headers/fog_engine_target.hpp, Line: 00332: need to gather!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	18467681	19631084	18525487	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	18648206	19664666	18728942	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	18459676	19650601	18504103	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	18658047	19672904	18716027	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 76347921 update in processor 0, utilization rate is 0.967720
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 76765483 update in processor 1, utilization rate is 0.973012
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 76338049 update in processor 2, utilization rate is 0.967594
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 76770647 update in processor 3, utilization rate is 0.973078
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 61578128, the min_vert = 16
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 61578170, the min_vert = 22
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 61578087, the min_vert = 47
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 61578005, the min_vert = 13
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 21187956, max_vert= 61578128
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 22650211, max_vert= 61578087
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 20023606, max_vert= 61578170
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 23019705, max_vert= 61578005
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 32062682, the edge_id is 69
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 2 has 2505761 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 33972892, the edge_id is 4587
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 0 has 2362373 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 39077195, the edge_id is 7546
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 3 has 1967978 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 39752421, the edge_id is 12
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 1 has 1909829 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:0 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:1 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:2 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:3 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00331: ALL CPUS have not finished scatter beacuse the update_bufs are full!
+File: ./headers/fog_engine_target.hpp, Line: 00332: need to gather!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	18934655	19610448	18976072	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	18979918	19562505	18962397	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	18790933	19590630	18863670	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	18959733	19560481	18958600	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 77244844 update in processor 0, utilization rate is 0.979088
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 77228489 update in processor 1, utilization rate is 0.978881
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 76968902 update in processor 2, utilization rate is 0.975591
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 77202483 update in processor 3, utilization rate is 0.978551
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 61578128, the min_vert = 16
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 61578170, the min_vert = 22
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 61578087, the min_vert = 47
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 61578005, the min_vert = 13
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 33972892, max_vert= 61578128
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 39077195, max_vert= 61578087
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 32062682, max_vert= 61578170
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 39752421, max_vert= 61578005
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 0 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 2 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00324: All cpus have finished scatter
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		17684144	17189320	17500698	17171446	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		12377307	12091689	12250584	12066524	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19519680	18987238	19330211	18970899	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		12819771	12517981	12696166	12490287	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 69545608 update in processor 0, utilization rate is 0.881499
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 48786104 update in processor 1, utilization rate is 0.618370
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 76808028 update in processor 2, utilization rate is 0.973551
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 50524205 update in processor 3, utilization rate is 0.640401
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 61578128, the min_vert = 16
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 61578170, the min_vert = 22
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 61578005, the min_vert = 13
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 61578087, the min_vert = 47
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 29915395
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 4
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 29915395
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 16, max_vert= 61578128
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 13, max_vert= 61578005
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 47, max_vert= 61578087
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 22, max_vert= 61578170
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 18472550, the edge_id is 302
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 2 has 6776315 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 19370876, the edge_id is 26
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 0 has 6652915 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 2
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 19648393, the edge_id is 3278
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 1 has 6609703 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 2
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 20297867, the edge_id is 51
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 3 has 6511072 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:0 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:1 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:2 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:3 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00331: ALL CPUS have not finished scatter beacuse the update_bufs are full!
+File: ./headers/fog_engine_target.hpp, Line: 00332: need to gather!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	17930478	19690541	17961115	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19692866	18479939	19723669	18495621	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	18018752	19705671	18051974	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19711605	18417155	19723669	18447609	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 75305803 update in processor 0, utilization rate is 0.954511
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 76392095 update in processor 1, utilization rate is 0.968279
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 75500066 update in processor 2, utilization rate is 0.956973
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 76300038 update in processor 3, utilization rate is 0.967113
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 0, the min_vert = 61578428
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 2, the min_vert = 61578430
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 19370876, max_vert= 61578128
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 18472550, max_vert= 61578170
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 19648393, max_vert= 61578005
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 20297867, max_vert= 61578087
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 29397194, the edge_id is 524
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 2 has 4988191 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 2
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 29842036, the edge_id is 459726
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 0 has 4908605 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 34433017, the edge_id is 39
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 1 has 4237541 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 35656627, the edge_id is 24
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 3 has 4044499 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:0 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:1 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:2 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:3 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00331: ALL CPUS have not finished scatter beacuse the update_bufs are full!
+File: ./headers/fog_engine_target.hpp, Line: 00332: need to gather!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19716999	19129977	19723669	19229335	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	19072921	19690981	19153285	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	19023829	19705595	19133813	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	19139114	19680475	19200353	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 77799980 update in processor 0, utilization rate is 0.986125
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 77640856 update in processor 1, utilization rate is 0.984108
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 77586906 update in processor 2, utilization rate is 0.983424
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 77743611 update in processor 3, utilization rate is 0.985410
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 61577744, the min_vert = 96
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 61577683, the min_vert = 155
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 61577625, the min_vert = 81
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 61577714, the min_vert = 190
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 29397194, max_vert= 61578170
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 34433017, max_vert= 61578005
+File: ./headers/cpu_thread_target.hpp, Line: 00187: Context scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 29842036, max_vert= 61578128
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 35656627, max_vert= 61578087
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 55879614, the edge_id is 383
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 2 has 777896 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00342: Currently, the strip_num = 0, cpu_offset = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00343: The vert_to_scatter is 58285760, the edge_id is 25
+File: ./headers/cpu_thread_target.hpp, Line: 00376: UPDATE_BUF_FULL:after this scatter, Processor 0 has 405532 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:0 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 100
+File: ./headers/fog_engine_target.hpp, Line: 00303: Processor:2 has not finished scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00339: There are some cpus have finished! Others have not finished!
+File: ./headers/fog_engine_target.hpp, Line: 00340: Also need to gather!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	19310215	19604856	19349991	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		17498915	17216815	17403858	17211742	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		19723669	19321067	19613620	19368679	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		16308038	16037588	16230154	16035702	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 77988731 update in processor 0, utilization rate is 0.988517
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 69331330 update in processor 1, utilization rate is 0.878783
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 78027035 update in processor 2, utilization rate is 0.989003
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 64611482 update in processor 3, utilization rate is 0.818959
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 61577744, the min_vert = 96
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 61577714, the min_vert = 190
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 61577649, the min_vert = 81
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 61577683, the min_vert = 155
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00425: In cpu 2, min_vert = 55879614, max_vert = 61578170, average_num = 1424639
+File: ./headers/fog_engine_target.hpp, Line: 00450: Processor-0's steal_min_vert = 55879614
+File: ./headers/fog_engine_target.hpp, Line: 00475: Processor-0's steal_max_vert = 57304254
+File: ./headers/fog_engine_target.hpp, Line: 00450: Processor-1's steal_min_vert = 57304258
+File: ./headers/fog_engine_target.hpp, Line: 00475: Processor-1's steal_max_vert = 58728894
+File: ./headers/fog_engine_target.hpp, Line: 00450: Processor-2's steal_min_vert = 58728898
+File: ./headers/fog_engine_target.hpp, Line: 00475: Processor-2's steal_max_vert = 60153534
+File: ./headers/fog_engine_target.hpp, Line: 00450: Processor-3's steal_min_vert = 60153538
+File: ./headers/fog_engine_target.hpp, Line: 00475: Processor-3's steal_max_vert = 61578170
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00194: Steal scatter
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 58728898, max_vert= 60153534
+File: ./headers/cpu_thread_target.hpp, Line: 00194: Steal scatter
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 55879614, max_vert= 57304254
+File: ./headers/cpu_thread_target.hpp, Line: 00194: Steal scatter
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 57304258, max_vert= 58728894
+File: ./headers/cpu_thread_target.hpp, Line: 00194: Steal scatter
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 60153538, max_vert= 61578170
+File: ./headers/cpu_thread_target.hpp, Line: 00382: Steal-cpu 3 has scatter 151435 bits
+File: ./headers/cpu_thread_target.hpp, Line: 00382: Steal-cpu 2 has scatter 190716 bits
+File: ./headers/cpu_thread_target.hpp, Line: 00382: Steal-cpu 1 has scatter 212945 bits
+File: ./headers/cpu_thread_target.hpp, Line: 00382: Steal-cpu 0 has scatter 222800 bits
+File: ./headers/fog_engine_target.hpp, Line: 00358: After steal scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00361: Steal processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00377: Steal round 0, Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00361: Steal processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00377: Steal round 0, Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00361: Steal processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00377: Steal round 0, Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00361: Steal processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00377: Steal round 0, Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00425: In cpu 0, min_vert = 58285760, max_vert = 61578128, average_num = 823092
+File: ./headers/fog_engine_target.hpp, Line: 00450: Processor-0's steal_min_vert = 58285760
+File: ./headers/fog_engine_target.hpp, Line: 00475: Processor-0's steal_max_vert = 59108860
+File: ./headers/fog_engine_target.hpp, Line: 00450: Processor-1's steal_min_vert = 59108864
+File: ./headers/fog_engine_target.hpp, Line: 00475: Processor-1's steal_max_vert = 59931964
+File: ./headers/fog_engine_target.hpp, Line: 00450: Processor-2's steal_min_vert = 59931968
+File: ./headers/fog_engine_target.hpp, Line: 00475: Processor-2's steal_max_vert = 60755068
+File: ./headers/fog_engine_target.hpp, Line: 00450: Processor-3's steal_min_vert = 60755072
+File: ./headers/fog_engine_target.hpp, Line: 00475: Processor-3's steal_max_vert = 61578128
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00194: Steal scatter
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 58285760, max_vert= 59108860
+File: ./headers/cpu_thread_target.hpp, Line: 00194: Steal scatter
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 59931968, max_vert= 60755068
+File: ./headers/cpu_thread_target.hpp, Line: 00194: Steal scatter
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 59108864, max_vert= 59931964
+File: ./headers/cpu_thread_target.hpp, Line: 00194: Steal scatter
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 60755072, max_vert= 61578128
+File: ./headers/cpu_thread_target.hpp, Line: 00382: Steal-cpu 3 has scatter 80047 bits
+File: ./headers/cpu_thread_target.hpp, Line: 00382: Steal-cpu 2 has scatter 99839 bits
+File: ./headers/cpu_thread_target.hpp, Line: 00382: Steal-cpu 1 has scatter 109084 bits
+File: ./headers/cpu_thread_target.hpp, Line: 00382: Steal-cpu 0 has scatter 116562 bits
+File: ./headers/fog_engine_target.hpp, Line: 00358: After steal scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00361: Steal processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00377: Steal round 1, Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00361: Steal processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00377: Steal round 1, Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00361: Steal processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00377: Steal round 1, Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00361: Steal processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00377: Steal round 1, Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00382: After steal!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		751074	728896	747350	730696	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		674605	651608	663795	651665	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		590828	565186	583889	567892	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		442739	428640	442021	437132	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 2958016 update in processor 0, utilization rate is 0.037493
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 2641673 update in processor 1, utilization rate is 0.033484
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 2307795 update in processor 2, utilization rate is 0.029252
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 1750532 update in processor 3, utilization rate is 0.022188
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 61577744, the min_vert = 96
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 61577683, the min_vert = 155
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 61578414, the min_vert = 190
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 61577649, the min_vert = 81
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 12467375
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 5
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 12467375
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 190, max_vert= 61578414
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 81, max_vert= 61577649
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 155, max_vert= 61577683
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 96, max_vert= 61577744
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 0 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 2 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00324: All cpus have finished scatter
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		12162932	11716219	12192801	11745528	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		11462840	11218059	11494179	11219917	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		12264887	11821376	12279585	11861133	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		11421219	11168250	11462609	11173023	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 47817480 update in processor 0, utilization rate is 0.606093
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 45394995 update in processor 1, utilization rate is 0.575387
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 48226981 update in processor 2, utilization rate is 0.611283
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 45225101 update in processor 3, utilization rate is 0.573234
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 61578128, the min_vert = 58285760
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 61578170, the min_vert = 55879614
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 2332101
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 6
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 2332101
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 214, max_vert= 61578170
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 212, max_vert= 61578128
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 205, max_vert= 61576477
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 211, max_vert= 61575463
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 2 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 0 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00324: All cpus have finished scatter
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		1203363	1148036	1204695	1152554	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		1208391	1194122	1214358	1194564	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		1369892	1312556	1369569	1320710	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		1219534	1198899	1222941	1199924	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 4708648 update in processor 0, utilization rate is 0.059683
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 4811435 update in processor 1, utilization rate is 0.060986
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 5372727 update in processor 2, utilization rate is 0.068100
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 4841298 update in processor 3, utilization rate is 0.061364
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 0, the min_vert = 61578428
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 2, the min_vert = 61578430
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 444295
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 7
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 444295
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 400, max_vert= 61556744
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 205, max_vert= 61547813
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 342, max_vert= 61569398
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 399, max_vert= 61540455
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 0 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 2 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00324: All cpus have finished scatter
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		195970	185332	195676	185353	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		206617	206271	208701	205665	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		186849	176506	187143	177018	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		169652	168594	170691	167830	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 762331 update in processor 0, utilization rate is 0.009663
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 827254 update in processor 1, utilization rate is 0.010486
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 727516 update in processor 2, utilization rate is 0.009221
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 676767 update in processor 3, utilization rate is 0.008578
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 0, the min_vert = 61578428
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 2, the min_vert = 61578430
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 70224
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 8
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 70224
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 4186, max_vert= 61516626
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 2955, max_vert= 61557947
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 3524, max_vert= 61529156
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 2957, max_vert= 61567745
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 0 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 2 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00324: All cpus have finished scatter
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		27243	25644	27331	25309	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		23482	23891	23867	23700	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		25951	24188	26334	24351	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		35270	35415	35822	35461	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 105527 update in processor 0, utilization rate is 0.001338
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 94940 update in processor 1, utilization rate is 0.001203
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 100824 update in processor 2, utilization rate is 0.001278
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 141968 update in processor 3, utilization rate is 0.001799
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 0, the min_vert = 61578428
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 2, the min_vert = 61578430
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 9431
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 9
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 9431
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 4346, max_vert= 61357134
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 5295172, max_vert= 61425568
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 3583, max_vert= 61410447
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 23073, max_vert= 61424385
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 0 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 2 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00324: All cpus have finished scatter
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		2860	2606	2851	2532	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		3188	3126	3253	3082	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		3239	2905	3171	2814	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		2858	2932	2862	2891	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 10849 update in processor 0, utilization rate is 0.000138
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 12649 update in processor 1, utilization rate is 0.000160
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 12129 update in processor 2, utilization rate is 0.000154
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 11543 update in processor 3, utilization rate is 0.000146
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 0, the min_vert = 61578428
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 2, the min_vert = 61578430
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 1651
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 10
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 1651
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 14097047, max_vert= 61376467
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 5422932, max_vert= 60850928
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 52353, max_vert= 61477253
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 5523862, max_vert= 61390190
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 0 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 2 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00324: All cpus have finished scatter
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		570	638	561	470	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		419	486	508	435	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		563	669	626	534	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		445	564	467	397	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 2239 update in processor 0, utilization rate is 0.000028
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 1848 update in processor 1, utilization rate is 0.000023
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 2392 update in processor 2, utilization rate is 0.000030
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 1873 update in processor 3, utilization rate is 0.000024
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 0, the min_vert = 61578428
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 2, the min_vert = 61578430
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 268
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 11
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 268
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 14190067, max_vert= 61376467
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 14547581, max_vert= 61209421
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 5701042, max_vert= 59475462
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 5546272, max_vert= 60230732
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 2 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 0 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00324: All cpus have finished scatter
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		144	142	138	123	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		92	105	100	104	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		219	215	200	178	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		163	191	182	169	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 547 update in processor 0, utilization rate is 0.000007
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 401 update in processor 1, utilization rate is 0.000005
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 812 update in processor 2, utilization rate is 0.000010
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 705 update in processor 3, utilization rate is 0.000009
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 0, the min_vert = 61578428
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 2, the min_vert = 61578430
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 80
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 12
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 80
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 12177932, max_vert= 37071136
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 14547581, max_vert= 37918017
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 12178042, max_vert= 59475462
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 14470467, max_vert= 61376467
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 0 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 2 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00324: All cpus have finished scatter
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		41	46	49	35	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		43	35	49	42	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		117	134	112	87	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		47	52	57	46	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 171 update in processor 0, utilization rate is 0.000002
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 169 update in processor 1, utilization rate is 0.000002
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 450 update in processor 2, utilization rate is 0.000006
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 202 update in processor 3, utilization rate is 0.000003
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 0, the min_vert = 61578428
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 2, the min_vert = 61578430
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 36
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 13
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 36
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 17797633, max_vert= 30552753
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 12177992, max_vert= 46655700
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 14399411, max_vert= 30665835
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 16216846, max_vert= 52892434
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 2 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 0 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00324: All cpus have finished scatter
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		54	48	60	39	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		24	27	41	32	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		36	40	37	31	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		16	18	20	9	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 201 update in processor 0, utilization rate is 0.000003
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 124 update in processor 1, utilization rate is 0.000002
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 144 update in processor 2, utilization rate is 0.000002
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 63 update in processor 3, utilization rate is 0.000001
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 0, the min_vert = 61578428
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 2, the min_vert = 61578430
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 21
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 14
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 21
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 18502192, max_vert= 30807152
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 18795659, max_vert= 51688475
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 17773146, max_vert= 59475462
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 18849857, max_vert= 30552753
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 0 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 2 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00324: All cpus have finished scatter
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		3	6	9	4	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		2	2	5	2	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		53	54	39	38	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		13	9	12	9	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 22 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 11 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 184 update in processor 2, utilization rate is 0.000002
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 43 update in processor 3, utilization rate is 0.000001
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 0, the min_vert = 61578428
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 2, the min_vert = 61578430
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 7
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 15
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 7
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:0, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 18503073, max_vert= 34253349
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 0 ,min_vert= 18827272, max_vert= 46655700
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 18510318, max_vert= 18510318
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 2 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 18519043, max_vert= 18519043
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 0 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00324: All cpus have finished scatter
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		7	4	8	1	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		3	1	9	3	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		4	5	3	3	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		2	1	1	1	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 20 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 16 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 15 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 5 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 2, the min_vert = 61578430
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 0, the min_vert = 61578428
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+		CPU0	CPU1	CPU2	CPU3
+Strip0		0	0	0	0	
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 3
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 16
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 18519043, max_vert= 18519043
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 18826890, max_vert= 18826890
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 2 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 18518917, max_vert= 18518917
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 
+File: ./headers/fog_engine_target.hpp, Line: 00101: SCATTER and UPDATE loop 16
+File: ./headers/fog_engine_target.hpp, Line: 00105: before scatter, num_vert_of_next_phase = 3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 3
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 2
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 2 ,min_vert= 18826890, max_vert= 18826890
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 3 ,min_vert= 18519043, max_vert= 18519043
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 1
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00212: Processor: 1 ,min_vert= 18518917, max_vert= 18518917
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 3 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00161: PHASE:1, processor : 0
+File: ./headers/cpu_thread_target.hpp, Line: 00180: Normal scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 1 has 0 bits to scatter!
+File: ./headers/cpu_thread_target.hpp, Line: 00387: After this scatter, Processor 2 has 0 bits to scatter!
+File: ./headers/fog_engine_target.hpp, Line: 00267: After scatter computation!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 0 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 0 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 1 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 1 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 2 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 2 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00276: Processor 3 status 102
+File: ./headers/fog_engine_target.hpp, Line: 00312: Processor: 3 has finished scatter, and the update buffer is not full!
+File: ./headers/fog_engine_target.hpp, Line: 00324: All cpus have finished scatter
+--------------- update map of CPU0 begin-----------------
+CPU0CPU1CPU2CPU3
+Strip00000
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+CPU0CPU1CPU2CPU3CPU2CPU3
+Strip000000010
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+CPU0CPU1CPU2CPU3CPU2CPU3CPU3
+Strip000002320
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+CPU0CPU1CPU2CPU3CPU2CPU3CPU3
+Strip000002320111
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 1 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 7 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 5 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00108: after scatter, num_vert_of_next_phase = 0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:0
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:3
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:1
+File: ./headers/cpu_thread_target.hpp, Line: 00613: Before operator, this is processor:2
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 3, the max_vert = 3, the min_vert = 61578431
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 0, the max_vert = 0, the min_vert = 61578428
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 1, the max_vert = 1, the min_vert = 61578429
+File: ./headers/cpu_thread_target.hpp, Line: 00435: This is the processor 2, the max_vert = 2, the min_vert = 61578430
+File: ./headers/fog_engine_target.hpp, Line: 00666: After gather!!
+--------------- update map of CPU0 begin-----------------
+CPU0CPU1CPU2CPU3CPU2CPU3CPU3
+Strip000000010000
+--------------- update map of CPU0 end-----------------
+--------------- update map of CPU1 begin-----------------
+CPU0CPU1CPU2CPU3CPU2CPU3CPU3
+Strip00000001000000
+--------------- update map of CPU1 end-----------------
+--------------- update map of CPU2 begin-----------------
+CPU0CPU1CPU2CPU3CPU2CPU3CPU3
+Strip000000010000000
+--------------- update map of CPU2 end-----------------
+--------------- update map of CPU3 begin-----------------
+CPU0CPU1CPU2CPU3CPU2CPU3CPU3
+Strip000000010000000
+--------------- update map of CPU3 end-----------------
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 0, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 1, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 2, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00696: THere are 0 update in processor 3, utilization rate is 0.000000
+File: ./headers/fog_engine_target.hpp, Line: 00112: after gather, num_vert_of_next_phase = 0
+File: ./headers/fog_engine_target.hpp, Line: 00819: begin to reclaim everything
+sudo ./bin/fog -g /home/hejian/mmap_project/output_convert/twitter_rv.desc -a  552.09s user 47.39s system 98% cpu 10:10.25 total
