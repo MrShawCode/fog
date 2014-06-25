@@ -251,8 +251,10 @@ class fog_engine_target{
                     return -1;
                 }
                 p_scatter_param->attr_array_head = (void *)attr_array_header;
-                PRINT_DEBUG("CHeck remap, dest_vert = %d\n", 294);
-                PRINT_DEBUG("attr_array_head[%d]->value = %f\n", 294,((VA*)attr_array_header)[294].value);
+                //PRINT_DEBUG("CHeck remap, dest_vert = %d\n", 294);
+                //PRINT_DEBUG("attr_array_head[%d]->value = %f\n", 294,((VA*)attr_array_header)[294].value);
+                //PRINT_DEBUG("CHeck remap, dest_vert = %d\n", 4);
+                //PRINT_DEBUG("attr_array_head[%d]->value = %f\n", 4,((VA*)attr_array_header)[4].value);
                 p_scatter_param->PHASE = PHASE;
             }
 
@@ -544,7 +546,7 @@ class fog_engine_target{
             //u32_t begin_with;
             u64_t offset, read_size;
             gather_param_target * p_gather_param = new gather_param_target;
-            u32_t ret;
+            //u32_t ret;
 
 			fog_engine_target_state = GATHER;
             //for (u32_t strip_id = 0; strip_id < seg_config->num_segments; strip_id++)
@@ -565,8 +567,8 @@ class fog_engine_target{
             }
             else
             {
-                if ((ret = cal_threshold()) == 1)
-                {
+                //if ((ret = cal_threshold()) == 1)
+               // {
                     for(u32_t i = 0; i < seg_config->num_segments; i++)
                     {
                         p_gather_param->threshold = 1;
@@ -612,7 +614,7 @@ class fog_engine_target{
 
                             if ((i + 1) == (seg_config->num_segments - 1))
                             {
-                                read_size = (u64_t)(gen_config.max_vert_id%seg_config->segment_cap)*sizeof(VA);
+                                read_size = (u64_t)(gen_config.max_vert_id%seg_config->segment_cap+1)*sizeof(VA);
                             }
                             else 
                                 read_size = (u64_t)(seg_config->segment_cap*sizeof(VA)); 
@@ -637,22 +639,33 @@ class fog_engine_target{
                             fog_io_queue->del_io_task(write_io_work);
                             write_io_work = NULL;
                         }
-                        write_io_work = new io_work_target(gen_config.attr_file_name.c_str(),
-                                FILE_WRITE, next_buffer, offset, read_size);
+
+                        if (i != (seg_config->num_segments-1) )
+                        {
+                            write_io_work = new io_work_target(gen_config.attr_file_name.c_str(),
+                                    FILE_WRITE, read_buf, 
+                                    (u64_t)i * seg_config->segment_cap*sizeof(VA), (u64_t)seg_config->segment_cap*sizeof(VA));
+                        }
+                        else
+                        {
+                            write_io_work = new io_work_target(gen_config.attr_file_name.c_str(),
+                                    FILE_WRITE, read_buf, 
+                                    (u64_t)i * seg_config->segment_cap*sizeof(VA),
+                                    (u64_t)(gen_config.max_vert_id%seg_config->segment_cap+1)*sizeof(VA));
+
+                        }
+
                         fog_io_queue->add_io_task(write_io_work);
                     }
-                }
-                else
+
+                //}
+            /*    else
                 {
                     for(u32_t i = 0; i < seg_config->num_segments; i++)
                     {
                         p_gather_param->threshold = 0;
                         p_gather_param->strip_id = i;
                         p_gather_param->PHASE = PHASE;
-                        if (remap_attr_file() < 0)
-                        {
-                            PRINT_ERROR("FOG_ENGINE::gather_updates failed!\n");
-                        }
                         p_gather_param->attr_array_head = (void *)attr_array_header;
 
                         gather_cpu_work = new cpu_work_target<A, VA>(GATHER, (void *)p_gather_param);
@@ -661,10 +674,15 @@ class fog_engine_target{
 
                         delete gather_cpu_work;
                         gather_cpu_work = NULL;
+
+                        if (remap_write_attr_file() < 0)
+                        {
+                            PRINT_ERROR("FOG_ENGINE::gather_updates failed!\n");
+                        }
                     }
 
                 PRINT_DEBUG("In gather, PHASE = %d, num_vert_of_next_phase = %d\n", PHASE, cal_true_bits_size(PHASE));
-                }
+                }*/
             }
             PRINT_DEBUG("After gather!!\n");
         }
@@ -734,8 +752,7 @@ class fog_engine_target{
             struct stat st;
             char *memblock;
 
-            //attr_fd = open(gen_config.attr_file_name.c_str(),O_RDONLY );
-            attr_fd = open(gen_config.attr_file_name.c_str(),O_RDWR);
+            attr_fd = open(gen_config.attr_file_name.c_str(),O_RDONLY );
             if (attr_fd < 0)
             {
                 PRINT_ERROR("fog_engine_target::map_attr_file cannot open attribute file!\n");
@@ -765,6 +782,42 @@ class fog_engine_target{
             return 0;
         }
 
+        int map_write_attr_file()
+        {
+            struct stat st;
+            char *memblock;
+
+            attr_fd = open(gen_config.attr_file_name.c_str(),O_RDWR);
+            if (attr_fd < 0)
+            {
+                PRINT_ERROR("fog_engine_target::map_attr_file cannot open attribute file!\n");
+                return -1;
+            }
+            fstat(attr_fd, &st);
+            attr_file_length = (u64_t)st.st_size;
+
+            memblock = (char *)mmap(NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, attr_fd, 0);
+            if (MAP_FAILED == memblock)
+            {
+                close(attr_fd);
+                PRINT_ERROR("index file mapping failed!\n");
+                exit(-1);
+            }
+            attr_array_header = (VA*)memblock;
+            return 0;
+        }
+
+
+
+        int remap_write_attr_file()
+        {
+            int ret;
+            if (attr_fd)
+                if ((ret = unmap_attr_file()) < 0) return ret;
+            if ((ret = map_write_attr_file()) < 0) return ret;
+
+            return 0;
+        }
         //remap
         int remap_attr_file()
         {

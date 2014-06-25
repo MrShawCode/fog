@@ -158,7 +158,7 @@ struct cpu_work_target{
                 //u32_t u8_min_index, tmp_u8, u8_min_value, tmp_index;
                 u32_t max_vert = 0, min_vert = 0;
 
-                PRINT_DEBUG("PHASE:%d, processor : %d\n",p_scatter_param->PHASE, processor_id);
+                PRINT_DEBUG("In scatter, PHASE:%d, processor : %d\n",p_scatter_param->PHASE, processor_id);
 
                 my_sched_bitmap_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
                 my_update_map_manager = seg_config->per_cpu_info_list[processor_id]->update_manager;
@@ -308,11 +308,6 @@ struct cpu_work_target{
                                 {
                                     t_edge = vert_index->out_edge(u32_bitmap_value, z);
                                     assert(t_edge);//Make sure this edge existd!
-                                    if (u32_bitmap_value == 294)
-                                    {
-                                        PRINT_DEBUG("Value of T-edge: %f\n", t_edge->edge_weight);
-                                        PRINT_DEBUG("attr_array_head[%d].value = %f\n", u32_bitmap_value, attr_array_head[u32_bitmap_value].value);
-                                    }
                                     t_update = A::scatter_one_edge(u32_bitmap_value, (VA *)&attr_array_head[u32_bitmap_value], t_edge);
                                     //if (p_scatter_param->PHASE == 1)
                                     //{
@@ -436,7 +431,7 @@ struct cpu_work_target{
                     my_sched_bitmap_manager->p_context_data0;
                 //current_bitmap = p_gather_param->PHASE > 0? my_sched_bitmap_manager->p_bitmap1
                   //  : my_sched_bitmap_manager->p_bitmap0;
-                PRINT_DEBUG("PHASE = %d, This is the processor %d, the max_vert = %d, the min_vert = %d\n", 
+                PRINT_DEBUG("In gather, PHASE = %d, This is the processor %d, the max_vert = %d, the min_vert = %d\n", 
                         p_gather_param->PHASE, processor_id, 
                         my_context_data->per_max_vert_id, my_context_data->per_min_vert_id);
                 
@@ -468,12 +463,12 @@ struct cpu_work_target{
                             
                         A::gather_one_update(dest_vert, (VA *)&attr_array_head[vert_index], t_update, p_gather_param->PHASE);
 
-                        if (dest_vert == 294 || dest_vert == 26978 || dest_vert == 58337 || dest_vert == 3210418)
-                        {
-                            PRINT_DEBUG("Threshold = %d, PHASE = %d, dest_vert = %d\n", threshold, p_gather_param->PHASE, dest_vert);
-                            PRINT_DEBUG("attr_array_head[%d]->value = %f, t_update->vert_attr.value = %f\n", dest_vert,
-                                    attr_array_head[vert_index].value, t_update->vert_attr.value);
-                        }
+                        //if (dest_vert == 294 || dest_vert == 26978 || dest_vert == 58337 || dest_vert == 3210418)
+                        //{
+                        //    PRINT_DEBUG("Threshold = %d, PHASE = %d, dest_vert = %d\n", threshold, p_gather_param->PHASE, dest_vert);
+                        //    PRINT_DEBUG("attr_array_head[%d]->value = %f, t_update->vert_attr.value = %f\n", dest_vert,
+                        //            attr_array_head[vert_index].value, t_update->vert_attr.value);
+                        //}
                         //if (/*p_gather_param->PHASE == 1 &&*/ ( dest_vert == 23 || dest_vert == 10))
                           //  PRINT_DEBUG("dest_vert = %d\n", dest_vert);
                           //  PRINT_ERROR("here!\n");
