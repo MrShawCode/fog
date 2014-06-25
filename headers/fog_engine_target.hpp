@@ -251,6 +251,8 @@ class fog_engine_target{
                     return -1;
                 }
                 p_scatter_param->attr_array_head = (void *)attr_array_header;
+                PRINT_DEBUG("CHeck remap, dest_vert = %d\n", 294);
+                PRINT_DEBUG("attr_array_head[%d]->value = %f\n", 294,((VA*)attr_array_header)[294].value);
                 p_scatter_param->PHASE = PHASE;
             }
 
@@ -561,7 +563,8 @@ class fog_engine_target{
                 delete gather_cpu_work;
                 gather_cpu_work = NULL;
             }
-            else{
+            else
+            {
                 if ((ret = cal_threshold()) == 1)
                 {
                     for(u32_t i = 0; i < seg_config->num_segments; i++)
@@ -731,7 +734,8 @@ class fog_engine_target{
             struct stat st;
             char *memblock;
 
-            attr_fd = open(gen_config.attr_file_name.c_str(),O_RDONLY );
+            //attr_fd = open(gen_config.attr_file_name.c_str(),O_RDONLY );
+            attr_fd = open(gen_config.attr_file_name.c_str(),O_RDWR);
             if (attr_fd < 0)
             {
                 PRINT_ERROR("fog_engine_target::map_attr_file cannot open attribute file!\n");

@@ -308,6 +308,11 @@ struct cpu_work_target{
                                 {
                                     t_edge = vert_index->out_edge(u32_bitmap_value, z);
                                     assert(t_edge);//Make sure this edge existd!
+                                    if (u32_bitmap_value == 294)
+                                    {
+                                        PRINT_DEBUG("Value of T-edge: %f\n", t_edge->edge_weight);
+                                        PRINT_DEBUG("attr_array_head[%d].value = %f\n", u32_bitmap_value, attr_array_head[u32_bitmap_value].value);
+                                    }
                                     t_update = A::scatter_one_edge(u32_bitmap_value, (VA *)&attr_array_head[u32_bitmap_value], t_edge);
                                     //if (p_scatter_param->PHASE == 1)
                                     //{
@@ -439,7 +444,6 @@ struct cpu_work_target{
                 //Traversal all the buffers of each cpu to find the corresponding UPDATES
                 for (u32_t buf_id = 0; buf_id < gen_config.num_processors; buf_id++)
                 {
-                    //PRINT_DEBUG("I(%d) am checking the %d's buffer\n", processor_id, buf_id);
                     my_update_map_manager = seg_config->per_cpu_info_list[buf_id]->update_manager;
                     my_update_map_head = my_update_map_manager->update_map_head;
                     my_update_buf_head = (update<VA> *)(seg_config->per_cpu_info_list[buf_id]->strip_buf_head);
@@ -462,8 +466,14 @@ struct cpu_work_target{
                         else
                             vert_index = dest_vert;
                             
-                        //PRINT_DEBUG("dest_vert = %d\n", dest_vert);
                         A::gather_one_update(dest_vert, (VA *)&attr_array_head[vert_index], t_update, p_gather_param->PHASE);
+
+                        if (dest_vert == 294 || dest_vert == 26978 || dest_vert == 58337 || dest_vert == 3210418)
+                        {
+                            PRINT_DEBUG("Threshold = %d, PHASE = %d, dest_vert = %d\n", threshold, p_gather_param->PHASE, dest_vert);
+                            PRINT_DEBUG("attr_array_head[%d]->value = %f, t_update->vert_attr.value = %f\n", dest_vert,
+                                    attr_array_head[vert_index].value, t_update->vert_attr.value);
+                        }
                         //if (/*p_gather_param->PHASE == 1 &&*/ ( dest_vert == 23 || dest_vert == 10))
                           //  PRINT_DEBUG("dest_vert = %d\n", dest_vert);
                           //  PRINT_ERROR("here!\n");
