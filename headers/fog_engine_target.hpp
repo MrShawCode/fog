@@ -818,6 +818,14 @@ class fog_engine_target{
 		{
 			PRINT_DEBUG( "begin to reclaim everything\n" );
 			//reclaim pre-allocated space
+
+			for(u32_t i=0; i<gen_config.num_processors; i++)
+            {
+                delete seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->p_bitmap;
+                delete seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->p_bitmap;
+                PRINT_DEBUG("Delete bitmap!\n");
+            }
+
 			munlock( buf_for_write, gen_config.memory_size );
 			munmap( buf_for_write, gen_config.memory_size );
 
@@ -832,12 +840,6 @@ class fog_engine_target{
 			for(u32_t i=0; i<gen_config.num_processors; i++)
 				delete pcpu_threads[i];
 
-			for(u32_t i=0; i<gen_config.num_processors; i++)
-            {
-                delete seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->p_bitmap;
-                delete seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->p_bitmap;
-                PRINT_DEBUG("Delete bitmap!\n");
-            }
 
 			//terminate the disk thread
 			delete fog_io_queue;

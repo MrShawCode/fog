@@ -431,7 +431,8 @@ struct cpu_work_target{
                     my_sched_bitmap_manager->p_context_data0;
                 //current_bitmap = p_gather_param->PHASE > 0? my_sched_bitmap_manager->p_bitmap1
                   //  : my_sched_bitmap_manager->p_bitmap0;
-                PRINT_DEBUG("This is the processor %d, the max_vert = %d, the min_vert = %d\n", processor_id, 
+                PRINT_DEBUG("PHASE = %d, This is the processor %d, the max_vert = %d, the min_vert = %d\n", 
+                        p_gather_param->PHASE, processor_id, 
                         my_context_data->per_max_vert_id, my_context_data->per_min_vert_id);
                 
                 //int current_bitmap_file_fd;
@@ -610,7 +611,7 @@ public:
 	            break;
             }
             else {
-                PRINT_DEBUG("Before operator, this is processor:%ld\n", processor_id);
+                //PRINT_DEBUG("Before operator, this is processor:%ld\n", processor_id);
                 sync->wait();
 	            (*work_to_do)(processor_id, sync, vert_index, seg_config, &status);
 
