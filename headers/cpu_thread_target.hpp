@@ -268,6 +268,7 @@ struct cpu_work_target{
                             continue;
 
                                 num_out_edges = vert_index->num_out_edges(u32_bitmap_value);
+                                //PRINT_DEBUG("num_out_edges = %d\n", num_out_edges);
                                 if (num_out_edges == 0 )
                                 {
                                     current_bitmap->clear_value(u32_bitmap_value);
@@ -311,10 +312,10 @@ struct cpu_work_target{
                                     t_update = A::scatter_one_edge(u32_bitmap_value, (VA *)&attr_array_head[u32_bitmap_value], t_edge);
                                     //if (p_scatter_param->PHASE == 1)
                                     //{
-                                      //  PRINT_DEBUG("u32_bitmap_value = %d, the value is %f\n",u32_bitmap_value, 
-                                        //        attr_array_head[u32_bitmap_value].value);
-                                      //  PRINT_DEBUG("t_edge's weight = %f\n", t_edge->edge_weight);
-                                       // PRINT_DEBUG("t_update's dest_vert = %d, value = %f\n", t_update->dest_vert, t_update->vert_attr.value);
+                                        //PRINT_DEBUG("u32_bitmap_value = %d, the value is %f\n",u32_bitmap_value, 
+                                         //       attr_array_head[u32_bitmap_value].value);
+                                        //PRINT_DEBUG("t_edge's weight = %f\n", t_edge->edge_weight);
+                                        //PRINT_DEBUG("t_update's dest_vert = %d, value = %f\n", t_update->dest_vert, t_update->vert_attr.value);
                                    // }
                                     assert(t_update);
 
@@ -347,6 +348,8 @@ struct cpu_work_target{
 
                                         my_context_data->per_min_vert_id = u32_bitmap_value;
                                         my_context_data->per_num_edges = z;
+                                        my_context_data->partition_gather_signal = processor_id;//just be different from origin status
+                                        my_context_data->partition_gather_strip_id = strip_num;//record the strip_id to gather
 
                                         *status = UPDATE_BUF_FULL;
                                         break;

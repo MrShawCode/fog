@@ -2,6 +2,7 @@
 #define __TYPES_H__
 
 #include "bitmap.hpp"
+
 typedef unsigned int u32_t;
 typedef unsigned long long u64_t;
 
@@ -64,6 +65,10 @@ struct context_data{
     u32_t steal_virt_cpu_id;
     u32_t steal_num_virt_cpus;
     u32_t steal_bits_true_size;
+
+    //data for partition-gather!
+    int partition_gather_strip_id;
+    int partition_gather_signal;
 }__attribute__ ((aligned(8)));
 
 //manage the update buffer.

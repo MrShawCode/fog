@@ -6,6 +6,16 @@
 #define EDGE_BUFFER_LEN 2048*2048
 #define VERT_BUFFER_LEN 2048*2048
 
+struct edge
+{
+    unsigned int dest_vert;
+    float edge_weight;
+}__attribute__((aligned(8)));
+
+struct vert_index
+{
+    unsigned long long offset;
+}__attribute__((aligned(8)));
 extern FILE * in;
 extern int edge_file, vert_index_file;
 extern unsigned int src_vert, dst_vert;

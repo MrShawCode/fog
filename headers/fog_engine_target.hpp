@@ -27,7 +27,7 @@
 #include "print_debug.hpp"
 #include "cpu_thread_target.hpp"
 
-#define THRESHOLD 0.3
+#define THRESHOLD 0.8
 
 int init_current_fd;
 //A stands for the algorithm (i.e., ???_program)
@@ -52,6 +52,8 @@ class fog_engine_target{
         u64_t attr_file_length;
         VA *attr_array_header;
 
+        int signal_of_partition_gather;
+
 
 	public:
 
@@ -60,7 +62,10 @@ class fog_engine_target{
             //create the index array for indexing the out-going edges
             vert_index = new index_vert_array;
 
-            //
+            //-1 means nothing
+            //1 means partiton_gather, thus gather a part of segments in stead of all the segments, in ALL-BUF-FULL mode
+            //2 means partition gather in steal-mode
+            signal_of_partition_gather = 0;
 
             //allocate buffer for writting
             buf_for_write = (char *)map_anon_memory(gen_config.memory_size, true, true );
@@ -231,7 +236,7 @@ class fog_engine_target{
         }
         int scatter_updates(u32_t PHASE)
         {
-            u32_t ret, unemployed=0; 
+            u32_t ret = 0, unemployed=0; 
             u32_t num_finished, num_not_finished;
             u32_t *p_finished = NULL, *p_not_finished = NULL;
             cpu_work_target<A,VA>* scatter_cpu_work = NULL;
@@ -259,7 +264,7 @@ class fog_engine_target{
             }
 
             do{
-                if (unemployed == 1)
+                if (ret == 1)
                     PRINT_DEBUG("before context scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(PHASE));
                 scatter_cpu_work = new cpu_work_target<A, VA>(SCATTER, (void *)p_scatter_param);
                 pcpu_threads[0]->work_to_do = scatter_cpu_work;
@@ -325,13 +330,16 @@ class fog_engine_target{
                 {
                     //All cpus have finished scatter_updates! Now we just need to go back to normal gather.
                     assert(num_finished == gen_config.num_processors);
+                    signal_of_partition_gather = 0;
                     PRINT_DEBUG("All cpus have finished scatter\n");
+                    free(p_finished);
                     return ret;
                 }
 
                 if (ret == 1 && unemployed == 0)
                 {
                     assert(num_not_finished == gen_config.num_processors);
+                    signal_of_partition_gather = 1;
                     PRINT_DEBUG("ALL CPUS have not finished scatter beacuse the update_bufs are full!\n");
                     PRINT_DEBUG("need to gather!\n");
                     cal_threshold();
@@ -342,6 +350,7 @@ class fog_engine_target{
                 {
                     PRINT_DEBUG("There are some cpus have finished! Others have not finished!\n");
                     PRINT_DEBUG("Also need to gather!\n");
+                    signal_of_partition_gather = 2;
                     cal_threshold();
                     gather_updates(1-PHASE);
                     cal_threshold();
@@ -411,6 +420,9 @@ class fog_engine_target{
                 my_context_data->steal_virt_cpu_id = -1;
                 my_context_data->steal_num_virt_cpus = 0;
                 my_context_data->steal_bits_true_size = 0;
+
+                my_context_data->partition_gather_signal = 0;
+                my_context_data->partition_gather_strip_id = -1;
             }
         }
 
@@ -546,7 +558,8 @@ class fog_engine_target{
             //u32_t begin_with;
             u64_t offset, read_size;
             gather_param_target * p_gather_param = new gather_param_target;
-            //u32_t ret;
+            u32_t ret;
+            u32_t index_j;
 
 			fog_engine_target_state = GATHER;
             //for (u32_t strip_id = 0; strip_id < seg_config->num_segments; strip_id++)
@@ -567,16 +580,21 @@ class fog_engine_target{
             }
             else
             {
-                //if ((ret = cal_threshold()) == 1)
-               // {
+                //means all cpus have finished scatter, so we need to gather
+                //But, we also need to notice that some strips may be empty.
+                if (signal_of_partition_gather == 0 || signal_of_partition_gather == 2)
+                {
+                    //index_j = 1; //init-value of next_buffer
+                    u32_t buf_index = 0;
                     for(u32_t i = 0; i < seg_config->num_segments; i++)
                     {
                         p_gather_param->threshold = 1;
                         p_gather_param->strip_id = i;
                         p_gather_param->PHASE = PHASE;
-                        PRINT_DEBUG( "i=%d, read_io_work=%llx\n", i, (u64_t)read_io_work );
+                        PRINT_DEBUG( "i=%d, buf_index = %d, read_io_work=%llx\n", i, buf_index, (u64_t)read_io_work );
 
-                        if (i%2) read_buf = (char *)seg_config->attr_buf1;
+                        //if (i%2) read_buf = (char *)seg_config->attr_buf1;
+                        if (buf_index%2) read_buf = (char *)seg_config->attr_buf1;
                         else read_buf = (char *)seg_config->attr_buf0;
 
                         if (read_io_work == NULL)
@@ -584,7 +602,7 @@ class fog_engine_target{
                             offset = (u64_t)i * (u64_t)seg_config->segment_cap * sizeof(VA);
                             if (i == (seg_config->num_segments - 1))
                             {
-                                read_size = (u64_t)(gen_config.max_vert_id%seg_config->segment_cap)*sizeof(VA);
+                                read_size = (u64_t)(gen_config.max_vert_id%seg_config->segment_cap+1)*sizeof(VA);
                             }
                             else 
                                 read_size = (u64_t)(seg_config->segment_cap*sizeof(VA)); 
@@ -603,8 +621,44 @@ class fog_engine_target{
 
                             read_buf = next_buffer;
                         }
+                        index_j = i+1;
+                        while (index_j < seg_config->num_segments)
+                        {
+                            //ret = cal_strip_size(index_j, 0, 1);
+                            if (signal_of_partition_gather == 0)
+                                ret = cal_strip_size(index_j, 0, 0);
+                            if (signal_of_partition_gather == 2)
+                                ret = cal_strip_size(index_j, 0, 1);
+                            //PRINT_DEBUG("Index_j = %d, ret = %d\n", index_j, ret);
+                            if (ret == 0)//means this strip is ZERO
+                                index_j++;
+                            else
+                            {
+                                buf_index++;
+                                PRINT_DEBUG("buf_index = %d\n", buf_index);
+                                //next buffer must different from read_buf
+                                //if ((i+1)%2) next_buffer = (char *)seg_config->attr_buf1;
+                                if ((buf_index)%2) next_buffer = (char *)seg_config->attr_buf1;
+                                else  next_buffer = (char *)seg_config->attr_buf0;
 
-                        if ((i + 1) < seg_config->num_segments)
+                                offset = (u64_t)(index_j)*(u64_t)seg_config->segment_cap*sizeof(VA);
+
+                                if ((index_j) == (seg_config->num_segments - 1))
+                                {
+                                    read_size = (u64_t)(gen_config.max_vert_id%seg_config->segment_cap+1)*sizeof(VA);
+                                }
+                                else 
+                                    read_size = (u64_t)(seg_config->segment_cap*sizeof(VA)); 
+
+                                read_io_work = new io_work_target(gen_config.attr_file_name.c_str(),
+                                        FILE_READ, next_buffer, offset, read_size);
+                                fog_io_queue->add_io_task(read_io_work);
+                                PRINT_DEBUG( "will invoke next read io work, offset %llu, size:%llu\n", offset, read_size );
+                                break;
+                            }
+                        }
+
+                        /*if ((i + 1) < seg_config->num_segments)
                         {
                             //next buffer must different from read_buf
                             if ((i + 1)%2) next_buffer = (char *)seg_config->attr_buf1;
@@ -623,7 +677,7 @@ class fog_engine_target{
                                     FILE_READ, next_buffer, offset, read_size);
                             fog_io_queue->add_io_task(read_io_work);
                             PRINT_DEBUG( "will invoke next read io work, offset %llu, size:%llu\n", offset, read_size );
-                        }
+                        }*/
                         p_gather_param->attr_array_head = (void *)read_buf;
 
                         gather_cpu_work = new cpu_work_target<A, VA>(GATHER, (void *)p_gather_param);
@@ -652,13 +706,168 @@ class fog_engine_target{
                                     FILE_WRITE, read_buf, 
                                     (u64_t)i * seg_config->segment_cap*sizeof(VA),
                                     (u64_t)(gen_config.max_vert_id%seg_config->segment_cap+1)*sizeof(VA));
+                        }
+
+                        fog_io_queue->add_io_task(write_io_work);
+                        i = index_j - 1;//Hint:for-loop
+                    }
+                    fog_io_queue->wait_for_io_task(write_io_work);
+                    fog_io_queue->del_io_task(write_io_work);
+
+                }
+                else if (signal_of_partition_gather == 1) // means ALL cpus's buffer are FULL
+                {
+                    int partition_gather_array[(gen_config.num_processors)] ;
+                    u32_t tmp_num = 0;
+                    for (u32_t i = 0; i < gen_config.num_processors; i++)
+                    {
+                        context_data * my_context_data = (1-PHASE) > 0 ? seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1
+                            : seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0;
+                        int tmp_strip_id = my_context_data->partition_gather_strip_id;
+                        u32_t out_signal = 0;
+
+                        if (i > 0)
+                        {
+                            for (u32_t j = 0; j < i; j++)
+                            {
+                                if (partition_gather_array[j] == tmp_strip_id)
+                                {
+                                    out_signal = 1;
+                                    break;
+                                }
+                            }
+                        }
+                        if (out_signal == 0)
+                        {
+                            partition_gather_array[i] = tmp_strip_id;
+                            tmp_num++;
+                        }
+                    }
+                    PRINT_DEBUG("IN partition-gather, Strips_NUM = %d\n", tmp_num);
+                    for (u32_t i = 0; i < tmp_num; i++)
+                    {
+                        u32_t tmp_strip_id = partition_gather_array[i];
+                        p_gather_param->threshold = 1;
+                        p_gather_param->strip_id = tmp_strip_id;
+                        p_gather_param->PHASE = PHASE;
+                        PRINT_DEBUG( "strip_id = %d, read_io_work=%llx\n", tmp_strip_id, (u64_t)read_io_work );
+
+                        if (i%2) read_buf = (char *)seg_config->attr_buf1;
+                        else read_buf = (char *)seg_config->attr_buf0;
+
+                        if (read_io_work == NULL)
+                        {
+                            offset = (u64_t)tmp_strip_id * (u64_t)seg_config->segment_cap * sizeof(VA);
+                            if (tmp_strip_id == (seg_config->num_segments - 1))
+                            {
+                                read_size = (u64_t)(gen_config.max_vert_id%seg_config->segment_cap+1)*sizeof(VA);
+                            }
+                            else 
+                                read_size = (u64_t)(seg_config->segment_cap*sizeof(VA)); 
+
+                            read_io_work = new io_work_target(gen_config.attr_file_name.c_str(),
+                                    FILE_READ, read_buf, offset, read_size);
+                            fog_io_queue->add_io_task(read_io_work);
+                            fog_io_queue->wait_for_io_task(read_io_work);
+                            fog_io_queue->del_io_task(read_io_work);
+                            PRINT_DEBUG("Finish reading the first segment!\n");
+                        }
+                        else
+                        {
+                            fog_io_queue->wait_for_io_task(read_io_work);
+                            fog_io_queue->del_io_task(read_io_work);
+
+                            read_buf = next_buffer;
+                        }
+                        /*while (index_j < seg_config->num_segments)
+                        {
+                            ret = cal_strip_size(index_j, 0);
+                            if (ret == 0)//means this strip is ZERO
+                                index_j++;
+                            else
+                            {
+                                //next buffer must different from read_buf
+                                if ((i+1)%2) next_buffer = (char *)seg_config->attr_buf1;
+                                else  next_buffer = (char *)seg_config->attr_buf0;
+
+                                offset = (u64_t)(index_j)*(u64_t)seg_config->segment_cap*sizeof(VA);
+
+                                if ((index_j) == (seg_config->num_segments - 1))
+                                {
+                                    read_size = (u64_t)(gen_config.max_vert_id%seg_config->segment_cap+1)*sizeof(VA);
+                                }
+                                else 
+                                    read_size = (u64_t)(seg_config->segment_cap*sizeof(VA)); 
+
+                                read_io_work = new io_work_target(gen_config.attr_file_name.c_str(),
+                                        FILE_READ, next_buffer, offset, read_size);
+                                fog_io_queue->add_io_task(read_io_work);
+                                PRINT_DEBUG( "will invoke next read io work, offset %llu, size:%llu\n", offset, read_size );
+                            }
+                        }*/
+
+                        if ((i + 1) < tmp_num)
+                        {
+                            //next buffer must different from read_buf
+                            u32_t next_strip_id = partition_gather_array[i+1];
+                            if ((i + 1)%2) next_buffer = (char *)seg_config->attr_buf1;
+                            else  next_buffer = (char *)seg_config->attr_buf0;
+
+                            offset = (u64_t)(next_strip_id)*(u64_t)seg_config->segment_cap*sizeof(VA);
+
+                            if ((next_strip_id) == (seg_config->num_segments - 1))
+                            {
+                                read_size = (u64_t)(gen_config.max_vert_id%seg_config->segment_cap+1)*sizeof(VA);
+                            }
+                            else 
+                                read_size = (u64_t)(seg_config->segment_cap*sizeof(VA)); 
+
+                            read_io_work = new io_work_target(gen_config.attr_file_name.c_str(),
+                                    FILE_READ, next_buffer, offset, read_size);
+                            fog_io_queue->add_io_task(read_io_work);
+                            PRINT_DEBUG( "will invoke next read io work, offset %llu, size:%llu\n", offset, read_size );
+                        }
+                        p_gather_param->attr_array_head = (void *)read_buf;
+
+                        gather_cpu_work = new cpu_work_target<A, VA>(GATHER, (void *)p_gather_param);
+                        pcpu_threads[0]->work_to_do = gather_cpu_work;
+                        (*pcpu_threads[0])();
+
+                        delete gather_cpu_work;
+                        gather_cpu_work = NULL;
+                        //we need to write the attr_buf to attr_file 
+                        if (write_io_work != NULL)
+                        {
+                            fog_io_queue->wait_for_io_task(write_io_work);
+                            fog_io_queue->del_io_task(write_io_work);
+                            write_io_work = NULL;
+                        }
+
+                        if (tmp_strip_id != (seg_config->num_segments-1) )
+                        {
+                            write_io_work = new io_work_target(gen_config.attr_file_name.c_str(),
+                                    FILE_WRITE, read_buf, 
+                                    (u64_t)i * seg_config->segment_cap*sizeof(VA), (u64_t)seg_config->segment_cap*sizeof(VA));
+                        }
+                        else
+                        {
+                            write_io_work = new io_work_target(gen_config.attr_file_name.c_str(),
+                                    FILE_WRITE, read_buf, 
+                                    (u64_t)i * seg_config->segment_cap*sizeof(VA),
+                                    (u64_t)(gen_config.max_vert_id%seg_config->segment_cap+1)*sizeof(VA));
 
                         }
 
                         fog_io_queue->add_io_task(write_io_work);
                     }
+                    fog_io_queue->wait_for_io_task(write_io_work);
+                    fog_io_queue->del_io_task(write_io_work);
+                } 
+               // else if (signal_of_partition_gather == 2) // steal mode
+                
+            }
 
-                //}
+
             /*    else
                 {
                     for(u32_t i = 0; i < seg_config->num_segments; i++)
@@ -683,10 +892,75 @@ class fog_engine_target{
 
                 PRINT_DEBUG("In gather, PHASE = %d, num_vert_of_next_phase = %d\n", PHASE, cal_true_bits_size(PHASE));
                 }*/
-            }
             PRINT_DEBUG("After gather!!\n");
         }
 
+        //return:
+        //0:The strip_id-buffer of all cpus are ZERO
+        //1:some buffer is not ZERO
+        u32_t cal_strip_size(u32_t strip_id, u32_t util_rate_signal, u32_t signal_threshold)
+        {
+            update_map_manager * map_manager;
+            u32_t * map_head;
+            u32_t strip_cap;
+            u32_t total_updates;
+            u32_t util_ret = 0; 
+            u32_t strip_ret = 0;
+            u32_t threshold_ret = 0;
+            double util_rate;
+
+            for (u32_t i = 0; i < gen_config.num_processors; i++)
+            {
+                map_manager = seg_config->per_cpu_info_list[i]->update_manager;
+                map_head = map_manager->update_map_head;
+                if (strip_id >= 0 && signal_threshold == 0)
+                {
+                    for (u32_t j = 0; j < gen_config.num_processors; j++)
+                    {
+                        if ((*(map_head + strip_id * gen_config.num_processors + j)) != 0)
+                        {
+                            PRINT_DEBUG("CPU = %d, strip_id = %d, map_value = %d\n", j, strip_id, 
+                                (*(map_head + strip_id * gen_config.num_processors + j))); 
+                            strip_ret = 1;
+                            return strip_ret;
+                        }
+                    }
+                }
+
+                if (util_rate_signal == 1 && signal_threshold == 0)
+                {
+                    strip_cap = seg_config->per_cpu_info_list[i]->strip_cap;
+                    total_updates = 0;
+                    for (u32_t j = 0; j < (seg_config->num_segments*gen_config.num_processors); j++)
+                        total_updates += *(map_head+j);
+                    util_rate = (double)total_updates/((double)strip_cap*seg_config->num_segments);
+                    PRINT_DEBUG("THere are %u update in processor %d, utilization rate is %f\n", total_updates, i, util_rate);
+                    if (util_rate > THRESHOLD)
+                    {
+                        util_ret = 1;
+                        return util_ret;
+                    }
+                    
+                }
+
+                if (strip_id >= 0  && signal_threshold == 1)
+                {
+                    strip_cap = seg_config->per_cpu_info_list[i]->strip_cap;
+                    total_updates = 0;
+                    for (u32_t i = 0; i < gen_config.num_processors; i++)
+                    {
+                            total_updates += (*(map_head + strip_id * gen_config.num_processors + i));
+                    }
+                    util_rate = (double)total_updates/((double)strip_cap);
+                    if (util_rate >= THRESHOLD)
+                    {
+                        threshold_ret = 1;
+                        return threshold_ret;
+                    }
+                }
+            }
+            return 0;
+        }
         u32_t cal_threshold()
         {
             update_map_manager * map_manager;
@@ -1178,6 +1452,10 @@ class fog_engine_target{
                 seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->steal_bits_true_size = 
                 seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->steal_bits_true_size = 0;
 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->partition_gather_signal = 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->partition_gather_signal = 0;
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->partition_gather_strip_id = 
+                seg_config->per_cpu_info_list[i]->sched_manager->p_context_data1->partition_gather_strip_id = -1;
 
                 seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->p_bitmap = new bitmap(
                         seg_config->per_cpu_info_list[i]->sched_manager->p_context_data0->per_bitmap_buf_head, 
