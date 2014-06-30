@@ -52,6 +52,8 @@ int main( int argc, const char**argv)
 	std::string out_dir, out_edge_file_name,
 		out_index_file_name, out_desc_file_name, 
 		out_desc_file1_name;
+    //hejian-debug
+    std::string old_out_edge_file_name, old_out_index_file_name, old_out_desc_file_name, old_out_dest_file1_name;
 	std::string snap_type;
 
 	//setup options
@@ -68,6 +70,12 @@ int main( int argc, const char**argv)
 	out_index_file_name = out_dir+ input_file_name +".index";
 	out_desc_file_name = out_dir+ input_file_name +".desc";
 
+    //hejian-debug
+	old_out_edge_file_name = out_dir+ input_file_name +"-old.type1";
+	old_out_index_file_name = out_dir+ input_file_name +"-old.index";
+	old_out_desc_file_name = out_dir+ input_file_name +"-old.desc";
+    
+
 	snap_type = vm["type"].as<std::string>();
 
 	std::cout << "Input file: " << input_file_name << "\n";
@@ -79,7 +87,9 @@ int main( int argc, const char**argv)
 	if( snap_type == "edgelist" )
 		process_edgelist( input_graph_name.c_str(), 
 				out_edge_file_name.c_str(), 
-				out_index_file_name.c_str() );
+				out_index_file_name.c_str() ,
+                old_out_edge_file_name.c_str(),
+                old_out_index_file_name.c_str());
 	else if (snap_type == "adjlist" )
 		process_adjlist( input_graph_name.c_str(), 
 				out_edge_file_name.c_str(), 
@@ -91,6 +101,14 @@ int main( int argc, const char**argv)
 
 	//graph description
 	desc_file.open( out_desc_file_name.c_str() );
+	desc_file << "[description]\n";
+	desc_file << "min_vertex_id = " << min_vertex_id << "\n";
+	desc_file << "max_vertex_id = " << max_vertex_id << "\n";
+	desc_file << "num_of_edges = " << num_edges << "\n";
+	desc_file << "max_out_edges = " << max_out_edges << "\n";
+    desc_file.close();
+	//old-graph description
+	desc_file.open( old_out_desc_file_name.c_str() );
 	desc_file << "[description]\n";
 	desc_file << "min_vertex_id = " << min_vertex_id << "\n";
 	desc_file << "max_vertex_id = " << max_vertex_id << "\n";

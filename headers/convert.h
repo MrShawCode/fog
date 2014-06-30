@@ -30,7 +30,7 @@ extern struct vert_index vert_buffer[VERT_BUFFER_LEN];
 char *get_adjline();
 int flush_buffer_to_file( int fd, char* buffer, unsigned int size );
 void process_adjlist(const char*, const char*, const char* );
-void process_edgelist(const char*, const char*,const char* );
+void process_edgelist(const char*, const char*,const char*, const char *, const char *);
 int read_one_edge( void );
 float produce_random_weight();
 

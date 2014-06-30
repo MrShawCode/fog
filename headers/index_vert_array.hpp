@@ -93,7 +93,7 @@ unsigned int index_vert_array::num_out_edges( unsigned int vid )
 	unsigned long long start_edge=0L, end_edge=0L;
 	
 	start_edge = vert_array_header[vid].offset;
-	if ( start_edge == 0L ) return 0;
+	if ( start_edge == 0L && vid != 0 ) return 0;
 
 	if ( vid > gen_config.max_vert_id ) return 0;
 

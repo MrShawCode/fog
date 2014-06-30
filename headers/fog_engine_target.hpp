@@ -119,7 +119,20 @@ class fog_engine_target{
                 if (cal_true_bits_size(PHASE) == 0)
                     break;
             }
+            print_attr_result();
         }
+
+        void print_attr_result()
+        {
+            u32_t i = 0;
+            VA * attr_array_head =  (VA *)seg_config->attr_buf0;
+            if (seg_config->num_attr_buf == 1)
+            {
+                for (i = 0; i < 100; i++)
+                    PRINT_DEBUG("attr[%d].predecessor = %d, value = %f\n",i, attr_array_head[i].predecessor, attr_array_head[i].value);
+            }
+        }
+
         u32_t cal_true_bits_size(u32_t PHASE)
         {
             u32_t num_vert_of_next_phase = 0;
