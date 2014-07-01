@@ -407,6 +407,7 @@ class fog_engine_target{
                     }
                     PRINT_DEBUG("After steal!\n");
                     ret = 0;
+                    signal_of_partition_gather = 0;
                 }
             }while(ret == 1);
             //return ret;
