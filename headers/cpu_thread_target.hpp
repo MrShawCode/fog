@@ -158,7 +158,7 @@ struct cpu_work_target{
                 //u32_t u8_min_index, tmp_u8, u8_min_value, tmp_index;
                 u32_t max_vert = 0, min_vert = 0;
 
-                PRINT_DEBUG("In scatter, PHASE:%d, processor : %d\n",p_scatter_param->PHASE, processor_id);
+                //PRINT_DEBUG("In scatter, PHASE:%d, processor : %d\n",p_scatter_param->PHASE, processor_id);
 
                 my_sched_bitmap_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
                 my_update_map_manager = seg_config->per_cpu_info_list[processor_id]->update_manager;
@@ -198,6 +198,7 @@ struct cpu_work_target{
                 }
                 //current_bitmap->print_binary(0, 100);
                 //if (current_bitmap->get_bits_true_size() == 0)
+                //PRINT_DEBUG("Processor:%d, before SCATTER, I have %d bits to scatter!\n", processor_id, my_context_data->per_bits_true_size);
                 if (my_context_data->per_bits_true_size == 0 && signal_to_scatter != 2)
                 {
                     *status = FINISHED_SCATTER;
@@ -209,7 +210,10 @@ struct cpu_work_target{
 
                 //max_vert = current_bitmap->get_max_vert();
                 //min_vert = current_bitmap->get_min_vert();
-                PRINT_DEBUG("Processor: %d ,min_vert= %d, max_vert= %d\n", processor_id, min_vert, max_vert);
+                PRINT_DEBUG("Processor: %d , PHASE = %d,min_vert= %d, max_vert= %d, vertex to scatter:%d\n", processor_id,
+                        p_scatter_param->PHASE,
+                        min_vert, max_vert,
+                        my_context_data->per_bits_true_size);
 
                     //a funny way to get the private value
                     //u32_t max_vert = *((u32_t *)new_read_bitmap + 5);
@@ -267,11 +271,14 @@ struct cpu_work_target{
                         if (current_bitmap->get_value(u32_bitmap_value) == 0)
                             continue;
 
+
                                 num_out_edges = vert_index->num_out_edges(u32_bitmap_value);
                                 //PRINT_DEBUG("num_out_edges = %d\n", num_out_edges);
                                 if (num_out_edges == 0 )
                                 {
                                     current_bitmap->clear_value(u32_bitmap_value);
+                                    //if (signal_to_scatter == 1 && my_context_data->per_bits_true_size == 0)
+                                    //    PRINT_DEBUG("u32_bitmap_value = %d\n", u32_bitmap_value);
                                     if (signal_to_scatter == 2)
                                         my_context_data->steal_bits_true_size++;
                                     else 
@@ -304,6 +311,11 @@ struct cpu_work_target{
                                     old_edge_id = my_context_data->per_num_edges;
                                 else 
                                     old_edge_id = 0;
+                        //if (signal_to_scatter == 1 && i == my_context_data->per_min_vert_id)
+                        //{
+                          //  PRINT_DEBUG("old_edge_id = %d\n", old_edge_id);
+                          //  PRINT_DEBUG("u32_bitmap_value = %d, num_out_edges = %d\n", u32_bitmap_value, num_out_edges);
+                       // }
                                 //for (u32_t z = 0; z < num_out_edges; z++)
                                 for (u32_t z = old_edge_id; z < num_out_edges; z++)
                                 {
@@ -355,22 +367,35 @@ struct cpu_work_target{
                                         break;
                                     }
 
-                                    if (z == (num_out_edges - 1))
+                                    /*if (z == (num_out_edges - 1))
                                     {
                                         current_bitmap->clear_value(u32_bitmap_value);
+                                        if (my_context_data->per_bits_true_size == 0)
+                                            PRINT_DEBUG("u32_bitmap_value = %d\n", u32_bitmap_value);
                                         if (signal_to_scatter == 2)
                                             my_context_data->steal_bits_true_size++;
                                         else 
                                             my_context_data->per_bits_true_size--;
-                                    }
+                                    }*/
                                     delete t_edge;
                                     delete t_update;
                                 }
+                                if (*status == UPDATE_BUF_FULL)
+                                    break;
+                                else
+                                {
+                                    current_bitmap->clear_value(u32_bitmap_value);
+                                    if (signal_to_scatter == 1 && my_context_data->per_bits_true_size == 0)
+                                        PRINT_DEBUG("u32_bitmap_value = %d\n", u32_bitmap_value);
+                                    if (signal_to_scatter == 2)
+                                        my_context_data->steal_bits_true_size++;
+                                    else 
+                                        my_context_data->per_bits_true_size--;
+                                }
+                                         
                                 //current_bitmap->clear_value(u32_bitmap_value);
                             //}
                         //}
-                        if (*status == UPDATE_BUF_FULL)
-                            break;
                     }
 
                     if (*status == UPDATE_BUF_FULL)
@@ -390,8 +415,9 @@ struct cpu_work_target{
                                     my_context_data->per_bits_true_size);
                             if (my_context_data->per_bits_true_size != 0)
                             {
-                                PRINT_ERROR("Processor %d still has %d bits to scatter!\n", processor_id, 
+                                PRINT_DEBUG("Processor %d still has %d bits to scatter!\n", processor_id, 
                                     my_context_data->per_bits_true_size);
+                                my_context_data->per_bits_true_size = 0;
                             }
                             my_context_data->per_max_vert_id = current_bitmap->get_start_vert();
                             my_context_data->per_min_vert_id = current_bitmap->get_term_vert();
