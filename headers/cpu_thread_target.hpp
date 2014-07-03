@@ -18,53 +18,10 @@
 #include <fcntl.h>
 
 
-/*enum fog_engine_state{
-    INIT = 0,
-    SCATTER,
-    GATHER,
-    TERM
-};*/
-
-//denotes the different status of cpu threads after they finished the given tasks.
-// Note: these status are for scatter phase ONLY!
-/*enum cpu_thread_status{
-	UPDATE_BUF_FULL = 100,	//Cannot scatter more updates, since my update buffer is full
-	NO_MORE_SCHED,			//I have no more sched tasks, but have updates in the auxiliary update buffer
-	FINISHED_SCATTER		//I have no more sched tasks, and no updates in auxiliary update buffer.
-							//	But still have updates in my strip update buffer. 
-};*/
-
 #define SCHED_BUFFER_LEN    1024
 
 template <typename A, typename VA>
 class cpu_thread_target;
-
-/*class barrier {
-    volatile unsigned long count[2];
-    volatile unsigned long sense;
-    unsigned long expected;
-    public:
-    barrier(unsigned long expected_in)
-        :sense(0), expected(expected_in)
-    {
-        count[0] = 0;
-        count[1] = 0;
-    }
-
-    void wait()
-    {
-        unsigned long sense_used = sense;
-        unsigned long arrived =
-            __sync_fetch_and_add(&count[sense_used], 1);
-        if(arrived == (expected - 1)) {
-            sense = 1 - sense_used; // Reverse sense
-            count[sense_used] = 0;
-        }
-        while(count[sense_used] != 0);
-        __sync_synchronize(); // Also clobber memory
-    }
-//    friend class cpu_thread_target<A,VA>;
-};*/
 
 struct init_param_target{
 	char* attr_buf_head;
@@ -100,7 +57,6 @@ struct cpu_work_target{
 	{
 		u32_t local_start_vert_off, local_term_vert_off;
         sync->wait();
-        //PRINT_DEBUG("PROCESSOR:%d\n", processor_id);
 		
 		switch( engine_state ){
 			case INIT:
@@ -144,21 +100,11 @@ struct cpu_work_target{
                 update<VA> * t_update;
                 u32_t num_out_edges/*,  temp_laxity*/;
                 u32_t strip_num, cpu_offset, map_value, update_buf_offset;
-                //param for new_bitmap
                 bitmap * current_bitmap = NULL ;
-                //u32_t * p_bitmap_index = NULL;
-                //unsigned char * p_char_bitmap_index;
-                //u32_t p_bitmap_value;
-                //unsigned char p_char_bitmap_value;
                 u32_t u32_bitmap_value;
-                //u32_t min_index, u32_min_index;
-                //u32_t max_index, u32_max_index;
                 u32_t signal_to_scatter;
                 u32_t old_edge_id;
-                //u32_t u8_min_index, tmp_u8, u8_min_value, tmp_index;
                 u32_t max_vert = 0, min_vert = 0;
-
-                //PRINT_DEBUG("In scatter, PHASE:%d, processor : %d\n",p_scatter_param->PHASE, processor_id);
 
                 my_sched_bitmap_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
                 my_update_map_manager = seg_config->per_cpu_info_list[processor_id]->update_manager;
@@ -196,234 +142,118 @@ struct cpu_work_target{
                     max_vert = my_context_data->steal_max_vert_id;
                     min_vert = my_context_data->steal_min_vert_id;
                 }
-                //current_bitmap->print_binary(0, 100);
-                //if (current_bitmap->get_bits_true_size() == 0)
-                //PRINT_DEBUG("Processor:%d, before SCATTER, I have %d bits to scatter!\n", processor_id, my_context_data->per_bits_true_size);
+
                 if (my_context_data->per_bits_true_size == 0 && signal_to_scatter != 2)
                 {
                     *status = FINISHED_SCATTER;
                     break;
                 }
-                //p_bitmap_index =  (u32_t *)my_context_data->per_bitmap_buf_head;
-                //PRINT_DEBUG("p_bitmap_index's first u32_t is 0x%u\n", (u32_t)*p_bitmap_index);
 
-
-                //max_vert = current_bitmap->get_max_vert();
-                //min_vert = current_bitmap->get_min_vert();
                 PRINT_DEBUG("Processor: %d , PHASE = %d,min_vert= %d, max_vert= %d, vertex to scatter:%d\n", processor_id,
                         p_scatter_param->PHASE,
                         min_vert, max_vert,
                         my_context_data->per_bits_true_size);
 
-                    //a funny way to get the private value
-                    //u32_t max_vert = *((u32_t *)new_read_bitmap + 5);
-                    //u32_t min_vert = *((u32_t *)new_read_bitmap + 6);
-                    //Traversal the bitmap to find ...
-                    //min_index = VID_TO_BITMAP_INDEX(min_vert, processor_id, gen_config.num_processors);
-                    //max_index = VID_TO_BITMAP_INDEX(max_vert, processor_id, gen_config.num_processors);
-                    //u32_min_index = min_index/(sizeof(u32_t) * 8);
-                    //u32_max_index = max_index/(sizeof(u32_t) * 8);
-                    //u8_min_index = (min_index%(sizeof(u32_t)*8))/(sizeof(char) * 8);
-                    //u8_min_value = (min_index%(sizeof(u32_t)*8))%(sizeof(char) * 8);
-                    //PRINT_DEBUG("min_index = %d, max_index = %d\n", u32_min_index, u32_max_index);
-                    //p_bitmap_index = p_bitmap_index + u32_min_index;
-                    //PRINT_DEBUG("after  add u32_min_index ,p_bitmap_index's u32_t is 0x%u\n", (u32_t)*p_bitmap_index);
-                    for (u32_t i = min_vert; i <= max_vert; i = i + gen_config.num_processors)
+                for (u32_t i = min_vert; i <= max_vert; i = i + gen_config.num_processors)
+                {
+                    u32_bitmap_value = i;
+                    if (current_bitmap->get_value(u32_bitmap_value) == 0)
+                        continue;
+                    num_out_edges = vert_index->num_out_edges(u32_bitmap_value);
+                    if (num_out_edges == 0 )
                     {
-                    //for (u32_t i = u32_min_index; i <= u32_max_index; i++)
-                    //{
-                    //    p_bitmap_value = (u32_t)*(p_bitmap_index+i);
-                    //    if (p_bitmap_value == 0)
-                    //    {
-                            //means this u32_t dosen't contain any vertex to scatter!
-                   //         continue;
-                   //     }
-                        //p_char_bitmap_index = (char *)p_bitmap_index;
-                  //      p_char_bitmap_index = (unsigned char *)&p_bitmap_value;
-                       // if (i == u32_min_index)
-                          //  tmp_u8 = u8_min_index;
-                        //else 
-                          //  tmp_u8 = 0;
-                        //for (u32_t j = tmp_u8; j < sizeof(u32_t); j++)
-                   //     for (u32_t j = 0; j < sizeof(u32_t); j++)
-                    //    {
-                    //        p_char_bitmap_value = (unsigned char )*(p_char_bitmap_index + j);
-                    //        if ((u32_t)p_char_bitmap_value == 0)
-                    //        {
-                    //            continue;
-                    //        }
-
-                            //if (i == u32_min_index)
-                                //tmp_index = u8_min_value;
-                            //else 
-                                //tmp_index = 0;
-                            //tmp_index = tmp_u8;
-                           //tmp_u8 = tmp_index;
-                            //for (u32_t k = tmp_index; k < 8; k++)
-                      //      for (u32_t k = 0; k < 8; k++)
-                       //     {
-                     //           if ( ((1 << k) & p_char_bitmap_value) == 0 )
-                      //              continue;
-                      //          u32_bitmap_value = INDEX_TO_VID(i, j, k, gen_config.num_processors, processor_id);
-                      //          if (current_bitmap->get_value(u32_bitmap_value) == 0)
-                       //             continue;
-                        u32_bitmap_value = i;
-                        if (current_bitmap->get_value(u32_bitmap_value) == 0)
-                            continue;
-
-
-                                num_out_edges = vert_index->num_out_edges(u32_bitmap_value);
-                                //PRINT_DEBUG("num_out_edges = %d\n", num_out_edges);
-                                if (num_out_edges == 0 )
-                                {
-                                    current_bitmap->clear_value(u32_bitmap_value);
-                                    //if (signal_to_scatter == 1 && my_context_data->per_bits_true_size == 0)
-                                    //    PRINT_DEBUG("u32_bitmap_value = %d\n", u32_bitmap_value);
-                                    if (signal_to_scatter == 2)
-                                        my_context_data->steal_bits_true_size++;
-                                    else 
-                                        my_context_data->per_bits_true_size--;
-                                    continue;
-                                }
-
-                                //tell if the remaining space in update buffer is enough to store the updates?
-                                //since we add an auxiliary update buffer
-                                //temp_laxity = my_aux_manager->buf_cap - my_aux_manager->num_updates;
-                                /*temp_laxity = 0;
-
-                                if (temp_laxity < num_out_edges)
-                                {
-                                    PRINT_DEBUG("Processor %d: laxity=%u, current out edges=%u, i = %u\n", processor_id, temp_laxity, num_out_edges, u32_bitmap_value);
-                                    *status = UPDATE_BUF_FULL;
-                                    current_bitmap->set_min_value(u32_bitmap_value);
-                                    //need to supplement
-                                    return;
-                                }*/
-
-                                //set the 0 to the i-th pos 
-                                //if (u32_bitmap_value == 23 || u32_bitmap_value == 10)
-                                  //  PRINT_DEBUG("u32_bitmap_value = %d\n", u32_bitmap_value);
-
-                                //u32_t tmp;
-                                if (signal_to_scatter == 0)
-                                    old_edge_id = 0;
-                                else if ((signal_to_scatter == 1) && (i == my_context_data->per_min_vert_id))
-                                    old_edge_id = my_context_data->per_num_edges;
-                                else 
-                                    old_edge_id = 0;
-                        //if (signal_to_scatter == 1 && i == my_context_data->per_min_vert_id)
-                        //{
-                          //  PRINT_DEBUG("old_edge_id = %d\n", old_edge_id);
-                          //  PRINT_DEBUG("u32_bitmap_value = %d, num_out_edges = %d\n", u32_bitmap_value, num_out_edges);
-                       // }
-                                //for (u32_t z = 0; z < num_out_edges; z++)
-                                for (u32_t z = old_edge_id; z < num_out_edges; z++)
-                                {
-                                    t_edge = vert_index->out_edge(u32_bitmap_value, z);
-                                    assert(t_edge);//Make sure this edge existd!
-                                    t_update = A::scatter_one_edge(u32_bitmap_value, (VA *)&attr_array_head[u32_bitmap_value], t_edge);
-                                    //if (p_scatter_param->PHASE == 1)
-                                    //{
-                                        //PRINT_DEBUG("u32_bitmap_value = %d, the value is %f\n",u32_bitmap_value, 
-                                         //       attr_array_head[u32_bitmap_value].value);
-                                        //PRINT_DEBUG("t_edge's weight = %f\n", t_edge->edge_weight);
-                                        //PRINT_DEBUG("t_update's dest_vert = %d, value = %f\n", t_update->dest_vert, t_update->vert_attr.value);
-                                   // }
-                                    assert(t_update);
-
-                                    strip_num = VID_TO_SEGMENT(t_update->dest_vert);
-                                    cpu_offset = VID_TO_PARTITION(t_update->dest_vert );
-                                    assert(strip_num < seg_config->num_segments);
-                                    assert(cpu_offset < gen_config.num_processors);
-                                    map_value = *(my_update_map_head + strip_num * gen_config.num_processors + cpu_offset);
-
-                                    if (map_value < per_cpu_strip_cap)
-                                    {
-                                        update_buf_offset = strip_num * my_strip_cap + map_value * gen_config.num_processors + cpu_offset;
-                                        *(my_update_buf_head + update_buf_offset) = *t_update;
-                                        //update the map
-                                        map_value++;
-                                        *(my_update_map_head + strip_num * gen_config.num_processors + cpu_offset) = map_value;
-                                    }
-                                    else
-                                    {
-                                        //should add it to auxiliary update buffer
-                                        //*(my_aux_manager->update_head + my_aux_manager->num_updates) = *t_update;
-                                        //my_aux_manager->num_updates++;
-                                        
-                                        //A new method to handle the situation when some strip_buf is FULL
-                                        PRINT_DEBUG("Currently, the strip_num = %d, cpu_offset = %d\n", strip_num, cpu_offset);
-                                        PRINT_DEBUG("The vert_to_scatter is %d, the edge_id is %d\n", u32_bitmap_value, z);
-                                        //PRINT_DEBUG("map_value = %d, per_cpu_strip_cap = %d\n", map_value, per_cpu_strip_cap);
-
-                                        //set the value of current_bitmap and current bitmap_manager
-
-                                        my_context_data->per_min_vert_id = u32_bitmap_value;
-                                        my_context_data->per_num_edges = z;
-                                        my_context_data->partition_gather_signal = processor_id;//just be different from origin status
-                                        my_context_data->partition_gather_strip_id = strip_num;//record the strip_id to gather
-
-                                        *status = UPDATE_BUF_FULL;
-                                        break;
-                                    }
-
-                                    /*if (z == (num_out_edges - 1))
-                                    {
-                                        current_bitmap->clear_value(u32_bitmap_value);
-                                        if (my_context_data->per_bits_true_size == 0)
-                                            PRINT_DEBUG("u32_bitmap_value = %d\n", u32_bitmap_value);
-                                        if (signal_to_scatter == 2)
-                                            my_context_data->steal_bits_true_size++;
-                                        else 
-                                            my_context_data->per_bits_true_size--;
-                                    }*/
-                                    delete t_edge;
-                                    delete t_update;
-                                }
-                                if (*status == UPDATE_BUF_FULL)
-                                    break;
-                                else
-                                {
-                                    current_bitmap->clear_value(u32_bitmap_value);
-                                    if (signal_to_scatter == 1 && my_context_data->per_bits_true_size == 0)
-                                        PRINT_DEBUG("u32_bitmap_value = %d\n", u32_bitmap_value);
-                                    if (signal_to_scatter == 2)
-                                        my_context_data->steal_bits_true_size++;
-                                    else 
-                                        my_context_data->per_bits_true_size--;
-                                }
-                                         
-                                //current_bitmap->clear_value(u32_bitmap_value);
-                            //}
-                        //}
-                    }
-
-                    if (*status == UPDATE_BUF_FULL)
-                    {
-                        PRINT_DEBUG("UPDATE_BUF_FULL:after this scatter, Processor %d has %d bits to scatter!\n", processor_id, 
-                                my_context_data->per_bits_true_size);
-                    }
-                    else
-                    {
+                        current_bitmap->clear_value(u32_bitmap_value);
                         if (signal_to_scatter == 2)
+                            my_context_data->steal_bits_true_size++;
+                        else 
+                            my_context_data->per_bits_true_size--;
+                        continue;
+                    }
+
+                    if (signal_to_scatter == 0)
+                        old_edge_id = 0;
+                    else if ((signal_to_scatter == 1) && (i == my_context_data->per_min_vert_id))
+                        old_edge_id = my_context_data->per_num_edges;
+                    else 
+                        old_edge_id = 0;
+
+                    for (u32_t z = old_edge_id; z < num_out_edges; z++)
+                    {
+                        t_edge = vert_index->out_edge(u32_bitmap_value, z);
+                        assert(t_edge);//Make sure this edge existd!
+                        t_update = A::scatter_one_edge(u32_bitmap_value, (VA *)&attr_array_head[u32_bitmap_value], t_edge);
+                        assert(t_update);
+
+                        strip_num = VID_TO_SEGMENT(t_update->dest_vert);
+                        cpu_offset = VID_TO_PARTITION(t_update->dest_vert );
+                        assert(strip_num < seg_config->num_segments);
+                        assert(cpu_offset < gen_config.num_processors);
+                        map_value = *(my_update_map_head + strip_num * gen_config.num_processors + cpu_offset);
+
+                        if (map_value < per_cpu_strip_cap)
                         {
-                            PRINT_DEBUG("Steal-cpu %d has scatter %d bits\n", processor_id, my_context_data->steal_bits_true_size);
+                            update_buf_offset = strip_num * my_strip_cap + map_value * gen_config.num_processors + cpu_offset;
+                            *(my_update_buf_head + update_buf_offset) = *t_update;
+                            //update the map
+                            map_value++;
+                            *(my_update_map_head + strip_num * gen_config.num_processors + cpu_offset) = map_value;
                         }
                         else
                         {
-                            PRINT_DEBUG("After this scatter, Processor %d has %d bits to scatter!\n", processor_id, 
-                                    my_context_data->per_bits_true_size);
-                            if (my_context_data->per_bits_true_size != 0)
-                            {
-                                PRINT_DEBUG("Processor %d still has %d bits to scatter!\n", processor_id, 
-                                    my_context_data->per_bits_true_size);
-                                my_context_data->per_bits_true_size = 0;
-                            }
-                            my_context_data->per_max_vert_id = current_bitmap->get_start_vert();
-                            my_context_data->per_min_vert_id = current_bitmap->get_term_vert();
+                            //A new method to handle the situation when some strip_buf is FULL
+                            PRINT_DEBUG("Currently, the strip_num = %d, cpu_offset = %d\n", strip_num, cpu_offset);
+                            PRINT_DEBUG("The vert_to_scatter is %d, the edge_id is %d\n", u32_bitmap_value, z);
+                            my_context_data->per_min_vert_id = u32_bitmap_value;
+                            my_context_data->per_num_edges = z;
+                            my_context_data->partition_gather_signal = processor_id;//just be different from origin status
+                            my_context_data->partition_gather_strip_id = strip_num;//record the strip_id to gather
+
+                            *status = UPDATE_BUF_FULL;
+                            break;
                         }
-                        *status = FINISHED_SCATTER;
+                        delete t_edge;
+                        delete t_update;
                     }
+                    if (*status == UPDATE_BUF_FULL)
+                        break;
+                    else
+                    {
+                        current_bitmap->clear_value(u32_bitmap_value);
+                        if (signal_to_scatter == 1 && my_context_data->per_bits_true_size == 0)
+                            PRINT_DEBUG("u32_bitmap_value = %d\n", u32_bitmap_value);
+                        if (signal_to_scatter == 2)
+                            my_context_data->steal_bits_true_size++;
+                        else 
+                            my_context_data->per_bits_true_size--;
+                    }
+                }
+
+                if (*status == UPDATE_BUF_FULL)
+                {
+                    PRINT_DEBUG("Processor %d have not finished scatter,  UPDATE_BUF_FULL, has %d bits to scatter!\n", processor_id, 
+                            my_context_data->per_bits_true_size);
+                }
+                else
+                {
+                    if (signal_to_scatter == 2)
+                    {
+                        PRINT_DEBUG("Steal-cpu %d has scatter %d bits\n", processor_id, my_context_data->steal_bits_true_size);
+                    }
+                    else
+                    {
+                        PRINT_DEBUG("Processor %d Finished scatter, has %d bits to scatter!\n", processor_id, 
+                                my_context_data->per_bits_true_size);
+                        if (my_context_data->per_bits_true_size != 0)
+                        {
+                            PRINT_DEBUG("Error, processor %d still has %d bits to scatter!\n", processor_id, 
+                                my_context_data->per_bits_true_size);
+                            my_context_data->per_bits_true_size = 0;
+                        }
+                        my_context_data->per_max_vert_id = current_bitmap->get_start_vert();
+                        my_context_data->per_min_vert_id = current_bitmap->get_term_vert();
+                    }
+                    *status = FINISHED_SCATTER;
+                }
                 break;
 			}
             case GATHER:
@@ -445,9 +275,6 @@ struct cpu_work_target{
                 u32_t strip_id;
                 u32_t threshold;
                 u32_t vert_index;
-                //bitmap * current_bitmap;
-
-                //PRINT_DEBUG("processor : %d, parameter address:%llx\n", processor_id, (u64_t)p_gather_param);
 
                 my_strip_cap = seg_config->per_cpu_info_list[processor_id]->strip_cap;
                 attr_array_head = (VA *)p_gather_param->attr_array_head;
@@ -458,13 +285,10 @@ struct cpu_work_target{
 
                 my_context_data = p_gather_param->PHASE > 0 ? my_sched_bitmap_manager->p_context_data1:
                     my_sched_bitmap_manager->p_context_data0;
-                //current_bitmap = p_gather_param->PHASE > 0? my_sched_bitmap_manager->p_bitmap1
-                  //  : my_sched_bitmap_manager->p_bitmap0;
                 PRINT_DEBUG("In gather, PHASE = %d, This is the processor %d, the max_vert = %d, the min_vert = %d\n", 
                         p_gather_param->PHASE, processor_id, 
                         my_context_data->per_max_vert_id, my_context_data->per_min_vert_id);
                 
-                //int current_bitmap_file_fd;
                 //Traversal all the buffers of each cpu to find the corresponding UPDATES
                 for (u32_t buf_id = 0; buf_id < gen_config.num_processors; buf_id++)
                 {
@@ -475,14 +299,10 @@ struct cpu_work_target{
                     if (map_value == 0)
                         continue;
 
-                    //PRINT_DEBUG("I(%d) am checking the %d's buffer, and now in the %d strip,and the num of this strip is %d\n", 
-                      //      processor_id, buf_id, strip_id, map_value);
                     for (u32_t update_id = 0; update_id < map_value; update_id++)
                     {
                         update_buf_offset = strip_id * my_strip_cap + update_id * gen_config.num_processors + processor_id;
-                        //PRINT_DEBUG("update_buf_offset = %d\n", update_buf_offset);
                         t_update = (my_update_buf_head + update_buf_offset);
-                        //PRINT_DEBUG("dest_vert = %d\n", my_update_buf_head->dest_vert);
                         assert(t_update);
                         dest_vert = t_update->dest_vert;
                         if (threshold == 1) 
@@ -491,34 +311,9 @@ struct cpu_work_target{
                             vert_index = dest_vert;
                             
                         A::gather_one_update(dest_vert, (VA *)&attr_array_head[vert_index], t_update, p_gather_param->PHASE);
-
-                        //if (dest_vert == 294 || dest_vert == 26978 || dest_vert == 58337 || dest_vert == 3210418)
-                        //{
-                        //    PRINT_DEBUG("Threshold = %d, PHASE = %d, dest_vert = %d\n", threshold, p_gather_param->PHASE, dest_vert);
-                        //    PRINT_DEBUG("attr_array_head[%d]->value = %f, t_update->vert_attr.value = %f\n", dest_vert,
-                        //            attr_array_head[vert_index].value, t_update->vert_attr.value);
-                        //}
-                        //if (/*p_gather_param->PHASE == 1 &&*/ ( dest_vert == 23 || dest_vert == 10))
-                          //  PRINT_DEBUG("dest_vert = %d\n", dest_vert);
-                          //  PRINT_ERROR("here!\n");
                     }
-                    //PRINT_DEBUG("This is processor:%d, my_bitmap->bits_true_size is %d:\n", processor_id,
-                            //current_bitmap->get_bits_true_size());
                     map_value = 0;
                     *(my_update_map_head + strip_id * gen_config.num_processors + processor_id) = 0;
-                    //now, the thread has finished its own task of the strip_id 
-                    /*if (strip_id == (seg_config->num_segments - 1))
-                    {
-                        //handle the aux_buffer 
-                        for (u32_t tmp_processor_id = 0; tmp_processor_id < gen_config.num_processors; tmp_processor_id++)
-                        {
-                            tmp_aux_manager = seg_config->per_cpu_info_list[tmp_processor_id]->aux_manager;
-                            if (tmp_aux_manager->num_updates > 0)
-                            {
-                                //we need to hadle each process's buffer 
-                            }
-                        }
-                    }*/
                 }
                 break;
             }

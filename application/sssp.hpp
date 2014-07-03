@@ -49,8 +49,6 @@ class sssp_program{
                 u32_t PHASE)
         {
 			//compare the value of u, if it is smaller, absorb the update
-                    //PRINT_DEBUG("this_update.value = %f, this_vert->value = %f\n", this_update->vert_attr.value, this_vert->value);
-                //PRINT_DEBUG("check in gather_one_update!\n");
 			if( this_update->vert_attr.value < this_vert->value ){
 				*this_vert = this_update->vert_attr;
 				//should add schedule of {vid,0}, need api from engine
