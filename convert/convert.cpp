@@ -55,6 +55,7 @@ int main( int argc, const char**argv)
     //hejian-debug
     std::string old_out_edge_file_name, old_out_index_file_name, old_out_desc_file_name, old_out_dest_file1_name;
 	std::string snap_type;
+    std::string out_txt_file_name;
 
 	//setup options
 	setup_options_convert( argc, argv );
@@ -74,6 +75,8 @@ int main( int argc, const char**argv)
 	old_out_edge_file_name = out_dir+ input_file_name +"-old.type1";
 	old_out_index_file_name = out_dir+ input_file_name +"-old.index";
 	old_out_desc_file_name = out_dir+ input_file_name +"-old.desc";
+
+    out_txt_file_name = out_dir + input_file_name + "-type1.txt";
     
 
 	snap_type = vm["type"].as<std::string>();
@@ -83,17 +86,22 @@ int main( int argc, const char**argv)
 	std::cout << "Output desc file: " << out_desc_file_name  << "\n";
 	std::cout << "Output index file: " << out_index_file_name  << "\n";
 	std::cout << "Output edge file: " << out_edge_file_name  << "\n";
+	std::cout << "Output txt file: " << out_edge_file_name  << "\n";
 
 	if( snap_type == "edgelist" )
 		process_edgelist( input_graph_name.c_str(), 
 				out_edge_file_name.c_str(), 
 				out_index_file_name.c_str() ,
                 old_out_edge_file_name.c_str(),
-                old_out_index_file_name.c_str());
+                old_out_index_file_name.c_str(),
+                out_txt_file_name.c_str());
 	else if (snap_type == "adjlist" )
 		process_adjlist( input_graph_name.c_str(), 
 				out_edge_file_name.c_str(), 
-				out_index_file_name.c_str() );
+				out_index_file_name.c_str(),
+                old_out_edge_file_name.c_str(),
+                old_out_index_file_name.c_str(),
+                out_txt_file_name.c_str());
 	else{
 		std::cout << "input parameter (type) error!\n";
 		exit( -1 );

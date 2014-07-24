@@ -61,13 +61,14 @@ struct io_work_target{
                 }
 
                 close(fd);
+                PRINT_DEBUG("Read work done!~~\n");
 
 				break;
 			}
 			case FILE_WRITE:
 			{
-				//PRINT_DEBUG( "dump to disk tasks is received by disk thread, buffer:0x%llx, offset:%llu, size:%llu\n", 
-				//	(u64_t)buffer, offset, size );
+				PRINT_DEBUG( "dump to disk tasks is received by disk thread, buffer:0x%llx, offset:%llu, size:%llu\n", 
+					(u64_t)buffer, offset, size );
 					
 				int written=0, remain=size, res;
 
@@ -75,7 +76,7 @@ struct io_work_target{
 				//fd = open( gen_config.attr_file_name.c_str(), O_RDWR, S_IRUSR | S_IRGRP | S_IROTH );
 				//fd = open( io_file_name, O_RDWR | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH );
 				fd = open( io_file_name, O_RDWR , S_IRUSR | S_IRGRP | S_IROTH );
-                PRINT_DEBUG("io_file_name:%s\n", io_file_name);
+                //PRINT_DEBUG("io_file_name:%s\n", io_file_name);
 				if( fd < 0 ){
 					PRINT_ERROR( "Cannot open attribute file for writing!\n");
 					exit( -1 );
@@ -92,6 +93,7 @@ struct io_work_target{
 				}
 
 				close(fd);
+                PRINT_DEBUG("Write work done!~~\n");
 				break;
 			}
 		}

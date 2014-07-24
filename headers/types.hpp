@@ -41,6 +41,10 @@ struct sched_list_manager{
     sched_task *head, *tail, *current;
 }__attribute__ ((aligned(8)));
 
+struct sched_list_context_data
+{
+    //to be continued
+}__attribute__((aligned(8)));
 
 //manage the bitmap buffer, add by hejian
 struct sched_bitmap_manager{
@@ -62,6 +66,7 @@ struct context_data{
     //data for stealed-cpus
     u32_t steal_max_vert_id;
     u32_t steal_min_vert_id;
+    u32_t steal_context_edge_id;
     u32_t steal_virt_cpu_id;
     u32_t steal_num_virt_cpus;
     u32_t steal_bits_true_size;

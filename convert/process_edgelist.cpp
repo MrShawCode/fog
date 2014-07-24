@@ -15,22 +15,9 @@
 
 #define LINE_FORMAT		"%d\t%d\n"
 
-//hejian-debug
-struct old_vert_index
-{
-    unsigned int vert_id;
-    unsigned long long offset;
-};
-
-struct old_edge
-{
-    unsigned int src_vert;
-    unsigned int dest_vert;
-    float edge_weight;
-};
-
 char line_buffer[MAX_LINE_LEN];
 FILE * in;
+FILE * out_txt;
 int edge_file, vert_index_file;
 //hejian-debug
 int old_edge_file, old_vert_index_file;
@@ -62,7 +49,8 @@ void process_edgelist( const char* input_file_name,
 		const char* edge_file_name, 
 		const char* vert_index_file_name,
         const char * old_edge_file_name,
-        const char * old_vert_index_file_name)
+        const char * old_vert_index_file_name,
+        const char * out_txt_file_name)
 {
 	unsigned int recent_src_vert=0;
 	unsigned int vert_buffer_offset=0;
@@ -84,6 +72,13 @@ void process_edgelist( const char* input_file_name,
 		printf( "Cannot open the input graph file!\n" );
 		exit(1);
 	}
+
+    out_txt = fopen(out_txt_file_name, "wt+");
+    if (out_txt == NULL)
+    {
+        printf("Cannot open the output txt file!\n");
+        exit(-1);
+    }
 
 	edge_file = open( edge_file_name, O_CREAT|O_WRONLY, S_IRUSR );
 	if( edge_file == -1 ){
@@ -141,6 +136,8 @@ void process_edgelist( const char* input_file_name,
 		edge_suffix = num_edges - (edge_buffer_offset * EDGE_BUFFER_LEN);
 		edge_buffer[edge_suffix].dest_vert = dst_vert;
 		edge_buffer[edge_suffix].edge_weight = produce_random_weight();
+        //write to out_txt file
+        fprintf(out_txt, "%d\t%d\t%f\n", src_vert, dst_vert, edge_buffer[edge_suffix].edge_weight);
 
         //hejian-debug
 		old_edge_buffer[edge_suffix].src_vert = src_vert;
@@ -203,6 +200,7 @@ void process_edgelist( const char* input_file_name,
 
 	//finished processing
 	fclose( in );
+    fclose(out_txt);
 	close( edge_file );
 	close( old_edge_file );
 	close( vert_index_file );

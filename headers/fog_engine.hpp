@@ -623,8 +623,6 @@ class fog_engine{
 		//	---------------------------------
 		//	| update_map_manager			|
 		//	---------------------------------
-		//	| aux_update_buf_manager		|
-		//	---------------------------------
 		//	| update_map(update_map_size)	|
 		//	---------------------------------
 		//	| sched_list(sched_list_size)	|
@@ -635,7 +633,7 @@ class fog_engine{
 		void init_sched_update_buf()
 		{
 			u32_t update_map_size, sched_list_size, total_header_len;
-			u64_t strip_buf_size, strip_size, aux_update_buf_len;
+			u64_t strip_buf_size, strip_size;//, aux_update_buf_len;
 			u32_t strip_cap;
 
 			update_map_size = seg_config->num_segments 
@@ -646,12 +644,12 @@ class fog_engine{
 			
 			total_header_len = sizeof(sched_list_manager) 
 					+ sizeof(update_map_manager)
-					+ sizeof(aux_update_buf_manager<VA>)
+					/*+ sizeof(aux_update_buf_manager<VA>)*/
 					+ update_map_size
 					+ sched_list_size;
 
-			PRINT_DEBUG( "init_sched_update_buffer--size of sched_list_manager:%lu, size of update map manager:%lu, size of aux_update buffer manager:%lu\n", 
-				sizeof(sched_list_manager), sizeof(update_map_manager), sizeof(aux_update_buf_manager<VA>) );
+			PRINT_DEBUG( "init_sched_update_buffer--size of sched_list_manager:%lu, size of update map manager:%lu\n", 
+				sizeof(sched_list_manager), sizeof(update_map_manager)/*, sizeof(aux_update_buf_manager<VA>)*/ );
 			PRINT_DEBUG( "init_sched_update_buffer--update_map_size:%u, sched_list_size:%u, total_head_len:%u\n", 
 				update_map_size, sched_list_size, total_header_len );
 /*
@@ -668,7 +666,7 @@ class fog_engine{
 			strip_cap = (u32_t)(strip_size / sizeof(update<VA>));
 
 */
-			aux_update_buf_len = seg_config->aux_update_buf_len / gen_config.num_processors;
+			//aux_update_buf_len = seg_config->aux_update_buf_len / gen_config.num_processors;
 			//populate the buffer managers
 			for(u32_t i=0; i<gen_config.num_processors; i++){
 				//headers
@@ -680,11 +678,39 @@ class fog_engine{
 								(u64_t)seg_config->per_cpu_info_list[i]->buf_head 
 								+ sizeof(sched_list_manager) );
 
-				seg_config->per_cpu_info_list[i]->aux_manager = 
+				/*seg_config->per_cpu_info_list[i]->aux_manager = 
 					(aux_update_buf_manager<VA>*)(
 								(u64_t)seg_config->per_cpu_info_list[i]->buf_head 
 								+ sizeof(sched_list_manager)
-								+ sizeof(update_map_manager) );
+								+ sizeof(update_map_manager) );*/
+                
+				//populate the update map manager, refer to types.hpp
+				seg_config->per_cpu_info_list[i]->update_manager->update_map_head = 
+					(u32_t*)((u64_t)seg_config->per_cpu_info_list[i]->update_manager
+						+ sizeof(update_map_manager));
+
+				seg_config->per_cpu_info_list[i]->update_manager->update_map_size =
+					update_map_size;
+               
+                //populate sched_manager, refer to types.hpp
+				seg_config->per_cpu_info_list[i]->sched_manager->sched_buf_head =
+					(sched_task*)(
+								(u64_t)seg_config->per_cpu_info_list[i]->update_manager->update_map_head
+								+ update_map_size );
+
+				seg_config->per_cpu_info_list[i]->sched_manager->sched_buf_size = 
+								SCHED_BUFFER_LEN;
+
+				seg_config->per_cpu_info_list[i]->sched_manager->sched_task_counter = 0;
+				seg_config->per_cpu_info_list[i]->sched_manager->head = 
+				seg_config->per_cpu_info_list[i]->sched_manager->tail = 
+				seg_config->per_cpu_info_list[i]->sched_manager->current = 
+					seg_config->per_cpu_info_list[i]->sched_manager->sched_buf_head;
+
+				//zero out the update buffer and sched list buffer
+				memset( seg_config->per_cpu_info_list[i]->update_manager->update_map_head, 
+					0, 
+					update_map_size + sched_list_size );
 
 				//build the strips
 				seg_config->per_cpu_info_list[i]->strip_buf_head = //the first strip
@@ -703,37 +729,10 @@ class fog_engine{
 				seg_config->per_cpu_info_list[i]->strip_buf_len = strip_size;
 				seg_config->per_cpu_info_list[i]->strip_cap = strip_cap;
 
-				//populate the update map manager, refer to types.hpp
-				seg_config->per_cpu_info_list[i]->update_manager->update_map_head = 
-					(u32_t*)((u64_t)seg_config->per_cpu_info_list[i]->aux_manager 
-						+ sizeof(aux_update_buf_manager<VA>));
-
-				seg_config->per_cpu_info_list[i]->update_manager->update_map_size =
-					update_map_size;
 	
-				//populate sched_manager, refer to types.hpp
-				seg_config->per_cpu_info_list[i]->sched_manager->sched_buf_head =
-					(sched_task*)(
-								(u64_t)seg_config->per_cpu_info_list[i]->aux_manager
-								+ sizeof(aux_update_buf_manager<VA>) 
-								+ update_map_size );
-
-				seg_config->per_cpu_info_list[i]->sched_manager->sched_buf_size = 
-								SCHED_BUFFER_LEN;
-
-				seg_config->per_cpu_info_list[i]->sched_manager->sched_task_counter = 0;
-				seg_config->per_cpu_info_list[i]->sched_manager->head = 
-				seg_config->per_cpu_info_list[i]->sched_manager->tail = 
-				seg_config->per_cpu_info_list[i]->sched_manager->current = 
-					seg_config->per_cpu_info_list[i]->sched_manager->sched_buf_head;
-
-				//zero out the update buffer and sched list buffer
-				memset( seg_config->per_cpu_info_list[i]->update_manager->update_map_head, 
-					0, 
-					update_map_size + sched_list_size );
-	
+					
 				//populate the auxiliary update buffer manager
-				seg_config->per_cpu_info_list[i]->aux_manager->buf_head =
+				/*seg_config->per_cpu_info_list[i]->aux_manager->buf_head =
 					seg_config->aux_update_buf + i* aux_update_buf_len;
 						
 				seg_config->per_cpu_info_list[i]->aux_manager->buf_size =
@@ -745,7 +744,7 @@ class fog_engine{
 								sizeof( update<VA> ) );
 				seg_config->per_cpu_info_list[i]->aux_manager->buf_cap =
 					(u32_t)(aux_update_buf_len/sizeof( update<VA> ));
-				seg_config->per_cpu_info_list[i]->aux_manager->num_updates = 0;
+				seg_config->per_cpu_info_list[i]->aux_manager->num_updates = 0;*/
 			}
 			show_sched_update_buf();
 		}

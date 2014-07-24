@@ -108,6 +108,10 @@ class segment_config{
 		//per-cpu data, a list with gen_config.num_processors elements.
 		per_cpu_data<VA, S>** per_cpu_info_list;
 
+        //buf_holder
+        int buf0_holder;
+        int buf1_holder;
+
         //Note:
         // Should show this configuration information at each run, especially when
         //  it is not debugging.
@@ -154,6 +158,7 @@ class segment_config{
 			//still assume the vertex id starts from 0
 			u32_t num_vertices = gen_config.max_vert_id + 1;
 
+            buf0_holder = buf1_holder = -1;
 			//fog will divide the whole (write) buffer into 5 pieces (in theory):
 			//	following figure explains why there are 5 pieces
 			//	---------------------------------		---

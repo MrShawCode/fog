@@ -57,6 +57,7 @@ struct io_work{
                 }
 
                 close(fd);
+                PRINT_DEBUG("Read work done!~~\n");
 
 				break;
 			}
@@ -85,6 +86,7 @@ struct io_work{
 				}
 
 				close(fd);
+                PRINT_DEBUG("Write work done!~~\n");
 				break;
 			}
 		}

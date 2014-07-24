@@ -11,14 +11,20 @@
 
 #include "convert.h"
 
+
+
 float produce_random_weight()
 {
-    return (1.0 + (float)(10.0 * rand()/(RAND_MAX + 1.0)));
+    //return (1.0 + (float)(10.0 * rand()/(RAND_MAX + 1.0)));
+    return ((float)(rand()/(RAND_MAX + 1.0)));
 }
 
 void process_adjlist(const char * input_file_name, 
 		const char * edge_file_name, 
-		const char * vert_index_file_name)
+		const char * vert_index_file_name,
+        const char * old_edge_file_name,
+        const char * old_vert_index_file_name,
+        const char * out_txt_file_name)
 {
     char * res;
     unsigned int edge_buffer_offset = 0;
@@ -38,6 +44,13 @@ void process_adjlist(const char * input_file_name,
 		exit(1);
 	}
 
+    out_txt = fopen(out_txt_file_name, "wt+");
+    if (out_txt == NULL)
+    {
+        printf("Connnot open out_txt_file!\n");
+        exit(1);
+    }
+
    edge_file = open(edge_file_name, O_CREAT|O_WRONLY, S_IRUSR);
    if (edge_file == -1){
        printf("Cannot create edge list file:%s\nAborted..\n", edge_file_name);
@@ -50,8 +63,24 @@ void process_adjlist(const char * input_file_name,
        exit(-1);
    }
 
+    old_edge_file = open(old_edge_file_name, O_CREAT | O_WRONLY, S_IRUSR);
+    if (old_edge_file == -1)
+    {
+       printf("Cannot create old edge list file:%s\nAborted..\n", old_edge_file_name);
+       exit(-1);
+    }
+
+   old_vert_index_file = open( old_vert_index_file_name, O_CREAT|O_WRONLY, S_IRUSR );
+   if (old_vert_index_file == -1){
+       printf( "Cannot create old vertex index file:%s\nAborted..\n", old_vert_index_file_name);
+       exit(-1);
+   }
+
     memset((char *)vert_buffer, 0, VERT_BUFFER_LEN * sizeof(struct vert_index) );
 	memset((char *)edge_buffer, 0, EDGE_BUFFER_LEN * sizeof(struct edge) );
+
+    memset((char *)old_vert_buffer, 0, VERT_BUFFER_LEN * sizeof(struct old_vert_index) );
+	memset((char *)old_edge_buffer, 0, EDGE_BUFFER_LEN * sizeof(struct old_edge) );
 
     while ((res = (char *) get_adjline()) != '\0')
     {
@@ -79,11 +108,17 @@ void process_adjlist(const char * input_file_name,
                     //flush the vertex index array to file.
                     flush_buffer_to_file(vert_index_file, (char *)vert_buffer, VERT_BUFFER_LEN * sizeof(vert_index));
                     memset((char *)vert_buffer, 0, VERT_BUFFER_LEN * sizeof(struct vert_index));
+
+                    flush_buffer_to_file(old_vert_index_file, (char *)old_vert_buffer, VERT_BUFFER_LEN * sizeof(old_vert_index));
+                    memset((char *)old_vert_buffer, 0, VERT_BUFFER_LEN * sizeof(struct old_vert_index));
                 }
 
                 vert_suffix = src_vert - vert_buffer_offset * VERT_BUFFER_LEN;
 
                 vert_buffer[vert_suffix].offset = num_edges + 1;
+
+                old_vert_buffer[vert_suffix].offset = num_edges + 1;
+                old_vert_buffer[vert_suffix].vert_id = src_vert;
             }
 
             if (index > 0){//means this is the dest_node of the src_node
@@ -93,10 +128,20 @@ void process_adjlist(const char * input_file_name,
                 edge_buffer[edge_suffix].dest_vert = dst_vert;
                 edge_buffer[edge_suffix].edge_weight = produce_random_weight();
 
+                old_edge_buffer[edge_suffix].src_vert = src_vert;
+                old_edge_buffer[edge_suffix].dest_vert = dst_vert;
+                old_edge_buffer[edge_suffix].edge_weight = edge_buffer[edge_suffix].edge_weight;
+
+                fprintf(out_txt, "%d\t%d\t%f\n", src_vert, dst_vert, edge_buffer[edge_suffix].edge_weight);
+
 				num_out_edges ++;
                 if (edge_suffix == (EDGE_BUFFER_LEN - 1)){
                     flush_buffer_to_file(edge_file, (char *)edge_buffer, EDGE_BUFFER_LEN * sizeof(edge));
 					memset( edge_buffer, 0, EDGE_BUFFER_LEN * sizeof(struct edge) );
+
+                    flush_buffer_to_file(old_edge_file, (char *)old_edge_buffer, EDGE_BUFFER_LEN * sizeof(old_edge));
+					memset( old_edge_buffer, 0, EDGE_BUFFER_LEN * sizeof(struct old_edge) );
+
                     edge_buffer_offset += 1;
                 }
 
@@ -127,13 +172,19 @@ void process_adjlist(const char * input_file_name,
 
 	//flush the remaining data in vertex index and edge buffer to file
     flush_buffer_to_file (edge_file, (char *)edge_buffer, EDGE_BUFFER_LEN * sizeof(edge));
-    flush_buffer_to_file (vert_index_file, (char *)vert_buffer, VERT_BUFFER_LEN * sizeof(edge));
+    flush_buffer_to_file (vert_index_file, (char *)vert_buffer, VERT_BUFFER_LEN * sizeof(vert_index));
+
+    flush_buffer_to_file (old_edge_file, (char *)old_edge_buffer, EDGE_BUFFER_LEN * sizeof(old_edge));
+    flush_buffer_to_file (old_vert_index_file, (char *)old_vert_buffer, VERT_BUFFER_LEN * sizeof(old_vert_index));
 
 	if (res != NULL)
 		free(res);
 	fclose( in );
+    fclose(out_txt);
     close(edge_file);
     close(vert_index_file);
+    close(old_edge_file);
+    close(old_vert_index_file);
 }
 
 char *get_adjline()

@@ -114,7 +114,7 @@ struct cpu_work{
 				scatter_param* p_scatter_param = (scatter_param*) state_param;
 				sched_list_manager* my_sched_list_manager;
 				update_map_manager* my_update_map_manager;
-				aux_update_buf_manager<VA>* my_aux_manager;
+				//aux_update_buf_manager<VA>* my_aux_manager;
 				u32_t my_strip_cap, per_cpu_strip_cap;
 				u32_t* my_update_map_head;
 
@@ -131,7 +131,7 @@ struct cpu_work{
 
 				my_sched_list_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
 				my_update_map_manager = seg_config->per_cpu_info_list[processor_id]->update_manager;
-				my_aux_manager = seg_config->per_cpu_info_list[processor_id]->aux_manager;
+				//my_aux_manager = seg_config->per_cpu_info_list[processor_id]->aux_manager;
 
 				my_strip_cap = seg_config->per_cpu_info_list[processor_id]->strip_cap;
 				per_cpu_strip_cap = my_strip_cap/gen_config.num_processors;
@@ -157,7 +157,7 @@ struct cpu_work{
 //					my_aux_manager->num_updates,
 //					(u64_t) my_update_buf_head );
 
-				if( my_aux_manager->num_updates > 0 ){
+				/*if( my_aux_manager->num_updates > 0 ){
 					for( i=my_aux_manager->num_updates; i>0; i-- ){
 						t_update = (update<VA>*)(my_aux_manager->update_head + i - 1);
 						strip_num = VID_TO_SEGMENT( t_update->dest_vert );
@@ -190,7 +190,7 @@ struct cpu_work{
 							break;
 					}
 					my_aux_manager->num_updates = i;
-				}
+				}*/
 
 //				PRINT_DEBUG( "AFTER PRELOAD--processor id:%u, aux head:0x%llx, last update address:0x%llx with num_updates=%u\n",
 //					processor_id, 
@@ -203,19 +203,19 @@ struct cpu_work{
 					p_task = get_sched_task( my_sched_list_manager );
 
 					if( p_task == NULL ){
-						if( my_aux_manager->num_updates > 0 )
-							*status = NO_MORE_SCHED;
-						else
+				//		if( my_aux_manager->num_updates > 0 )
+				//			*status = NO_MORE_SCHED;
+				//		else
 							*status = FINISHED_SCATTER;
 						return;
 					}
 
-					PRINT_DEBUG( "processor:%d, task start:%u, task term:%u, remain task:%u. updates in aux:%u\n", 
+					/*PRINT_DEBUG( "processor:%d, task start:%u, task term:%u, remain task:%u. updates in aux:%u\n", 
 						processor_id, 
 						p_task->start, 
 						p_task->term, 
 						my_sched_list_manager->sched_task_counter,
-						my_aux_manager->num_updates );
+						my_aux_manager->num_updates );*/
 
 					for( i=p_task->start; i<p_task->term; i++ ){
 						//how many edges does "i" have?
@@ -224,7 +224,8 @@ struct cpu_work{
 
 						//tell if the remaining space in update buffer is enough to store the updates?
 						// since we add an auxiliary update buffer, need to 
-						temp_laxity = my_aux_manager->buf_cap - my_aux_manager->num_updates;
+						//temp_laxity = my_aux_manager->buf_cap - my_aux_manager->num_updates;
+                        temp_laxity = i;
 
 						if( temp_laxity < num_out_edges ){
 							PRINT_DEBUG( "Processor %d: laxity=%u, current out edgs=%u. i=%u\n",
@@ -266,9 +267,9 @@ struct cpu_work{
 								*(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset) = map_value;
 							}else{
 								//should add it to auxiliary update buffer
-								*(my_aux_manager->update_head + my_aux_manager->num_updates) = *t_update;
+						/*		*(my_aux_manager->update_head + my_aux_manager->num_updates) = *t_update;
 
-								my_aux_manager->num_updates ++;
+								my_aux_manager->num_updates ++;*/
 							}
 
 							//drop t_edge and t_update
