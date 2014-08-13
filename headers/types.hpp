@@ -39,11 +39,33 @@ struct sched_list_manager{
 	//fields that define the list
     u32_t sched_task_counter;   //remember the number of tasks.
     sched_task *head, *tail, *current;
+
+    //context data
+    struct sched_list_context_data * p_context_data;
 }__attribute__ ((aligned(8)));
 
 struct sched_list_context_data
 {
+    //normal-sched-vert-id
+    u32_t normal_sched_min_vert;
+    u32_t normal_sched_max_vert;
+    u32_t normal_sched_vert_to_scatter;
+    u32_t num_vert_to_scatter;
+    
+    //verte_id to store
+    u32_t context_vert_id;
+    //edge id to store
+    u32_t context_edge_id;
+
+    u32_t context_steal_max_vert;
+    u32_t context_steal_min_vert;
+    u32_t context_steal_num_vert;
+    u32_t context_steal_edge_id;
     //to be continued
+    u32_t signal_to_scatter;
+
+    //gather param
+    int partition_gather_strip_id;
 }__attribute__((aligned(8)));
 
 //manage the bitmap buffer, add by hejian

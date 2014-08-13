@@ -117,6 +117,10 @@ void process_edgelist( const char* input_file_name,
 
 	//parsing input file now.
 	while ( read_one_edge() != CUSTOM_EOF ){
+
+        //jump the ##
+        if (num_edges == 0)
+            continue;
 		//trace the vertex ids
 		if( src_vert < min_vertex_id ) min_vertex_id = src_vert;
 		if( dst_vert < min_vertex_id ) min_vertex_id = dst_vert;

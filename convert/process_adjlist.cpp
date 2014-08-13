@@ -15,8 +15,8 @@
 
 float produce_random_weight()
 {
-    //return (1.0 + (float)(10.0 * rand()/(RAND_MAX + 1.0)));
-    return ((float)(rand()/(RAND_MAX + 1.0)));
+    return (1.0 + (float)(10.0 * rand()/(RAND_MAX + 1.0)));
+    //return ((float)(rand()/(RAND_MAX + 1.0)));
 }
 
 void process_adjlist(const char * input_file_name, 

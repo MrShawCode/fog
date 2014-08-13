@@ -22,13 +22,12 @@
 #include "config.hpp"
 #include "index_vert_array.hpp"
 #include "disk_thread.hpp"
-#include "disk_thread_target.hpp"
 #include "cpu_thread.hpp"
 #include "print_debug.hpp"
 #include "cpu_thread_target.hpp"
 
 #define THRESHOLD 0.8
-#define MMAP_THRESHOLD 0.005
+#define MMAP_THRESHOLD 0.02
 
 int init_current_fd;
 //A stands for the algorithm (i.e., ???_program)
@@ -44,7 +43,7 @@ class fog_engine_target{
         static u32_t current_attr_segment;
 
         //io work queue
-        static io_queue_target* fog_io_queue;
+        static io_queue * fog_io_queue;
 
         cpu_thread_target<A,VA> ** pcpu_threads;
         boost::thread ** boost_pcpu_threads;
@@ -81,7 +80,7 @@ class fog_engine_target{
             seg_config = new segment_config<VA, sched_bitmap_manager>((const char *)buf_for_write);
 
             //create io queue
-            fog_io_queue = new io_queue_target;
+            fog_io_queue = new io_queue;
 
             //create cpu threads
             pcpu_threads = new cpu_thread_target<A,VA> *[gen_config.num_processors];
@@ -169,7 +168,7 @@ class fog_engine_target{
 			// the value in the attribute buffer, dump the content to file after done,
 			// then swap the attribute buffer (between 0 and 1)
 			cpu_work_target<A,VA>* new_cpu_work = NULL;
-			io_work_target* init_io_work = NULL;
+			io_work * init_io_work = NULL;
 			char * buf_to_dump = NULL;
 			init_param_target * p_init_param=new init_param_target;
 
@@ -215,13 +214,13 @@ class fog_engine_target{
 				}
 
 				if( i != (seg_config->num_segments-1) ){
-					init_io_work = new io_work_target( gen_config.attr_file_name.c_str(),
+					init_io_work = new io_work( gen_config.attr_file_name.c_str(),
                         FILE_WRITE, 
 						buf_to_dump, 
 						(u64_t)i*seg_config->segment_cap*sizeof(VA),
 						(u64_t)seg_config->segment_cap*sizeof(VA) );
 				}else{
-					init_io_work = new io_work_target( gen_config.attr_file_name.c_str(),
+					init_io_work = new io_work( gen_config.attr_file_name.c_str(),
                         FILE_WRITE, 
 						buf_to_dump, 
 						(u64_t)i*seg_config->segment_cap*sizeof(VA),
@@ -554,7 +553,7 @@ class fog_engine_target{
         void gather_updates(u32_t PHASE, int super_phase, int loop_counter)
         {
             cpu_work_target<A,VA>* gather_cpu_work = NULL;
-            io_work_target * one_io_work = NULL;
+            io_work* one_io_work = NULL;
             char * next_buffer = NULL, *read_buf = NULL;
             char * write_buf = NULL; /** next_write_buf = NULL;*/
             //u32_t begin_with;
@@ -700,13 +699,13 @@ class fog_engine_target{
 
                             if (tmp_strip_id != (seg_config->num_segments-1) )
                             {
-                                one_io_work = new io_work_target(gen_config.attr_file_name.c_str(),
+                                one_io_work = new io_work(gen_config.attr_file_name.c_str(),
                                         FILE_WRITE, read_buf, 
                                         (u64_t)tmp_strip_id * seg_config->segment_cap*sizeof(VA), (u64_t)seg_config->segment_cap*sizeof(VA));
                             }
                             else
                             {
-                                one_io_work = new io_work_target(gen_config.attr_file_name.c_str(),
+                                one_io_work = new io_work(gen_config.attr_file_name.c_str(),
                                         FILE_WRITE, read_buf, 
                                         (u64_t)tmp_strip_id * seg_config->segment_cap*sizeof(VA),
                                         (u64_t)(gen_config.max_vert_id%seg_config->segment_cap+1)*sizeof(VA));
@@ -748,7 +747,7 @@ class fog_engine_target{
                                 PRINT_ERROR("FOG_ENGINE::scatter_updates failed!\n");
                             }
 
-                        io_work_target * write_io_work = NULL;
+                        io_work* write_io_work = NULL;
 
                         for(u32_t i = 0; i < seg_config->num_segments; i++)
                         {
@@ -785,7 +784,7 @@ class fog_engine_target{
                                     else 
                                         read_size = (u64_t)(seg_config->segment_cap*sizeof(VA)); 
 
-                                    one_io_work = new io_work_target(gen_config.attr_file_name.c_str(),
+                                    one_io_work = new io_work(gen_config.attr_file_name.c_str(),
                                             FILE_READ, read_buf, offset, read_size);
                                     fog_io_queue->add_io_task(one_io_work);
                                     fog_io_queue->wait_for_io_task(one_io_work);
@@ -825,13 +824,13 @@ class fog_engine_target{
 
                                 if (i != (seg_config->num_segments-1) )
                                 {
-                                    write_io_work = new io_work_target(gen_config.attr_file_name.c_str(),
+                                    write_io_work = new io_work(gen_config.attr_file_name.c_str(),
                                             FILE_WRITE, read_buf, 
                                             (u64_t)i * seg_config->segment_cap*sizeof(VA), (u64_t)seg_config->segment_cap*sizeof(VA));
                                 }
                                 else
                                 {
-                                    write_io_work = new io_work_target(gen_config.attr_file_name.c_str(),
+                                    write_io_work = new io_work(gen_config.attr_file_name.c_str(),
                                             FILE_WRITE, read_buf, 
                                             (u64_t)i * seg_config->segment_cap*sizeof(VA),
                                             (u64_t)(gen_config.max_vert_id%seg_config->segment_cap+1)*sizeof(VA));
@@ -888,7 +887,7 @@ class fog_engine_target{
                                     else 
                                         read_size = (u64_t)(seg_config->segment_cap*sizeof(VA)); 
 
-                                    one_io_work = new io_work_target(gen_config.attr_file_name.c_str(),
+                                    one_io_work = new io_work(gen_config.attr_file_name.c_str(),
                                             FILE_READ, next_buffer, offset, read_size);
                                     fog_io_queue->add_io_task(one_io_work);
                                     if (one_io_work != NULL)
@@ -1035,7 +1034,7 @@ class fog_engine_target{
                                 }
                                 else
                                     size = (u64_t)(seg_config->segment_cap*sizeof(VA));
-                                one_io_work = new io_work_target(gen_config.attr_file_name.c_str(), 
+                                one_io_work = new io_work(gen_config.attr_file_name.c_str(), 
                                         FILE_READ, read_buf, offset, size);
                                 fog_io_queue->add_io_task(one_io_work);
                                 if (one_io_work != NULL)
@@ -1085,7 +1084,7 @@ class fog_engine_target{
                                     }
                                     else
                                         size = (u64_t)(seg_config->segment_cap*sizeof(VA));
-                                    one_io_work = new io_work_target(gen_config.attr_file_name.c_str(), 
+                                    one_io_work = new io_work(gen_config.attr_file_name.c_str(), 
                                             FILE_WRITE, write_buf, offset, size);
                                     fog_io_queue->add_io_task(one_io_work);
                                     if (one_io_work != NULL)
@@ -1116,7 +1115,7 @@ class fog_engine_target{
                                     }
                                     else
                                         size = (u64_t)(seg_config->segment_cap*sizeof(VA));
-                                    one_io_work = new io_work_target(gen_config.attr_file_name.c_str(), 
+                                    one_io_work = new io_work(gen_config.attr_file_name.c_str(), 
                                             FILE_READ, read_buf, offset, size);
                                     fog_io_queue->add_io_task(one_io_work);
                                     if (one_io_work != NULL)
@@ -1151,7 +1150,7 @@ class fog_engine_target{
                                     }
                                     else
                                         size = (u64_t)(seg_config->segment_cap*sizeof(VA));
-                                    one_io_work = new io_work_target(gen_config.attr_file_name.c_str(), 
+                                    one_io_work = new io_work(gen_config.attr_file_name.c_str(), 
                                             FILE_READ, read_buf, offset, size);
                                     fog_io_queue->add_io_task(one_io_work);
                                     if (one_io_work != NULL)
@@ -1211,7 +1210,7 @@ class fog_engine_target{
                                     }
                                     else
                                         size = (u64_t)(seg_config->segment_cap*sizeof(VA));
-                                    one_io_work = new io_work_target(gen_config.attr_file_name.c_str(), 
+                                    one_io_work = new io_work(gen_config.attr_file_name.c_str(), 
                                             FILE_READ, next_buffer, offset, size);
                                     fog_io_queue->add_io_task(one_io_work);
                                     if (one_io_work != NULL)
@@ -1255,7 +1254,7 @@ class fog_engine_target{
                                     }
                                     else
                                         size = (u64_t)(seg_config->segment_cap*sizeof(VA));
-                                    one_io_work = new io_work_target(gen_config.attr_file_name.c_str(), 
+                                    one_io_work = new io_work(gen_config.attr_file_name.c_str(), 
                                             FILE_WRITE, write_buf, offset, size);
                                     fog_io_queue->add_io_task(one_io_work);
 
@@ -1273,7 +1272,7 @@ class fog_engine_target{
                                     }
                                     else
                                         size = (u64_t)(seg_config->segment_cap*sizeof(VA));
-                                    one_io_work = new io_work_target(gen_config.attr_file_name.c_str(), 
+                                    one_io_work = new io_work(gen_config.attr_file_name.c_str(), 
                                             FILE_READ, next_buffer, offset, size);
                                     fog_io_queue->add_io_task(one_io_work);
                                     if (one_io_work != NULL)
@@ -1345,7 +1344,7 @@ class fog_engine_target{
                 return NULL;
         }
 
-        void do_io_work(int strip_id, u32_t operation, char * io_buf, io_work_target * one_io_work)
+        void do_io_work(int strip_id, u32_t operation, char * io_buf, io_work* one_io_work)
         {
             if (one_io_work != NULL)
             {
@@ -1362,7 +1361,7 @@ class fog_engine_target{
             }
             else
                 size = (u64_t)(seg_config->segment_cap*sizeof(VA));
-            one_io_work = new io_work_target(gen_config.attr_file_name.c_str(), 
+            one_io_work = new io_work(gen_config.attr_file_name.c_str(), 
                     operation, io_buf, offset, size);
             fog_io_queue->add_io_task(one_io_work);
         }
@@ -1800,7 +1799,7 @@ class fog_engine_target{
 			u64_t strip_buf_size, strip_size/*, aux_update_buf_len*/;
 			u32_t strip_cap;
             u32_t bitmap_buf_size; //bitmap_max_size;
-            //io_work_target* init_bitmap_io_work = NULL;
+            //io_work* init_bitmap_io_work = NULL;
             u32_t total_num_vertices;
             u32_t per_bitmap_buf_size;
 
@@ -2044,6 +2043,6 @@ template <typename A, typename VA>
 segment_config<VA, sched_bitmap_manager> * fog_engine_target<A, VA>::seg_config;
 
 template <typename A, typename VA>
-io_queue_target* fog_engine_target<A, VA>::fog_io_queue;
+io_queue * fog_engine_target<A, VA>::fog_io_queue;
 
 #endif

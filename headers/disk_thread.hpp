@@ -8,6 +8,7 @@
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include "print_debug.hpp"
 
+#include <sys/stat.h>
 enum{
 	FILE_READ = 0,
 	FILE_WRITE
@@ -20,12 +21,13 @@ struct io_work{
 	u64_t offset,size;
 	bool someone_work_on_it;
 	int fd;
+    const char * io_file_name;
 	//mutex that control the accesses to the disk task queue
 	boost::interprocess::interprocess_mutex work_mutex;
 
-	io_work( u32_t oper, char* buf, u64_t offset_in, u64_t size_in )
+	io_work( const char *file_name_in, u32_t oper, char* buf, u64_t offset_in, u64_t size_in )
 		:operation(oper), finished(0), buffer(buf), offset(offset_in), 
-		 size(size_in), someone_work_on_it( false )
+		 size(size_in), someone_work_on_it( false ), io_file_name(file_name_in)
 	{}
 
     void operator() (u32_t disk_thread_id)
@@ -40,7 +42,7 @@ struct io_work{
                 int finished=0, remain=size, res;
 
                 //the file should exist now
-                fd = open( gen_config.attr_file_name.c_str(), O_RDWR, S_IRUSR | S_IRGRP | S_IROTH );
+                fd = open( io_file_name, O_RDWR, S_IRUSR | S_IRGRP | S_IROTH );
                 if( fd < 0 ){
                     PRINT_ERROR( "Cannot open attribute file for writing!\n");
                     exit( -1 );
@@ -54,6 +56,7 @@ struct io_work{
                         PRINT_ERROR( "failure on disk reading!\n" );
                     finished += res;
                     remain -= res;
+                    PRINT_DEBUG("remain = %d\n", remain);
                 }
 
                 close(fd);
@@ -63,13 +66,13 @@ struct io_work{
 			}
 			case FILE_WRITE:
 			{
-//				PRINT_DEBUG( "dump to disk tasks is received by disk thread, buffer:0x%llx, offset:%llu, size:%llu\n", 
-//					(u64_t)buffer, offset, size );
+				PRINT_DEBUG( "dump to disk tasks is received by disk thread, buffer:0x%llx, offset:%llu, size:%llu\n", 
+					(u64_t)buffer, offset, size );
 					
 				int written=0, remain=size, res;
 
 				//the file should exist now
-				fd = open( gen_config.attr_file_name.c_str(), O_RDWR, S_IRUSR | S_IRGRP | S_IROTH );
+				fd = open( io_file_name, O_RDWR , S_IRUSR | S_IRGRP | S_IROTH );
 				if( fd < 0 ){
 					PRINT_ERROR( "Cannot open attribute file for writing!\n");
 					exit( -1 );
@@ -98,7 +101,7 @@ struct io_work{
 
 class io_queue;
 
-class disk_thread {
+class disk_thread{
 public:
     const unsigned long disk_thread_id;
     class io_queue* work_queue;
@@ -186,7 +189,7 @@ class io_queue{
 		io_queue_sem.post();
 	}
 
-	void del_io_task( io_work* task_to_del )
+	void del_io_task( io_work * task_to_del )
 	{
 		assert( task_to_del->finished==1 );
 		boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(io_queue_mutex);
@@ -203,7 +206,7 @@ class io_queue{
 	// After calling this member function, the thread will spin on waiting for the completion
 	// of specific io task!
 	// i.e., this is a BLOCKING operation!
-	void wait_for_io_task( io_work* task_to_wait )
+	void wait_for_io_task( io_work * task_to_wait )
 	{
         while( 1 ){
 			//should measure the time spent on waiting
@@ -229,7 +232,7 @@ void disk_thread::operator() ()
 			// at the time of searching!
 			//THEREFOR, do NOT allow any changes to the io task queue during searching.
 			//HOWEVER, keep this critical section as small as possible!
-			io_work* found=NULL;
+			io_work * found=NULL;
 			unsigned i;
 			for( i=0; i<work_queue->io_work_queue.size(); i++ )
 			{

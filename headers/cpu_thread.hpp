@@ -20,6 +20,21 @@ enum cpu_thread_status{
 	                        //	But still have updates in my strip update buffer. 
 };
 
+enum scatter_signal
+{
+    NORMAL_SCATTER = 0,
+    CONTEXT_SCATTER,
+    STEAL_SCATTER,
+    SPECIAL_STEAL_SCATTER
+};
+
+enum gather_signal
+{
+    NORMAL_GATHER = 0,
+    CONTEXT_GATHER,
+    STEAL_GATHER
+};
+
 #define SCHED_BUFFER_LEN    1024
 
 template <typename A, typename VA>
@@ -63,7 +78,9 @@ struct scatter_param{
 };
 
 struct gather_param{
-
+    void * attr_array_head;
+    int strip_id;
+    u32_t threshold;
 };
 
 template <typename A, typename VA>
@@ -76,7 +93,8 @@ struct cpu_work{
 	{}
 	
 	void operator() ( u32_t processor_id, barrier *sync, index_vert_array *vert_index, 
-		segment_config<VA, sched_list_manager>* seg_config, int *status )
+		segment_config<VA, sched_list_context_data>* seg_config, int *status )
+		//segment_config<VA, sched_list_manager>* seg_config, int *status )
 	{
 		u32_t local_start_vert_off, local_term_vert_off;
         sync->wait();
@@ -111,27 +129,23 @@ struct cpu_work{
 			}
 			case SCATTER:
 			{
+                *status = FINISHED_SCATTER;
 				scatter_param* p_scatter_param = (scatter_param*) state_param;
-				sched_list_manager* my_sched_list_manager;
+				sched_list_context_data* my_sched_list_manager;
 				update_map_manager* my_update_map_manager;
-				//aux_update_buf_manager<VA>* my_aux_manager;
 				u32_t my_strip_cap, per_cpu_strip_cap;
 				u32_t* my_update_map_head;
 
 				VA* attr_array_head;
 				update<VA>* my_update_buf_head;
 
-				sched_task *p_task;
 				edge* t_edge;
 				update<VA> *t_update;
-				u32_t num_out_edges, i, temp_laxity;
+				u32_t num_out_edges;
 				u32_t strip_num, cpu_offset, map_value, update_buf_offset;
-
-//				PRINT_DEBUG( "processor:%d, parameter address:%llx\n", processor_id, (u64_t)p_scatter_param );
 
 				my_sched_list_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
 				my_update_map_manager = seg_config->per_cpu_info_list[processor_id]->update_manager;
-				//my_aux_manager = seg_config->per_cpu_info_list[processor_id]->aux_manager;
 
 				my_strip_cap = seg_config->per_cpu_info_list[processor_id]->strip_cap;
 				per_cpu_strip_cap = my_strip_cap/gen_config.num_processors;
@@ -141,149 +155,215 @@ struct cpu_work{
 				my_update_buf_head = 
 					(update<VA>*)(seg_config->per_cpu_info_list[processor_id]->strip_buf_head);
 
-//				if( processor_id == 0 ){
-//					PRINT_DEBUG( "my_strip_cap=%u, per_cpu_strip_cap=%u\n", my_strip_cap, per_cpu_strip_cap );
-//					//AUX buffer status
-//					PRINT_DEBUG( "aux buffer: number of updates=%u, capacity=%u\n", 
-//							my_aux_manager->num_updates, my_aux_manager->buf_cap );
-//				}
+                u32_t signal_to_scatter = my_sched_list_manager->signal_to_scatter;
+                u32_t min_vert = 0, max_vert = 0;
+                u32_t old_edge_id;
+                if (signal_to_scatter == NORMAL_SCATTER)
+                {
+                    min_vert = my_sched_list_manager->normal_sched_min_vert;
+                    max_vert = my_sched_list_manager->normal_sched_max_vert;
+                    PRINT_DEBUG("cpu %d normal scatter, min_vert = %d, max_vert = %d\n",
+                            processor_id, min_vert, max_vert);
+                }
+                else if (signal_to_scatter == CONTEXT_SCATTER)
+                {
+                    min_vert = my_sched_list_manager->context_vert_id;
+                    max_vert = my_sched_list_manager->normal_sched_max_vert;
+                    PRINT_DEBUG("cpu %d context scatter, min_vert = %d, max_vert = %d\n",
+                            processor_id, min_vert, max_vert);
+                }
+                else if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
+                {
+                    min_vert = my_sched_list_manager->context_steal_min_vert;
+                    max_vert = my_sched_list_manager->context_steal_max_vert;
+                    PRINT_DEBUG("cpu %d steal scatter, min_vert = %d, max_vert = %d\n",
+                            processor_id, min_vert, max_vert);
+                }
 
-				//move the updates in auxiliary update buffer to sched_update buffer
-				//	before handling new tasks.
-//				PRINT_DEBUG( "PRELOAD--processor id:%u, aux head:0x%llx, last update address:0x%llx with num_updates=%u. strip buffer:0x%llx\n",
-//					processor_id, 
-//					(u64_t) my_aux_manager->update_head,
-//					(u64_t) (my_aux_manager->update_head + my_aux_manager->num_updates),
-//					my_aux_manager->num_updates,
-//					(u64_t) my_update_buf_head );
+                if (my_sched_list_manager->num_vert_to_scatter == 0 
+                        && signal_to_scatter != STEAL_SCATTER && signal_to_scatter != SPECIAL_STEAL_SCATTER)
+                {
+                    *status = FINISHED_SCATTER;
+                    break;
+                }
+                if (my_sched_list_manager->context_steal_min_vert == 0 &&
+                        my_sched_list_manager->context_steal_max_vert == 0 &&
+                        (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER))
+                {
+                    *status = FINISHED_SCATTER;
+                    break;
+                }
 
-				/*if( my_aux_manager->num_updates > 0 ){
-					for( i=my_aux_manager->num_updates; i>0; i-- ){
-						t_update = (update<VA>*)(my_aux_manager->update_head + i - 1);
-						strip_num = VID_TO_SEGMENT( t_update->dest_vert );
-						cpu_offset = VID_TO_PARTITION( t_update->dest_vert );
+                //for loop for every vertex in every cpu
+                for (u32_t i = min_vert; i <= max_vert; i += gen_config.num_processors)
+                {
+                    num_out_edges = vert_index->num_out_edges(i);
+                    if (num_out_edges == 0)
+                    {
+                        //different counter for different scatter-mode
+                        if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
+                            my_sched_list_manager->context_steal_num_vert++;
+                        else
+                            my_sched_list_manager->num_vert_to_scatter--;
 
-						assert( strip_num < seg_config->num_segments );
-						assert( cpu_offset < gen_config.num_processors );
+                        //jump to next loop
+                        continue;
+                    }
+                    
+                    //set old_edge_id for context-scatter
+                    if ((signal_to_scatter == CONTEXT_SCATTER) && (i == my_sched_list_manager->context_vert_id))
+                    {
+                        old_edge_id = my_sched_list_manager->context_edge_id;
+                    }
+                    else if (signal_to_scatter == SPECIAL_STEAL_SCATTER)
+                        old_edge_id = my_sched_list_manager->context_steal_edge_id;
+                    else
+                        old_edge_id = 0;
 
-						//update map layout
-						//			cpu0				cpu1				.....
-						//strip 0-> map_value(s0,c0)	map_value(s0, c1)	.....
-						//strip 1-> map_value(s1,c0)	map_value(s1, c1)	.....
-						//strip 2-> map_value(s2,c0)	map_value(s2, c1)	.....
-						//		... ...
-						map_value = *(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset);
+                    //generating updates for each edge of this vertex
+                    for (u32_t z = old_edge_id; z < num_out_edges; z++)
+                    {
+                        //get edge from vert_index
+                        t_edge = vert_index->out_edge(i, z);
+                        //Make sure this edge existd!
+                        assert(t_edge);
+                        t_update = A::scatter_one_edge(i, (VA*)&attr_array_head[i], num_out_edges, t_edge);
+                        //Make sure this update existd!
+                        assert(t_update);
 
-						if( map_value < per_cpu_strip_cap ){
-							update_buf_offset = strip_num*per_cpu_strip_cap*gen_config.num_processors
-								+ map_value*gen_config.num_processors 
-								+ cpu_offset;
+                        strip_num = VID_TO_SEGMENT(t_update->dest_vert);
+                        cpu_offset = VID_TO_PARTITION(t_update->dest_vert);
+                        //Check for existd!
+                        assert(strip_num < seg_config->num_segments);
+                        assert(cpu_offset < gen_config.num_processors);
 
-							assert( update_buf_offset < (my_strip_cap*(strip_num+1)) );
+                        //find out the corresponding value for update-buffer
+                        map_value = *(my_update_map_head + strip_num * gen_config.num_processors + cpu_offset);
+                        if (map_value < (per_cpu_strip_cap - 1))
+                        {
+                            //There are enough space for the current update
+                            update_buf_offset = strip_num * my_strip_cap + map_value * gen_config.num_processors + cpu_offset;
+                            *(my_update_buf_head + update_buf_offset) = *t_update;
+                            map_value++;
+                            *(my_update_map_head + strip_num * gen_config.num_processors + cpu_offset) = map_value;
+                        }
+                        else
+                        {
+                            //There is no space for this update, need to store the context data
+                            if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
+                            {
+                                my_sched_list_manager->context_steal_min_vert = i;
+                                my_sched_list_manager->context_steal_max_vert = max_vert;
+                                my_sched_list_manager->context_steal_edge_id = z;
+                                PRINT_DEBUG("In steal-scatter, update-buf is fulled, need to store the context data!\n");
+                                PRINT_DEBUG("min_vert = %d, max_vert = %d, edge = %d\n", i, max_vert, z);
+                            }
+                            else
+                            {
+                                PRINT_DEBUG("other-scatter, update-buf is fulled, need to store the context data!\n");
+                                my_sched_list_manager->context_vert_id = i;
+                                my_sched_list_manager->context_edge_id = z;
+                                my_sched_list_manager->partition_gather_strip_id = (int)strip_num;
+                                PRINT_DEBUG("vert = %d, edge = %d, strip_num = %d\n", i, z, strip_num);
+                            }
+                            *status = UPDATE_BUF_FULL;
+                            delete t_edge;
+                            delete t_update;
+                            break;
+                        }
+                        delete t_edge;
+                        delete t_update;
+                    }
+                    if (*status == UPDATE_BUF_FULL)
+                        break;
+                    else
+                    {
+                        //need to set the counter
+                        if (signal_to_scatter == CONTEXT_SCATTER && my_sched_list_manager->num_vert_to_scatter == 0)
+                            PRINT_ERROR("i = %d\n", i);
+                        if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
+                            my_sched_list_manager->context_steal_num_vert++;
+                        else
+                            my_sched_list_manager->num_vert_to_scatter--;
+                    }
+                }
 
-							*(my_update_buf_head + update_buf_offset) = *t_update;
-
-							//update the map
-							map_value ++;
-							*(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset) = map_value;
-						}else
-							break;
-					}
-					my_aux_manager->num_updates = i;
-				}*/
-
-//				PRINT_DEBUG( "AFTER PRELOAD--processor id:%u, aux head:0x%llx, last update address:0x%llx with num_updates=%u\n",
-//					processor_id, 
-//					(u64_t) my_aux_manager->update_head,
-//					(u64_t) (my_aux_manager->update_head + my_aux_manager->num_updates),
-//					my_aux_manager->num_updates );
-
-				//Handling new tasks now.
-				while( 1 ){
-					p_task = get_sched_task( my_sched_list_manager );
-
-					if( p_task == NULL ){
-				//		if( my_aux_manager->num_updates > 0 )
-				//			*status = NO_MORE_SCHED;
-				//		else
-							*status = FINISHED_SCATTER;
-						return;
-					}
-
-					/*PRINT_DEBUG( "processor:%d, task start:%u, task term:%u, remain task:%u. updates in aux:%u\n", 
-						processor_id, 
-						p_task->start, 
-						p_task->term, 
-						my_sched_list_manager->sched_task_counter,
-						my_aux_manager->num_updates );*/
-
-					for( i=p_task->start; i<p_task->term; i++ ){
-						//how many edges does "i" have?
-						num_out_edges = vert_index->num_out_edges( i );
-						if( num_out_edges == 0 ) continue;
-
-						//tell if the remaining space in update buffer is enough to store the updates?
-						// since we add an auxiliary update buffer, need to 
-						//temp_laxity = my_aux_manager->buf_cap - my_aux_manager->num_updates;
-                        temp_laxity = i;
-
-						if( temp_laxity < num_out_edges ){
-							PRINT_DEBUG( "Processor %d: laxity=%u, current out edgs=%u. i=%u\n",
-								processor_id, temp_laxity, num_out_edges, i );
-							*status = UPDATE_BUF_FULL;
-							p_task->start = i;
-//							PRINT_DEBUG( "processor id:%u, aux head:0x%llx, last update address:0x%llx with num_updates=%u\n",
-//								processor_id, 
-//								(u64_t) my_aux_manager->update_head,
-//								(u64_t) (my_aux_manager->update_head + my_aux_manager->num_updates),
-//								my_aux_manager->num_updates );
-							return;
-						}
-					
-						for( u32_t j=0; j<num_out_edges; j++ ){
-							t_edge = vert_index->out_edge( i, j );
-							assert( t_edge ); //make sure the edge exists!
-
-							t_update = A::scatter_one_edge( i, (VA*)&attr_array_head[i], num_out_edges, t_edge );
-							assert( t_update );//make sure the update is not NULL
-
-							strip_num = VID_TO_SEGMENT( t_update->dest_vert );
-							cpu_offset = VID_TO_PARTITION( t_update->dest_vert );
-
-							assert( strip_num < seg_config->num_segments );
-							assert( cpu_offset < gen_config.num_processors );
-
-							map_value = *(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset);
-
-							if( map_value < per_cpu_strip_cap ){
-								update_buf_offset = strip_num*my_strip_cap
-									+ map_value*gen_config.num_processors 
-									+ cpu_offset;
-
-								*(my_update_buf_head + update_buf_offset) = *t_update;
-
-								//update the map
-								map_value ++;
-								*(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset) = map_value;
-							}else{
-								//should add it to auxiliary update buffer
-						/*		*(my_aux_manager->update_head + my_aux_manager->num_updates) = *t_update;
-
-								my_aux_manager->num_updates ++;*/
-							}
-
-							//drop t_edge and t_update
-							delete t_edge;
-							delete t_update;
-						}
-					}
-					//tell if this task is finished or not, if not, update it to make it start from i
-					if( i >= p_task->term )
-						del_sched_task( my_sched_list_manager );
-				}
-				*status = NO_MORE_SCHED;
+                if (*status == UPDATE_BUF_FULL)
+                {
+                    if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
+                        PRINT_DEBUG("Steal-cpu %d has scatter %d vertex\n", processor_id, 
+                                my_sched_list_manager->context_steal_num_vert);
+                    else
+                        PRINT_DEBUG("Processor %d has not finished scatter, has %d vertices to scatter~\n", processor_id,
+                                my_sched_list_manager->num_vert_to_scatter);
+                }
+                else
+                {
+                    if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
+                        PRINT_DEBUG("Steal-cpu %d has scatter %d vertex\n", processor_id, 
+                                my_sched_list_manager->context_steal_num_vert);
+                    else
+                    {
+                        PRINT_DEBUG("Processor %d has finished scatter, and there is %d vertex to scatter\n", processor_id, 
+                                my_sched_list_manager->num_vert_to_scatter);
+                        if (my_sched_list_manager->num_vert_to_scatter != 0)
+                        {
+                            PRINT_ERROR("after scatter, num_vert_to_scatter != 0\n");
+                        }
+                    }
+                    *status = FINISHED_SCATTER;
+                }
 				break;
 			}
+            case GATHER:
+            {
+                gather_param * p_gather_param = (gather_param *)state_param; 
+                update_map_manager * my_update_map_manager;
+                u32_t my_strip_cap;
+                u32_t * my_update_map_head;
+                VA * attr_array_head;
+                update<VA> * my_update_buf_head;
+
+                update<VA> * t_update;
+                u32_t map_value, update_buf_offset;
+                u32_t dest_vert;
+                int strip_id;
+                u32_t threshold;
+                u32_t vert_index;
+
+                my_strip_cap = seg_config->per_cpu_info_list[processor_id]->strip_cap;
+                attr_array_head = (VA *)p_gather_param->attr_array_head;
+                strip_id = p_gather_param->strip_id;
+                threshold = p_gather_param->threshold;
+
+                //Traversal all the buffers of each cpu to find the corresponding UPDATES
+                for (u32_t buf_id = 0; buf_id < gen_config.num_processors; buf_id++)
+                {
+                    my_update_map_manager = seg_config->per_cpu_info_list[buf_id]->update_manager;
+                    my_update_map_head = my_update_map_manager->update_map_head;
+                    my_update_buf_head = (update<VA> *)(seg_config->per_cpu_info_list[buf_id]->strip_buf_head);
+                    map_value = *(my_update_map_head + strip_id * gen_config.num_processors + processor_id);
+                    if (map_value == 0)
+                        continue;
+
+                    for (u32_t update_id = 0; update_id < map_value; update_id++)
+                    {
+                        update_buf_offset = strip_id * my_strip_cap + update_id * gen_config.num_processors + processor_id;
+                        t_update = (my_update_buf_head + update_buf_offset);
+                        assert(t_update);
+                        dest_vert = t_update->dest_vert;
+                        if (threshold == 1) 
+                            vert_index = dest_vert%seg_config->segment_cap;
+                        else
+                            vert_index = dest_vert;
+                            
+                        A::gather_one_update(dest_vert, (VA *)&attr_array_head[vert_index], t_update);
+                    }
+                    map_value = 0;
+                    *(my_update_map_head + strip_id * gen_config.num_processors + processor_id) = 0;
+                }
+                break;
+            }
 			default:
 				printf( "Unknow fog engine state is encountered\n" );
 		}
@@ -330,7 +410,8 @@ struct cpu_work{
 	}
 */
 
-    void show_update_map( int processor_id, segment_config<VA, sched_list_manager>* seg_config, u32_t* map_head )
+    //void show_update_map( int processor_id, segment_config<VA, sched_list_manager>* seg_config, u32_t* map_head )
+    void show_update_map( int processor_id, segment_config<VA, sched_list_context_data>* seg_config, u32_t* map_head )
     {
         //print title
         PRINT_SHORT( "--------------- update map of CPU%d begin-----------------\n", processor_id );
@@ -383,7 +464,8 @@ class cpu_thread {
 public:
     const unsigned long processor_id; 
 	index_vert_array* vert_index;
-	segment_config<VA, sched_list_manager>* seg_config;
+	segment_config<VA, sched_list_context_data>* seg_config;
+	//segment_config<VA, sched_list_manager>* seg_config;
 	int status;
 
 	//following members will be shared among all cpu threads
@@ -391,7 +473,8 @@ public:
     static volatile bool terminate;
     static struct cpu_work<A,VA> * volatile work_to_do;
 
-    cpu_thread(u32_t processor_id_in, index_vert_array * vert_index_in, segment_config<VA, sched_list_manager>* seg_config_in )
+    //cpu_thread(u32_t processor_id_in, index_vert_array * vert_index_in, segment_config<VA, sched_list_manager>* seg_config_in )
+    cpu_thread(u32_t processor_id_in, index_vert_array * vert_index_in, segment_config<VA, sched_list_context_data>* seg_config_in )
     :processor_id(processor_id_in), vert_index(vert_index_in), seg_config(seg_config_in)
     {   
         if(sync == NULL) { //as it is shared, be created for one time

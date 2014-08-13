@@ -3,7 +3,7 @@
 
 #include "cpu_thread.hpp"
 #include "bitmap.hpp"
-#include "disk_thread_target.hpp"
+#include "disk_thread.hpp"
 #include <cassert>
 
 #include "config.hpp"
@@ -198,17 +198,17 @@ struct cpu_work_target{
                     else
                         old_edge_id = 0;
                     
+                    /*u32_t buf_index = -1;
+                    if (use_buf_data == 1)
+                        buf_index = u32_bitmap_value%seg_config->segment_cap;
+                    if (use_buf_data == 0)
+                        buf_index = u32_bitmap_value;*/
                     for (u32_t z = old_edge_id; z < num_out_edges; z++)
                     {
                         t_edge = vert_index->out_edge(u32_bitmap_value, z);
                         assert(t_edge);//Make sure this edge existd!
-                        u32_t buf_index = -1;
-                      //  if (use_buf_data == 1)
-                       //     buf_index = u32_bitmap_value%seg_config->segment_cap;
-                     //   if (use_buf_data == 0)
-                            buf_index = u32_bitmap_value;
-                        //t_update = A::scatter_one_edge(u32_bitmap_value, (VA *)&attr_array_head[u32_bitmap_value], t_edge);
-                        t_update = A::scatter_one_edge(u32_bitmap_value, (VA *)&attr_array_head[buf_index], t_edge);
+                        t_update = A::scatter_one_edge(u32_bitmap_value, (VA *)&attr_array_head[u32_bitmap_value], t_edge);
+                        //t_update = A::scatter_one_edge(u32_bitmap_value, (VA *)&attr_array_head[buf_index], t_edge);
                         assert(t_update);
 
                         strip_num = VID_TO_SEGMENT(t_update->dest_vert);
