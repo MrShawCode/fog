@@ -19,6 +19,11 @@ class pagerank_program{
 			this_vert->rank = 1.0;
 		}
 
+		static void init(u32_t vid, pagerank_vert_attr* va, u32_t PHASE, u32_t init_forward_backward_phase, u32_t loop_counter,
+            index_vert_array * vert_index){}
+
+		static void init(u32_t vid, pagerank_vert_attr* va, u32_t PHASE){}
+
 		//This member function is defined to process one of the out edges of vertex "vid".
 		//Explain the parameters:
 		// vid: the id of the vertex to be scattered.
@@ -45,6 +50,10 @@ class pagerank_program{
 			return ret;
 		}
 
+		static update<pagerank_vert_attr> *scatter_one_edge(u32_t vid,
+        pagerank_vert_attr * this_vert,
+        edge * this_edge){return NULL;}
+
 		// Gather one update. Explain the parameters:
 		// vid: the vertex id of destination vertex;
 		// va: the attribute of destination vertex;
@@ -54,6 +63,13 @@ class pagerank_program{
 			assert( vid == u->dest_vert );
 			dest_vert_attr->rank += u->vert_attr.rank;
 		}
+
+		static void gather_one_update( u32_t vid, pagerank_vert_attr* this_vert, 
+                struct update<pagerank_vert_attr>* this_update, 
+                u32_t PHASE){}
+		static void set_finish_to_vert(u32_t vid, pagerank_vert_attr * this_vert){}
+		static bool judge_true_false(pagerank_vert_attr* va){return false;}
+		static bool judge_src_dest(pagerank_vert_attr *va_src, pagerank_vert_attr *va_dst){return false;}
 };
 
 u32_t pagerank_program::iteration_times = 0;

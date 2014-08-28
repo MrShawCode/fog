@@ -53,20 +53,19 @@ extern general_config gen_config;
 #define ROUND_UP(x, y)		(((x+(y-1))/y)*y)
 
 //per-cpu data, arranged by address-increasing order
-template <typename VA, typename S>
+template <typename VA>
 struct per_cpu_data{
 	char* buf_head;
 	u64_t buf_size;
-	S * sched_manager;
+	sched_bitmap_manager * target_sched_manager;
+	sched_list_context_data * global_sched_manager;
 	update_map_manager* update_manager;
-	aux_update_buf_manager<VA>* aux_manager;
-	char* aux_update_buf_head;
 	char* strip_buf_head;
 	u64_t strip_buf_len;
 	u32_t strip_cap;		//how many updates will a (whole) strip store?
 }__attribute__ ((aligned(8)));
 
-template <typename VA, typename S>
+template <typename VA>
 class segment_config{
 	public:
 		//in theory, fog will divide the buffer into 5 pieces, however, 
@@ -83,16 +82,12 @@ class segment_config{
 		//	---------------------------------
 		//  |	sched_update (for each CPU)	|
 		//	---------------------------------
-		//	|	aux_update_buf(for each CPU)|
-		//	---------------------------------
 		//	|	attr_buf 					|
 		//	---------------------------------
 		char* sched_update_buf;
 		u64_t sched_update_buf_len;
 
         //modified by hejian
-		char* aux_update_buf ;
-		u64_t aux_update_buf_len ;
 
 		//possible value for num_attr_buf: 1 or 2
 		//there are possibly two buffers (especially for large graph)
@@ -106,7 +101,7 @@ class segment_config{
 		u64_t attr_buf_len;
 
 		//per-cpu data, a list with gen_config.num_processors elements.
-		per_cpu_data<VA, S>** per_cpu_info_list;
+		per_cpu_data<VA>** per_cpu_info_list;
 
         //buf_holder
         int buf0_holder;
@@ -134,8 +129,6 @@ class segment_config{
                 PRINT_DEBUG( "CPU:%d, sched_update buffer begins:0x%llx, size:0x%llx\n", 
                     i, (u64_t)per_cpu_info_list[i]->buf_head, per_cpu_info_list[i]->buf_size );
             }
-
-			//PRINT_DEBUG( "Auxiliary update buffer:0x%llx, size:0x%llx\n", (u64_t)aux_update_buf, aux_update_buf_len );
 
 			PRINT_DEBUG( "There are %u attribute buffer(s)\n", num_attr_buf );
 			switch( num_attr_buf ){
@@ -166,18 +159,15 @@ class segment_config{
 			//	---------------------------------		sched_update_buf_len
 			//  |	sched_update (for each CPU)	|
 			//	---------------------------------		---
-			//	|	aux_update_buf(for each CPU)|		aux_update_buf_len
-			//	---------------------------------  		---
 			//	|	attr_buf0					|
 			//	---------------------------------  		graph_attr_size
 			//	|	attr_buf1					|
 			//	---------------------------------  		---
 			// Note (in theory):
 			//	1) sched_update occupies 2/5 of the whole buffer area
-			//	2) aux_update_buf occupies the next 1/5 area
 			//	3) attr_buf0 and attr_buf1 divide the remaining area equally, and thus
 			//		organized as dual buffer to loading the vertex attribute data
-			//	4) sched_update and aux_update_buf will be further divided among 
+			//	4) sched_update will be further divided among 
 			//		all online CPUs, which will be done in fog_engine::init_sched_update_buffer()
 			
 			theory_per_slice_size = gen_config.memory_size / 5; 
@@ -232,25 +222,18 @@ class segment_config{
 				partition_cap = segment_cap / (gen_config.num_processors);
 			}
 
-			//the auxiliary update buffer, occupies one slice (i.e., 1/5 of whole buffer)
-			//aux_update_buf_len = ROUND_DOWN( theory_per_slice_size, (sizeof(update<VA>)*gen_config.num_processors) );
-			//aux_update_buf = (char*)((u64_t)buf_head + 
-			//	(gen_config.memory_size - segment_cap*sizeof(VA)*num_attr_buf - aux_update_buf_len) );
-			aux_update_buf = (char*)NULL;
-            aux_update_buf_len = 0;
-
 			//sched_udate buffer, its length should be the same as the size of remaining buffer
 			sched_update_buf = (char*)buf_head;
-			sched_update_buf_len = gen_config.memory_size - segment_cap*sizeof(VA)*num_attr_buf /*- aux_update_buf_len*/;
+			sched_update_buf_len = gen_config.memory_size - segment_cap*sizeof(VA)*num_attr_buf;
 
 			//divide sched_update to each processor
 			//make sure per_cpu_buf_size is aligned to 8 bytes, since the future
 			//	headers will be stored here, and they are aligned by 8 bytes
 			u64_t per_cpu_buf_size = ROUND_UP( (sched_update_buf_len / gen_config.num_processors), 8 );
 
-			per_cpu_info_list = new per_cpu_data<VA, S>*[gen_config.num_processors];
+			per_cpu_info_list = new per_cpu_data<VA>*[gen_config.num_processors];
 			for( u32_t i=0; i<gen_config.num_processors; i++ ){
-				per_cpu_info_list[i] = new per_cpu_data<VA, S>;
+				per_cpu_info_list[i] = new per_cpu_data<VA>;
 				per_cpu_info_list[i]->buf_head = (char*)((u64_t)buf_head+i*per_cpu_buf_size);
 				per_cpu_info_list[i]->buf_size = per_cpu_buf_size;
 			}

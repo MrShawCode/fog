@@ -6,12 +6,16 @@
 
 #include "config.hpp"
 #include "index_vert_array.hpp"
+#include "fog_engine_scc.hpp"
 #include "fog_engine.hpp"
 #include "fog_engine_target.hpp"
 #include "print_debug.hpp"
 
 #include "../application/sssp.hpp"
 #include "../application/pagerank.hpp"
+#include "../application/scc.hpp"
+#include "../application/spmv.hpp"
+#include "../application/cc.hpp"
 #include "bitmap.hpp"
 
 //boost::property_tree::ptree pt;
@@ -67,23 +71,41 @@ int main( int argc, const char**argv)
 	PRINT_DEBUG( "gen_config.attr_file_name(WRITE ONLY) = %s\n", gen_config.attr_file_name.c_str() );
 
 	if( prog_name == "sssp" ){
-        fog_engine_target<sssp_program, sssp_vert_attr> *eng;
+        fog_engine_target<sssp_program, sssp_vert_attr, sssp_vert_attr> *eng;
 
 		sssp_program::start_vid = vm["sssp::source"].as<unsigned long>();
 		PRINT_DEBUG( "sssp_program start_vid = %d\n", sssp_program::start_vid );
 		//ready and run
-		(*(eng = new fog_engine_target<sssp_program, sssp_vert_attr>()))();
+		(*(eng = new fog_engine_target<sssp_program, sssp_vert_attr, sssp_vert_attr>()))();
         delete eng;
 
 	}else if( prog_name == "pagerank" ){
-		fog_engine<pagerank_program, pagerank_vert_attr> * eng;
+		fog_engine<pagerank_program, pagerank_vert_attr, pagerank_vert_attr> * eng;
 
 		pagerank_program::iteration_times = vm["pagerank::niters"].as<unsigned long>();
 		PRINT_DEBUG( "pagerank_program iteration_times = %d\n", pagerank_program::iteration_times );
 		//ready and run
-		(*(eng = new fog_engine<pagerank_program, pagerank_vert_attr>()))();
+		(*(eng = new fog_engine<pagerank_program, pagerank_vert_attr, pagerank_vert_attr>()))();
 		delete eng;
-	}
+	}else if(prog_name == "scc"){
+        //set FIRST_INIT to init the attr_buf
+        fog_engine_scc<scc_program, scc_vert_attr, scc_update> * eng;
+
+        PRINT_DEBUG("scc starts!\n");
+
+		(*(eng = new fog_engine_scc<scc_program, scc_vert_attr, scc_update>()))();
+        delete eng;
+    }else if (prog_name == "spmv"){
+        fog_engine<spmv_program, spmv_vert_attr, spmv_update> * eng;
+        PRINT_DEBUG("spmv starts!\n");
+        (*(eng = new fog_engine<spmv_program, spmv_vert_attr, spmv_update>()))();
+        delete eng;
+    }/*else if (prog_name == "cc"){
+        fog_engine_scc<cc_program, cc_vert_attr, cc_vert_attr> *eng;
+        PRINT_DEBUG("cc starts!\n");
+		(*(eng = new fog_engine_scc<cc_program, cc_vert_attr, cc_vert_attr>()))();
+        delete eng;
+    }*/
 }
 
 

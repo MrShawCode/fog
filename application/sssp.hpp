@@ -17,7 +17,7 @@ class sssp_program{
 			if ( vid == start_vid ){
 				va->value = 0;
                 PRINT_DEBUG("VID = %d\n", vid);
-				fog_engine_target<sssp_program, sssp_vert_attr>::add_schedule( vid, 
+				fog_engine_target<sssp_program, sssp_vert_attr, sssp_vert_attr>::add_schedule( vid, 
                         PHASE /*phase:decide which buf to read and write */
                         );
 			}
@@ -27,6 +27,9 @@ class sssp_program{
             }
                 va->predecessor = (u32_t)-1;
 		}
+		static void init(u32_t vid, sssp_vert_attr * va, u32_t PHASE, u32_t init_forward_backward_phase, u32_t loop_counter,
+            index_vert_array * vert_index){}
+		static void init( u32_t vid, sssp_vert_attr* this_vert ){}
 
 		//scatter updates at vid-th vertex 
 		static update<sssp_vert_attr> *scatter_one_edge(u32_t vid,
@@ -43,19 +46,32 @@ class sssp_program{
             return ret;
 		}
 
+
+        static update<sssp_vert_attr>* scatter_one_edge( u32_t vid, 
+            sssp_vert_attr* this_vert, 
+            u32_t num_outedge, 
+            edge* this_edge ){return NULL;}
+
 		//gather one update "u" from outside
 		static void gather_one_update( u32_t vid, sssp_vert_attr* this_vert, 
                 struct update<sssp_vert_attr>* this_update, 
                 u32_t PHASE)
         {
 			//compare the value of u, if it is smaller, absorb the update
+            if (FLOAT_EQ(this_update->vert_attr.value, this_vert->value) == 0)
 			if( this_update->vert_attr.value < this_vert->value ){
 				*this_vert = this_update->vert_attr;
 				//should add schedule of {vid,0}, need api from engine
-				fog_engine_target<sssp_program, sssp_vert_attr>::add_schedule( vid, PHASE);
+				fog_engine_target<sssp_program, sssp_vert_attr, sssp_vert_attr>::add_schedule( vid, PHASE);
                     //PRINT_DEBUG("this_update.value = %f, this_vert->value = %f\n", this_update->vert_attr.value, this_vert->value);
 			}
 		}
+
+        static void gather_one_update( u32_t vid, sssp_vert_attr * dest_vert_attr, update<sssp_vert_attr> * u )
+        {}
+        static void set_finish_to_vert(u32_t vid, sssp_vert_attr * this_vert){}
+        static bool judge_true_false(sssp_vert_attr* va){return false;}
+        static bool judge_src_dest(sssp_vert_attr *va_src, sssp_vert_attr *va_dst){return false;}
 };
 
 unsigned int sssp_program::start_vid = 0;

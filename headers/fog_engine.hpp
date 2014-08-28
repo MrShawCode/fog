@@ -26,11 +26,11 @@
 
 //A stands for the algorithm (i.e., ???_program)
 //VA stands for the vertex attribute structure
-template <typename A, typename VA>
+template <typename A, typename VA, typename U>
 class fog_engine{
 		//global variables
 		//static segment_config<VA, sched_list_manager> *seg_config;
-		static segment_config<VA, sched_list_context_data> *seg_config;
+		static segment_config<VA> *seg_config;
 		static index_vert_array* vert_index;
 		char* buf_for_write;
 
@@ -42,7 +42,7 @@ class fog_engine{
 
         u32_t * p_strip_count;
 
-		cpu_thread<A,VA> ** pcpu_threads;
+		cpu_thread<A,VA,U> ** pcpu_threads;
 		boost::thread ** boost_pcpu_threads;
         int loop_counter;
 		
@@ -78,7 +78,7 @@ class fog_engine{
 
 			//config the buffer for writting
 			//seg_config = new segment_config<VA, sched_list_manager>( (const char*)buf_for_write );
-			seg_config = new segment_config<VA, sched_list_context_data>( (const char*)buf_for_write );
+			seg_config = new segment_config<VA>( (const char*)buf_for_write );
 
 			//create io queue
 			fog_io_queue = new io_queue;
@@ -86,10 +86,10 @@ class fog_engine{
 			//assume buffer_for_write is aligned, although it is possible that it is NOT! TODO
 
 			//create cpu threads
-			pcpu_threads = new cpu_thread<A,VA> *[gen_config.num_processors];
+			pcpu_threads = new cpu_thread<A,VA,U> *[gen_config.num_processors];
 			boost_pcpu_threads = new boost::thread *[gen_config.num_processors];
 			for( u32_t i=0; i<gen_config.num_processors; i++ ){
-				pcpu_threads[i] = new cpu_thread<A,VA>(i, vert_index, seg_config);
+				pcpu_threads[i] = new cpu_thread<A,VA,U>(i, vert_index, seg_config);
 				if( i>0 )	//Do not forget, "this->" is thread 0
 					boost_pcpu_threads[i] = new boost::thread( boost::ref(*pcpu_threads[i]) );
 			}
@@ -128,7 +128,7 @@ class fog_engine{
 			// each time, invoke cpu threads that called A::init to initialize
 			// the value in the attribute buffer, dump the content to file after done,
 			// then swap the attribute buffer (between 0 and 1)
-			cpu_work<A,VA>* new_cpu_work = NULL;
+			cpu_work<A,VA,U>* new_cpu_work = NULL;
 			io_work* init_io_work = NULL;
 			char * buf_to_dump = NULL;
 			init_param* p_init_param=new init_param;
@@ -137,7 +137,7 @@ class fog_engine{
             p_strip_count = new u32_t[seg_config->num_segments];
             memset(p_strip_count, 0, sizeof(u32_t)*seg_config->num_segments);
 			current_attr_segment = 0;
-			fog_engine_state = INIT;
+			fog_engine_state = GLOBAL_INIT;
 			for( u32_t i=0; i < seg_config->num_segments; i++ ){
 				//which attribute buffer should be dumped to disk?
 				if ( current_attr_segment%2== 0 ) buf_to_dump = (char*)seg_config->attr_buf0;
@@ -148,13 +148,13 @@ class fog_engine{
 					p_init_param->attr_buf_head = buf_to_dump;
 					p_init_param->start_vert_id = seg_config->segment_cap*i;
 					p_init_param->num_of_vertices = seg_config->segment_cap;
-					new_cpu_work = new cpu_work<A,VA>( INIT, 
+					new_cpu_work = new cpu_work<A,VA,U>( GLOBAL_INIT, 
 						(void*)p_init_param );
 				}else{	//the last segment, should be smaller than a full segment
 					p_init_param->attr_buf_head = buf_to_dump;
 					p_init_param->start_vert_id = seg_config->segment_cap*i;
 					p_init_param->num_of_vertices = gen_config.max_vert_id%seg_config->segment_cap+1;
-					new_cpu_work = new cpu_work<A,VA>( INIT, 
+					new_cpu_work = new cpu_work<A,VA,U>( GLOBAL_INIT, 
 						(void*)p_init_param );
 				}
 				pcpu_threads[0]->work_to_do = new_cpu_work;
@@ -214,16 +214,16 @@ class fog_engine{
 
 		void show_all_sched_tasks()
 		{
-			sched_list_context_data * sched_manager;
+			sched_list_context_data * global_sched_manager;
 
 			PRINT_DEBUG( "==========================	Browse all scheduled tasks	==========================\n" );
 			//browse all cpus
 			for(u32_t i=0; i<gen_config.num_processors; i++){
-				sched_manager = seg_config->per_cpu_info_list[i]->sched_manager;
+				global_sched_manager = seg_config->per_cpu_info_list[i]->global_sched_manager;
 				PRINT_DEBUG( "Processor %d: Number of scheduled tasks: %d, Details:\n", i,
-					sched_manager->num_vert_to_scatter);
-                PRINT_DEBUG("normal_min_vert = %d, normal_max_vert = %d\n", sched_manager->normal_sched_min_vert,
-                        sched_manager->normal_sched_max_vert);
+					global_sched_manager->num_vert_to_scatter);
+                PRINT_DEBUG("normal_min_vert = %d, normal_max_vert = %d\n", global_sched_manager->normal_sched_min_vert,
+                        global_sched_manager->normal_sched_max_vert);
 			}
 			PRINT_DEBUG( "==========================	That's All	==========================\n" );
 		}
@@ -237,7 +237,7 @@ class fog_engine{
 		int scatter_updates()
 		{
 			int ret, unemployed;
-			cpu_work<A,VA>* scatter_cpu_work = NULL;
+			cpu_work<A,VA,U>* scatter_cpu_work = NULL;
 			scatter_param* p_scatter_param=new scatter_param;
             int phase = 0;
 
@@ -257,7 +257,7 @@ class fog_engine{
             do{
                 PRINT_DEBUG("This is the %d phase of this scatter!~\n", phase);
                 //invoke cpu threads
-                scatter_cpu_work = new cpu_work<A,VA>( SCATTER, (void*)p_scatter_param );
+                scatter_cpu_work = new cpu_work<A,VA,U>( GLOBAL_SCATTER, (void*)p_scatter_param );
 
                 pcpu_threads[0]->work_to_do = scatter_cpu_work;
                 (*pcpu_threads[0])();
@@ -319,7 +319,7 @@ class fog_engine{
                         u32_t special_signal;
                         do{
                             special_signal = 0;
-                            scatter_cpu_work = new cpu_work<A,VA>( SCATTER, (void*)p_scatter_param );
+                            scatter_cpu_work = new cpu_work<A,VA,U>( GLOBAL_SCATTER, (void*)p_scatter_param );
 
                             pcpu_threads[0]->work_to_do = scatter_cpu_work;
                             (*pcpu_threads[0])();
@@ -333,9 +333,9 @@ class fog_engine{
                             for( u32_t i=0; i<gen_config.num_processors; i++ ){
                                 PRINT_DEBUG( "Processor %d status %d\n", i, pcpu_threads[i]->status );
                                 sched_list_context_data * context_data_steal = 
-                                    seg_config->per_cpu_info_list[i]->sched_manager;
+                                    seg_config->per_cpu_info_list[i]->global_sched_manager;
                                 sched_list_context_data * context_data_unfinished = 
-                                    seg_config->per_cpu_info_list[cpu_unfinished[k]]->sched_manager;
+                                    seg_config->per_cpu_info_list[cpu_unfinished[k]]->global_sched_manager;
 
                                 context_data_unfinished->num_vert_to_scatter -= context_data_steal->context_steal_num_vert;
                                 PRINT_DEBUG("unfinished->num_vert_to_scatter = %d\n", 
@@ -381,12 +381,12 @@ class fog_engine{
         //
         void set_signal_to_scatter(u32_t signal, u32_t processor_id)
         {
-            sched_list_context_data * my_context_data = seg_config->per_cpu_info_list[processor_id]->sched_manager;
+            sched_list_context_data * my_context_data = seg_config->per_cpu_info_list[processor_id]->global_sched_manager;
             my_context_data->signal_to_scatter = signal;
         }
 		void rebalance_sched_tasks(u32_t cpu_unfinished_id)
         {
-            sched_list_context_data * my_context_data = seg_config->per_cpu_info_list[cpu_unfinished_id]->sched_manager;
+            sched_list_context_data * my_context_data = seg_config->per_cpu_info_list[cpu_unfinished_id]->global_sched_manager;
             u32_t min_vert = my_context_data->context_vert_id;
             u32_t max_vert = my_context_data->normal_sched_max_vert;
             assert(((max_vert-min_vert)/gen_config.num_processors + 1) == 
@@ -398,14 +398,14 @@ class fog_engine{
                 for (u32_t i = 0; i < my_context_data->num_vert_to_scatter; i++)
                 {
                     set_signal_to_scatter(STEAL_SCATTER, i);
-                    seg_config->per_cpu_info_list[i]->sched_manager->context_steal_max_vert = 
-                        seg_config->per_cpu_info_list[i]->sched_manager->context_steal_min_vert = 
+                    seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert = 
+                        seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert = 
                             min_vert + i * gen_config.num_processors;
-                    //seg_config->per_cpu_info_list[i]->sched_manager->context_steal_num_vert = 1;
+                    //seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_num_vert = 1;
 
                     PRINT_DEBUG("Processor-%d's context_steal_min_vert = %d, max = %d\n",
-                            i, seg_config->per_cpu_info_list[i]->sched_manager->context_steal_min_vert,
-                            seg_config->per_cpu_info_list[i]->sched_manager->context_steal_max_vert);
+                            i, seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert,
+                            seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert);
                 }
             }
             else
@@ -417,17 +417,17 @@ class fog_engine{
                 for (u32_t i = 0; i < gen_config.num_processors; i++)
                 {
                     set_signal_to_scatter(STEAL_SCATTER, i);
-                    seg_config->per_cpu_info_list[i]->sched_manager->context_steal_min_vert = 
+                    seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert = 
                         min_vert + i * average_num * gen_config.num_processors;
                     if (i == gen_config.num_processors - 1)
-                        seg_config->per_cpu_info_list[i]->sched_manager->context_steal_max_vert = max_vert;
+                        seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert = max_vert;
                     else 
-                        seg_config->per_cpu_info_list[i]->sched_manager->context_steal_max_vert = 
-                            seg_config->per_cpu_info_list[i]->sched_manager->context_steal_min_vert + 
+                        seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert = 
+                            seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert + 
                             (average_num-1) * gen_config.num_processors;
                     PRINT_DEBUG("Processor-%d's context_steal_min_vert = %d, max = %d\n",
-                            i, seg_config->per_cpu_info_list[i]->sched_manager->context_steal_min_vert,
-                            seg_config->per_cpu_info_list[i]->sched_manager->context_steal_max_vert);
+                            i, seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert,
+                            seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert);
                 }
             }
         }
@@ -437,7 +437,7 @@ class fog_engine{
             sched_list_context_data * my_context_data;
             for (u32_t i = 0; i < gen_config.num_processors; i++)
             {
-                my_context_data = seg_config->per_cpu_info_list[i]->sched_manager;
+                my_context_data = seg_config->per_cpu_info_list[i]->global_sched_manager;
                 if (my_context_data->num_vert_to_scatter != 0)
                     PRINT_ERROR("num_vert != 0;\n");
                 my_context_data->num_vert_to_scatter = my_context_data->normal_sched_vert_to_scatter;
@@ -458,7 +458,7 @@ class fog_engine{
 		// this function is rather simple, therefore, no return results.
 		void gather_updates(u32_t phase)
 		{
-            cpu_work<A,VA> * gather_cpu_work = NULL;
+            cpu_work<A,VA,U> * gather_cpu_work = NULL;
             io_work * one_io_work = NULL;
             char * next_buffer = NULL, *read_buf = NULL;
             char * write_buf = NULL; 
@@ -466,7 +466,7 @@ class fog_engine{
             gather_param * p_gather_param = new gather_param;
             u32_t ret = 0;
 
-			fog_engine_state = GATHER;
+			fog_engine_state = GLOBAL_GATHER;
 
             PRINT_DEBUG("before gather\n");
             if (seg_config->num_attr_buf == 1)
@@ -475,7 +475,7 @@ class fog_engine{
                 p_gather_param->threshold = 0;
                 p_gather_param->strip_id = 0;
 
-                gather_cpu_work = new cpu_work<A, VA>(GATHER, (void *)p_gather_param);
+                gather_cpu_work = new cpu_work<A, VA, U>(GLOBAL_GATHER, (void *)p_gather_param);
                 pcpu_threads[0]->work_to_do = gather_cpu_work;
                 (*pcpu_threads[0])();
 
@@ -531,7 +531,7 @@ class fog_engine{
                         p_gather_param->attr_array_head = (void *)read_buf;
                         //PRINT_DEBUG("Earlier gather strip %d\n", tmp_strip_id);
 
-                        gather_cpu_work = new cpu_work<A, VA>(GATHER, (void *)p_gather_param);
+                        gather_cpu_work = new cpu_work<A, VA, U>(GLOBAL_GATHER, (void *)p_gather_param);
                         pcpu_threads[0]->work_to_do = gather_cpu_work;
                         (*pcpu_threads[0])();
 
@@ -648,7 +648,7 @@ class fog_engine{
                         else 
                             PRINT_ERROR("return value is false!\n");
 
-                        gather_cpu_work = new cpu_work<A, VA>(GATHER, (void *)p_gather_param);
+                        gather_cpu_work = new cpu_work<A, VA, U>(GLOBAL_GATHER, (void *)p_gather_param);
                         pcpu_threads[0]->work_to_do = gather_cpu_work;
                         (*pcpu_threads[0])();
 
@@ -705,7 +705,7 @@ class fog_engine{
                     for (u32_t i = 0; i < gen_config.num_processors; i++)
                     {
                         sched_list_context_data * my_context_data = 
-                            seg_config->per_cpu_info_list[i]->sched_manager;
+                            seg_config->per_cpu_info_list[i]->global_sched_manager;
                         int tmp_strip_id = my_context_data->partition_gather_strip_id;
                         PRINT_DEBUG("tmp_strip_id = %d\n", tmp_strip_id);
                         if (tmp_strip_id == -1)
@@ -1078,7 +1078,7 @@ class fog_engine{
                         p_gather_param->threshold = 1;
                         p_gather_param->strip_id = tmp_strip_id;
 
-                        gather_cpu_work = new cpu_work<A, VA>(GATHER, (void *)p_gather_param);
+                        gather_cpu_work = new cpu_work<A, VA, U>(GLOBAL_GATHER, (void *)p_gather_param);
                         pcpu_threads[0]->work_to_do = gather_cpu_work;
                         (*pcpu_threads[0])();
 
@@ -1400,7 +1400,7 @@ class fog_engine{
             struct context_data * old_context_data;//on scatter!
             bitmap * old_bitmap = NULL;
 
-            my_sched_bitmap_manager = seg_config->per_cpu_info_list[partition_id]->sched_manager;
+            my_sched_bitmap_manager = seg_config->per_cpu_info_list[partition_id]->global_sched_manager;
             my_context_data = PHASE > 0 ? my_sched_bitmap_manager->p_context_data1 : my_sched_bitmap_manager->p_context_data0;
             u32_t old_phase = 1 - PHASE;
             old_context_data = old_phase > 0 ? my_sched_bitmap_manager->p_context_data1 : my_sched_bitmap_manager->p_context_data0;
@@ -1472,7 +1472,7 @@ class fog_engine{
 			for( u32_t i=0; i<gen_config.num_processors; i++ )
 				PRINT_DEBUG( "%d\t0x%llx\t0x%llx\n", 
 					i,
-					(u64_t)seg_config->per_cpu_info_list[i]->sched_manager,
+					(u64_t)seg_config->per_cpu_info_list[i]->global_sched_manager,
 					(u64_t)seg_config->per_cpu_info_list[i]->update_manager);
 
 			/*PRINT_DEBUG( "------------------\tschedule manager\t---------------\n" );
@@ -1555,7 +1555,7 @@ class fog_engine{
 			//populate the buffer managers
 			for(u32_t i=0; i<gen_config.num_processors; i++){
 				//headers
-				seg_config->per_cpu_info_list[i]->sched_manager = 
+				seg_config->per_cpu_info_list[i]->global_sched_manager = 
 					(sched_list_context_data *)seg_config->per_cpu_info_list[i]->buf_head;
 
 				seg_config->per_cpu_info_list[i]->update_manager = 
@@ -1572,7 +1572,7 @@ class fog_engine{
 					update_map_size;
 
                 //populate sched_manager
-                memset(seg_config->per_cpu_info_list[i]->sched_manager, 0, sizeof(sched_list_context_data));
+                memset(seg_config->per_cpu_info_list[i]->global_sched_manager, 0, sizeof(sched_list_context_data));
 
 				//zero out the update buffer and sched list buffer
 				memset( seg_config->per_cpu_info_list[i]->update_manager->update_map_head, 
@@ -1583,15 +1583,15 @@ class fog_engine{
 				seg_config->per_cpu_info_list[i]->strip_buf_head = //the first strip
 					(char*)(ROUND_UP( 
 						(u64_t)seg_config->per_cpu_info_list[i]->buf_head + total_header_len,
-						sizeof(update<VA>) ));
+						sizeof(update<U>) ));
 
 				strip_buf_size = seg_config->per_cpu_info_list[i]->buf_size - total_header_len;
 
 				//divide the update buffer to "strip"s
 				//round down strip size
 				strip_size = ROUND_DOWN( strip_buf_size / seg_config->num_segments, 
-					(sizeof(update<VA>)*gen_config.num_processors) );
-				strip_cap = (u32_t)(strip_size / sizeof(update<VA>));
+					(sizeof(update<U>)*gen_config.num_processors) );
+				strip_cap = (u32_t)(strip_size / sizeof(update<U>));
 
 				seg_config->per_cpu_info_list[i]->strip_buf_len = strip_size;
 				seg_config->per_cpu_info_list[i]->strip_cap = strip_cap;
@@ -1604,18 +1604,18 @@ class fog_engine{
 			//assert *task point to a valid task
 			assert(processor_id < gen_config.num_processors );
 
-            seg_config->per_cpu_info_list[processor_id]->sched_manager->normal_sched_min_vert = task->start;
-            seg_config->per_cpu_info_list[processor_id]->sched_manager->normal_sched_max_vert = task->term;
-            seg_config->per_cpu_info_list[processor_id]->sched_manager->normal_sched_vert_to_scatter = task_len;
-            seg_config->per_cpu_info_list[processor_id]->sched_manager->num_vert_to_scatter = task_len;
+            seg_config->per_cpu_info_list[processor_id]->global_sched_manager->normal_sched_min_vert = task->start;
+            seg_config->per_cpu_info_list[processor_id]->global_sched_manager->normal_sched_max_vert = task->term;
+            seg_config->per_cpu_info_list[processor_id]->global_sched_manager->normal_sched_vert_to_scatter = task_len;
+            seg_config->per_cpu_info_list[processor_id]->global_sched_manager->num_vert_to_scatter = task_len;
 
-            seg_config->per_cpu_info_list[processor_id]->sched_manager->context_vert_id =
-            seg_config->per_cpu_info_list[processor_id]->sched_manager->context_edge_id = 0;
+            seg_config->per_cpu_info_list[processor_id]->global_sched_manager->context_vert_id =
+            seg_config->per_cpu_info_list[processor_id]->global_sched_manager->context_edge_id = 0;
 
-            seg_config->per_cpu_info_list[processor_id]->sched_manager->context_steal_max_vert = 
-            seg_config->per_cpu_info_list[processor_id]->sched_manager->context_steal_min_vert = 0;
-            seg_config->per_cpu_info_list[processor_id]->sched_manager->context_steal_num_vert = 0;
-            seg_config->per_cpu_info_list[processor_id]->sched_manager->signal_to_scatter = 0;
+            seg_config->per_cpu_info_list[processor_id]->global_sched_manager->context_steal_max_vert = 
+            seg_config->per_cpu_info_list[processor_id]->global_sched_manager->context_steal_min_vert = 0;
+            seg_config->per_cpu_info_list[processor_id]->global_sched_manager->context_steal_num_vert = 0;
+            seg_config->per_cpu_info_list[processor_id]->global_sched_manager->signal_to_scatter = 0;
 
 			delete task;
 		}
@@ -1707,16 +1707,16 @@ class fog_engine{
 		}
 };
 
-template <typename A, typename VA>
-index_vert_array* fog_engine<A,VA>::vert_index;
+template <typename A, typename VA, typename U>
+index_vert_array* fog_engine<A,VA, U>::vert_index;
 
-template <typename A, typename VA>
-u32_t fog_engine<A,VA>::fog_engine_state;
+template <typename A, typename VA, typename U>
+u32_t fog_engine<A,VA,U>::fog_engine_state;
 
-template <typename A, typename VA>
-u32_t fog_engine<A,VA>::current_attr_segment;
+template <typename A, typename VA, typename U>
+u32_t fog_engine<A,VA,U>::current_attr_segment;
 
-template <typename A, typename VA>
-segment_config<VA, sched_list_context_data> * fog_engine<A,VA>::seg_config;
+template <typename A, typename VA, typename U>
+segment_config<VA> * fog_engine<A,VA,U>::seg_config;
 
 #endif

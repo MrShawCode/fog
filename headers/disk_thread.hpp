@@ -1,6 +1,7 @@
 #ifndef __DISK_THREAD_HPP__
 #define __DISK_THREAD_HPP__
 
+#include <unistd.h>
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <boost/thread.hpp>
 //#include <boost/thread/mutex.hpp>
@@ -87,6 +88,8 @@ struct io_work{
 					written += res;
 					remain -= res;
 				}
+                //add by hejian
+                //fsync(fd);
 
 				close(fd);
                 PRINT_DEBUG("Write work done!~~\n");

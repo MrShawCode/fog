@@ -93,6 +93,10 @@ unsigned int index_vert_array::num_out_edges( unsigned int vid )
 	unsigned long long start_edge=0L, end_edge=0L;
 	
 	start_edge = vert_array_header[vid].offset;
+    //if (vid == 152)
+    //    PRINT_DEBUG("start_edge = %lld\n", start_edge);
+    //if (vid == 152)
+    //    PRINT_DEBUG("vert_array_head[156].offset = %lld\n", vert_array_header[156].offset);
 	if ( start_edge == 0L && vid != 0 ) return 0;
 
 	if ( vid > gen_config.max_vert_id ) return 0;
@@ -117,9 +121,13 @@ unsigned int index_vert_array::num_out_edges( unsigned int vid )
 edge* index_vert_array::out_edge( unsigned int vid, unsigned int which )
 {
 	edge* ret = new edge;
+    //PRINT_DEBUG("which = %d, num_out_edges = %d\n", which, index_vert_array::num_out_edges(vid));
 	if( which > index_vert_array::num_out_edges( vid ) ) return NULL;
+    //PRINT_DEBUG("vert_array_header[%d].offset = %lld\n",vid, vert_array_header[vid].offset);
 
 	*ret = (edge)edge_array_header[ vert_array_header[vid].offset + which ];
+    //PRINT_DEBUG("vert_array->dest_vert = %d, weight = %f\n",edge_array_header[vert_array_header[vid].offset+which].dest_vert, edge_array_header[vert_array_header[vid].offset+which].edge_weight);
+    //PRINT_DEBUG("vid = %d, ret->dest_vert = %d, weight = %f\n",vid, ret->dest_vert, ret->edge_weight);
 
 	return ret;
 }

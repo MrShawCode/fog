@@ -6,6 +6,10 @@
 typedef unsigned int u32_t;
 typedef unsigned long long u64_t;
 
+const float EPSILON = 1.00e-02;
+
+#define FLOAT_EQ(x, v)(((v - EPSILON) < x) && (x < (v + EPSILON)))
+
 //element in edge array
 struct edge{
     u32_t dest_vert;                                         
@@ -22,6 +26,8 @@ template<typename VA>
 struct update{
 	u32_t dest_vert;
 	VA vert_attr;
+    //modified by hejian
+    //VA vert_attr_msg;
 }__attribute__ ((__packed__));
 
 //defined to schedule tasks
@@ -92,10 +98,20 @@ struct context_data{
     u32_t steal_virt_cpu_id;
     u32_t steal_num_virt_cpus;
     u32_t steal_bits_true_size;
+    bool steal_special_signal;
 
     //data for partition-gather!
     int partition_gather_strip_id;
     int partition_gather_signal;
+
+    //context-data for scc-usign
+    bool will_be_updated;
+    bitmap * next_p_bitmap_steal;
+    u32_t next_steal_bits_true_size;
+    u32_t next_steal_max_vert_id;
+    u32_t next_steal_min_vert_id;
+
+    u32_t signal_to_gather;
 }__attribute__ ((aligned(8)));
 
 //manage the update buffer.
@@ -104,14 +120,9 @@ struct update_map_manager{
 	u32_t update_map_size;	//the size of update map: num_of_segments*num_of_processors. IN BYTES!!!
 }__attribute__ ((aligned(8)));
 
-//manage the auxiliary update buffer
-template <typename VA>
-struct aux_update_buf_manager{
-	char* buf_head;
-	u64_t buf_size;
-	update<VA>* update_head;
-	u32_t buf_cap;
-	u32_t num_updates;
-}__attribute__ ((aligned(8)));
-
+enum scc_phase
+{
+    FORWARD_TRAVERSAL = 0,
+    BACKWARD_TRAVERSAL
+};
 #endif

@@ -3,12 +3,24 @@
 
 #include "config.hpp"
 #include "print_debug.hpp"
+#include "bitmap.hpp"
+#include "disk_thread.hpp"
+#include <cassert>
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sstream> 
+#include <fcntl.h>
 
 enum fog_engine_state{
-    INIT = 0,
-    SCATTER,
-    GATHER,
-    TERM
+    GLOBAL_INIT = 0, TARGET_INIT, SCC_INIT, CC_INIT,
+    GLOBAL_SCATTER, TARGET_SCATTER, SCC_FORWARD_SCATTER, 
+    SCC_BACKWARD_SCATTER, CC_SCATTER, SPMV_SCATTER,
+    GLOBAL_GATHER, TARGET_GATHER, SCC_FORWARD_GATHER,
+    SCC_BACKWARD_GATHER, CC_GATHER
 };
 
 //denotes the different status of cpu threads after they finished the given tasks.
@@ -35,11 +47,40 @@ enum gather_signal
     STEAL_GATHER
 };
 
-#define SCHED_BUFFER_LEN    1024
-
-template <typename A, typename VA>
+//global variables
+//U:updates
+//VA:attr
+//A:
+template <typename A, typename VA, typename U>
 class cpu_thread;
 
+//for scc-backward routine 
+bool all_vertex_to_be_updated = false;
+
+
+//parameter to use to perform different actions
+struct init_param{
+	char* attr_buf_head;
+	u32_t start_vert_id;
+	u32_t num_of_vertices;
+    u32_t PHASE;//for target && scc algorithm
+    u32_t scc_phase; //for scc-algorithm using
+    u32_t loop_counter; //for scc algorithm using
+};
+
+struct scatter_param{
+	void* attr_array_head;
+    u32_t PHASE;
+};
+
+struct gather_param{
+    void * attr_array_head;
+    int strip_id;
+    u32_t threshold;
+    u32_t PHASE;
+};
+
+//class barrier - for multi-thread synchronization
 class barrier {
     volatile unsigned long count[2];
     volatile unsigned long sense;
@@ -67,42 +108,28 @@ class barrier {
 //    friend class cpu_thread<A,VA>;
 };
 
-struct init_param{
-	char* attr_buf_head;
-	u32_t start_vert_id;
-	u32_t num_of_vertices;
-};
 
-struct scatter_param{
-	void* attr_array_head;
-};
-
-struct gather_param{
-    void * attr_array_head;
-    int strip_id;
-    u32_t threshold;
-};
-
-template <typename A, typename VA>
+template <typename A, typename VA, typename U>
 struct cpu_work{
 	u32_t engine_state;
 	void* state_param;
 
-	cpu_work( u32_t state, void* state_param_in )
+	cpu_work( u32_t state, void* state_param_in)
 		:engine_state(state), state_param(state_param_in)
-	{}
+	{
+    }
 	
 	void operator() ( u32_t processor_id, barrier *sync, index_vert_array *vert_index, 
-		segment_config<VA, sched_list_context_data>* seg_config, int *status )
-		//segment_config<VA, sched_list_manager>* seg_config, int *status )
+		segment_config<VA>* seg_config, int *status )
 	{
-		u32_t local_start_vert_off, local_term_vert_off;
+        u32_t local_term_vert_off, local_start_vert_off;
         sync->wait();
 		
 		switch( engine_state ){
-			case INIT:
-			{	//add {} to prevent "error: jump to case label" error. Cann't believe that!
-				init_param* p_init_param = (init_param*) state_param;
+            case TARGET_INIT: //algorithm: SSSP
+            case GLOBAL_INIT: //algorithm: Pagerank, SPMV
+            {
+                init_param* p_init_param = (init_param*) state_param;
 
 				if( processor_id*seg_config->partition_cap > p_init_param->num_of_vertices ) break;
 
@@ -113,22 +140,378 @@ struct cpu_work{
 					local_term_vert_off = p_init_param->num_of_vertices - 1;
 				else
 					local_term_vert_off = local_start_vert_off + seg_config->partition_cap - 1;
-			
-//				PRINT_DEBUG( "processor:%d, vert start from %u, number:%u local start from vertex %u to %u\n", 
-//					processor_id, 
-//					p_init_param->start_vert_id, 
-//					p_init_param->num_of_vertices, 
-//					local_start_vert_off, 
-//					local_term_vert_off );
 
+				assert(engine_state == GLOBAL_INIT || engine_state == TARGET_INIT);
 				//Note: for A::init, the vertex id and VA* address does not mean the same offset!
 				for (u32_t i=local_start_vert_off; i<=local_term_vert_off; i++ )
-					A::init( p_init_param->start_vert_id + i, (VA*)(p_init_param->attr_buf_head) + i );
+				{
+					if (engine_state == GLOBAL_INIT)
+						A::init( p_init_param->start_vert_id + i, (VA*)(p_init_param->attr_buf_head) + i);
+					else
+					{
+						assert(engine_state == TARGET_INIT);
+						A::init( p_init_param->start_vert_id + i, (VA*)(p_init_param->attr_buf_head) + i, p_init_param->PHASE);
+					}
+				}
 
 				break;
 			}
-			case SCATTER:
+			case CC_INIT:
+            case SCC_INIT:
+			{	
+                init_param * p_init_param = (init_param *)state_param;
+				if( processor_id*seg_config->partition_cap > p_init_param->num_of_vertices ) break;
+
+                u32_t current_start_id = p_init_param->start_vert_id + processor_id;
+                u32_t current_term_id = p_init_param->start_vert_id + p_init_param->num_of_vertices; 
+
+				for (u32_t i=current_start_id ; i<current_term_id; i+=gen_config.num_processors)
+                {
+                    assert((i-processor_id)%gen_config.num_processors == 0);
+                    assert(i <= gen_config.max_vert_id);
+                    if ((engine_state == SCC_INIT || engine_state == CC_INIT) && i <= gen_config.max_vert_id)
+                    {
+                        u32_t index = 0;
+                        if (seg_config->num_segments > 1)
+                            index = i%seg_config->segment_cap;
+                        else
+                            index = i;
+
+                        assert(index <= seg_config->segment_cap);
+                        if (engine_state == SCC_INIT)
+                        	A::init( i, (VA*)(p_init_param->attr_buf_head) + index, 
+                                	p_init_param->PHASE, p_init_param->scc_phase, p_init_param->loop_counter, vert_index);
+                        else
+                        {
+                        	assert(engine_state == CC_INIT);
+                        	A::init(i, (VA*)(p_init_param->attr_buf_head) + index, p_init_param->PHASE);
+                        }
+                    }
+                }
+				break;
+			}
+            case TARGET_SCATTER:
+			case SCC_FORWARD_SCATTER:
+            case SCC_BACKWARD_SCATTER:
+            case CC_SCATTER:
 			{
+
+                *status = FINISHED_SCATTER;
+                scatter_param * p_scatter_param = (scatter_param *)state_param; 
+                sched_bitmap_manager * my_sched_bitmap_manager;
+                struct context_data * my_context_data;
+                update_map_manager * my_update_map_manager;
+                u32_t my_strip_cap, per_cpu_strip_cap;
+                u32_t * my_update_map_head;
+
+                VA * attr_array_head;
+                //update<VA> * my_update_buf_head;
+                update<U> * my_update_buf_head;
+                update<U> * t_update;
+
+                bitmap * next_bitmap = NULL;
+                context_data * next_context_data = NULL;
+
+                edge * t_edge;
+                //update<VA> * t_update;
+                u32_t num_out_edges/*,  temp_laxity*/;
+                u32_t strip_num, cpu_offset, map_value, update_buf_offset;
+                bitmap * current_bitmap = NULL ;
+                u32_t signal_to_scatter;
+                u32_t old_edge_id;
+                u32_t max_vert = 0, min_vert = 0;
+
+                my_sched_bitmap_manager = seg_config->per_cpu_info_list[processor_id]->target_sched_manager;
+                my_update_map_manager = seg_config->per_cpu_info_list[processor_id]->update_manager;
+
+                my_strip_cap = seg_config->per_cpu_info_list[processor_id]->strip_cap;
+                per_cpu_strip_cap = my_strip_cap/gen_config.num_processors;
+                my_update_map_head = my_update_map_manager->update_map_head;
+                my_update_buf_head = (update<U> *)(seg_config->per_cpu_info_list[processor_id]->strip_buf_head);
+
+                attr_array_head = (VA *)p_scatter_param->attr_array_head;
+
+
+                my_context_data = p_scatter_param->PHASE > 0 ? my_sched_bitmap_manager->p_context_data1:
+                    my_sched_bitmap_manager->p_context_data0;
+                
+                signal_to_scatter = my_context_data->signal_to_scatter;
+                if (signal_to_scatter == NORMAL_SCATTER || signal_to_scatter == CONTEXT_SCATTER)
+                {
+                    current_bitmap = my_context_data->p_bitmap;
+                    max_vert = my_context_data->per_max_vert_id;
+                    min_vert = my_context_data->per_min_vert_id;
+                    if (signal_to_scatter == NORMAL_SCATTER)
+                        all_vertex_to_be_updated = false;
+                }
+                if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
+                {
+                    current_bitmap = my_context_data->p_bitmap_steal;
+                    max_vert = my_context_data->steal_max_vert_id;
+                    min_vert = my_context_data->steal_min_vert_id;
+                    if (my_context_data->steal_special_signal == true)
+                    {
+                        *status = FINISHED_SCATTER;
+                        break;
+                    }
+                }
+
+                if (my_context_data->per_bits_true_size == 0 && 
+                        signal_to_scatter != STEAL_SCATTER && signal_to_scatter != SPECIAL_STEAL_SCATTER)
+                {
+                    *status = FINISHED_SCATTER;
+                    PRINT_DEBUG("Processor %d Finished scatter, has %d bits to scatter!\n", processor_id, 
+                           my_context_data->per_bits_true_size);
+                    break;
+                }
+
+                //special signal
+                for (u32_t i = min_vert; i <= max_vert; i = i + gen_config.num_processors)
+                {
+                    if (current_bitmap->get_value(i) == 0)
+                        continue;
+                    
+                    num_out_edges = vert_index->num_out_edges(i);
+                    if (num_out_edges == 0 )
+                    {
+                        if (seg_config->num_segments == 1 && 
+                                ( engine_state == SCC_BACKWARD_SCATTER || engine_state == SCC_FORWARD_SCATTER))
+                            A::set_finish_to_vert(i, (VA*)&attr_array_head[i]);
+                        
+                        current_bitmap->clear_value(i);
+                        if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == STEAL_SCATTER)
+                            my_context_data->steal_bits_true_size++;
+                        else 
+                            my_context_data->per_bits_true_size--;
+                        continue;
+                    }
+
+                    if (engine_state == SCC_BACKWARD_SCATTER)
+                    {
+                        //if ( attr_array_head[i].found_component == true || 
+                        //        attr_array_head[i].prev_root == attr_array_head[i].component_root)
+                        bool ret = false;
+                        //ret = A::judge_true_false((VA*)&attr_array_head[i]);
+                        //if (A::judge_true_false((VA*)&attr_array_head[i]) == true)
+                        if (ret == true)
+                        {
+                            current_bitmap->clear_value(i);
+                            if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == STEAL_SCATTER)
+                                my_context_data->steal_bits_true_size++;
+                            else 
+                                my_context_data->per_bits_true_size--;
+                            continue;
+                        }
+                    }
+
+                    if ((signal_to_scatter == CONTEXT_SCATTER) && (i == my_context_data->per_min_vert_id))
+                        old_edge_id = my_context_data->per_num_edges;
+                    else if (signal_to_scatter == SPECIAL_STEAL_SCATTER)
+                        old_edge_id = my_context_data->steal_context_edge_id;
+                    else
+                        old_edge_id = 0;
+
+                    bool will_be_updated = false;
+                    for (u32_t z = old_edge_id; z < num_out_edges; z++)
+                    {
+                        t_edge = vert_index->out_edge(i, z);
+                        assert(t_edge);//Make sure this edge existd!
+                        if (t_edge->dest_vert == (u32_t)-1)
+                        {
+                            PRINT_ERROR("i = %d, t_edge->dest_vert = %d, z = %d, num_out_edges = %d\n", i, t_edge->dest_vert, z, num_out_edges);
+                        }
+                        if (engine_state == SCC_BACKWARD_SCATTER)
+                        {
+                            //if (attr_array_head[i].prev_root == attr_array_head[t_edge->dest_vert].prev_root && 
+                            //        attr_array_head[t_edge->dest_vert].prev_root == attr_array_head[t_edge->dest_vert].component_root &&
+                            //        attr_array_head[i].prev_root != attr_array_head[i].component_root &&
+                            if (A::judge_src_dest((VA*)&attr_array_head[i], (VA*)&attr_array_head[t_edge->dest_vert]) == true 
+                                    && will_be_updated == false)
+                            {
+
+                                t_update = A::scatter_one_edge(i, (VA*)&attr_array_head[t_edge->dest_vert], t_edge);
+                                //Make sure this update existd!
+                                assert(t_update);
+                                will_be_updated = true;
+                                all_vertex_to_be_updated = true;
+                            }
+                            else 
+                            {
+                                continue;
+                            }
+
+                        }
+                        else
+                        {
+                            t_update = A::scatter_one_edge(i, (VA *)&attr_array_head[i], t_edge);
+                            assert(t_update);
+                        }
+
+                        strip_num = VID_TO_SEGMENT(t_update->dest_vert);
+                        cpu_offset = VID_TO_PARTITION(t_update->dest_vert );
+                        assert(strip_num < seg_config->num_segments);
+                        assert(cpu_offset < gen_config.num_processors);
+
+                        map_value = *(my_update_map_head + strip_num * gen_config.num_processors + cpu_offset);
+                        u32_t tmp_strip_cap = 0;
+
+                        if (engine_state == SCC_BACKWARD_SCATTER && signal_to_scatter != STEAL_SCATTER 
+                                && signal_to_scatter != SPECIAL_STEAL_SCATTER)
+                            tmp_strip_cap = my_strip_cap;
+                        else 
+                            tmp_strip_cap = per_cpu_strip_cap;
+
+                        if (map_value < tmp_strip_cap )
+                        {
+
+                            if (engine_state == SCC_BACKWARD_SCATTER && signal_to_scatter != STEAL_SCATTER 
+                                    && signal_to_scatter != SPECIAL_STEAL_SCATTER)
+                            {
+                                /*
+                                 * When scc-backward-scatter, the update->dest_vert will be the same as processor_id.
+                                 * So we just pull  all the update to hole strip instead of the corresponding partition.
+                                 */
+                                assert(cpu_offset == processor_id);
+                                assert(cpu_offset < gen_config.num_processors);
+                                update_buf_offset = strip_num * my_strip_cap + map_value;  
+                            }
+                            else
+                            {
+                                update_buf_offset = strip_num * my_strip_cap + 
+                                	map_value * gen_config.num_processors + cpu_offset;
+                            }
+
+                            *(my_update_buf_head + update_buf_offset) = *t_update;
+                            map_value++;
+                            *(my_update_map_head + strip_num * gen_config.num_processors + cpu_offset) = map_value;
+                        }
+                        else
+                        {          
+                            if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
+                            {
+                                my_context_data->steal_min_vert_id = i;
+                                my_context_data->steal_context_edge_id = z;
+                                PRINT_DEBUG("In steal-scatter, update_buffer is fulled, need to store the context data!\n");
+                            }
+                            else
+                            {
+                                PRINT_DEBUG("Update_buffer is fulled, need to store the context data!\n");
+                                my_context_data->per_min_vert_id = i;
+                                my_context_data->per_num_edges = z;
+                                my_context_data->partition_gather_signal = processor_id;//just be different from origin status
+                                my_context_data->partition_gather_strip_id = (int)strip_num;//record the strip_id to gather
+                            }
+                            *status = UPDATE_BUF_FULL;
+                            delete t_edge;
+                            delete t_update;
+                            break;
+                        }
+                        delete t_edge;
+                        delete t_update;
+                    }
+                    if (*status == UPDATE_BUF_FULL)
+                        break;
+                    else
+                    {
+                       	assert(*status == FINISHED_SCATTER);
+                        current_bitmap->clear_value(i);
+                        if (signal_to_scatter == 1 && my_context_data->per_bits_true_size == 0)
+                            PRINT_ERROR("i = %d\n", i);
+                        if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
+                        {
+                            my_context_data->steal_bits_true_size++;
+                            if (engine_state == SCC_BACKWARD_SCATTER && will_be_updated == false)
+                            {
+                                bitmap * next_bitmap_steal = my_context_data->next_p_bitmap_steal;
+                                assert(next_bitmap_steal->get_value(i) == 0);
+                                next_bitmap_steal->set_value(i);
+                                my_context_data->next_steal_bits_true_size++;
+                                if (my_context_data->next_steal_min_vert_id > i)
+                                    my_context_data->next_steal_min_vert_id = i;
+                                if(my_context_data->next_steal_max_vert_id < i)
+                                    my_context_data->next_steal_max_vert_id = i;
+
+                            }
+                        }
+                        else 
+                        {                            
+                            my_context_data->per_bits_true_size--;
+                            //For scc using
+                            //set all the value for next scatter
+                            if (engine_state == SCC_BACKWARD_SCATTER && will_be_updated == false )
+                            {
+                                //this vertex(i) has not updated this time. Adding it to the next bitmap         
+                                next_context_data = 
+                                    (1-p_scatter_param->PHASE) > 0 ? my_sched_bitmap_manager->p_context_data1:
+                                        my_sched_bitmap_manager->p_context_data0;
+                                next_bitmap = next_context_data->p_bitmap;
+                                assert(next_bitmap->get_value(i) == 0);
+                                next_bitmap->set_value(i);
+
+                                ++next_context_data->per_bits_true_size;
+                                if (next_context_data->per_min_vert_id > i)
+                                    next_context_data->per_min_vert_id = i;
+                                if(next_context_data->per_max_vert_id < i)
+                                    next_context_data->per_max_vert_id = i;
+                            }
+                        }
+                        
+                    }
+                    
+                }
+                
+                if (*status == UPDATE_BUF_FULL)
+                {
+                    if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
+                    {
+                        PRINT_DEBUG("Steal-cpu %d has scatter %d bits\n", processor_id, my_context_data->steal_bits_true_size);
+                    }
+                    else
+                        PRINT_DEBUG("Processor %d have not finished scatter,  UPDATE_BUF_FULL, has %d bits to scatter!\n", processor_id, 
+                            my_context_data->per_bits_true_size);
+                }
+                else
+                {
+                    if (engine_state == SCC_BACKWARD_SCATTER && all_vertex_to_be_updated == false)
+                    {
+                        if (next_context_data != NULL && next_bitmap != NULL)
+                        {
+                            for (u32_t j = next_context_data->per_min_vert_id;
+                                    j <= next_context_data->per_max_vert_id; j = j + gen_config.num_processors)
+                            {
+                                if(next_bitmap->get_value(j) == 0)
+                                    continue;
+
+                                next_bitmap->clear_value(j);
+                                next_context_data->per_bits_true_size -= 1;
+                            }
+                            next_context_data->per_bits_true_size = 0;
+                        }
+                    }
+                    if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
+                    {
+                        PRINT_DEBUG("Steal-cpu %d has scatter %d bits\n", processor_id, my_context_data->steal_bits_true_size);
+                    }
+                    else
+                    {
+                        PRINT_DEBUG("Processor %d Finished scatter, has %d bits to scatter!\n", processor_id, 
+                               my_context_data->per_bits_true_size);
+                        if (my_context_data->per_bits_true_size != 0)
+                        {
+                            PRINT_ERROR("Error, processor %d still has %d bits to scatter!\n", processor_id, 
+                                my_context_data->per_bits_true_size);
+                            my_context_data->per_bits_true_size = 0;
+                        }
+                        my_context_data->per_max_vert_id = current_bitmap->get_start_vert();
+                        my_context_data->per_min_vert_id = current_bitmap->get_term_vert();
+                    }
+                    *status = FINISHED_SCATTER;
+                }
+                break;
+			}
+            case SPMV_SCATTER:
+            case GLOBAL_SCATTER:
+            {
                 *status = FINISHED_SCATTER;
 				scatter_param* p_scatter_param = (scatter_param*) state_param;
 				sched_list_context_data* my_sched_list_manager;
@@ -137,14 +520,14 @@ struct cpu_work{
 				u32_t* my_update_map_head;
 
 				VA* attr_array_head;
-				update<VA>* my_update_buf_head;
+				update<U>* my_update_buf_head;
 
 				edge* t_edge;
-				update<VA> *t_update;
+				update<U> *t_update = NULL;
 				u32_t num_out_edges;
 				u32_t strip_num, cpu_offset, map_value, update_buf_offset;
 
-				my_sched_list_manager = seg_config->per_cpu_info_list[processor_id]->sched_manager;
+				my_sched_list_manager = seg_config->per_cpu_info_list[processor_id]->global_sched_manager;
 				my_update_map_manager = seg_config->per_cpu_info_list[processor_id]->update_manager;
 
 				my_strip_cap = seg_config->per_cpu_info_list[processor_id]->strip_cap;
@@ -153,7 +536,7 @@ struct cpu_work{
 
 				attr_array_head = (VA*) p_scatter_param->attr_array_head;
 				my_update_buf_head = 
-					(update<VA>*)(seg_config->per_cpu_info_list[processor_id]->strip_buf_head);
+					(update<U>*)(seg_config->per_cpu_info_list[processor_id]->strip_buf_head);
 
                 u32_t signal_to_scatter = my_sched_list_manager->signal_to_scatter;
                 u32_t min_vert = 0, max_vert = 0;
@@ -197,7 +580,9 @@ struct cpu_work{
                 //for loop for every vertex in every cpu
                 for (u32_t i = min_vert; i <= max_vert; i += gen_config.num_processors)
                 {
+                    
                     num_out_edges = vert_index->num_out_edges(i);
+
                     if (num_out_edges == 0)
                     {
                         //different counter for different scatter-mode
@@ -227,7 +612,11 @@ struct cpu_work{
                         t_edge = vert_index->out_edge(i, z);
                         //Make sure this edge existd!
                         assert(t_edge);
-                        t_update = A::scatter_one_edge(i, (VA*)&attr_array_head[i], num_out_edges, t_edge);
+
+                        if (engine_state == SPMV_SCATTER)
+                            t_update = A::scatter_one_edge(i, (VA*)&attr_array_head[i], t_edge);
+                        else
+                            t_update = A::scatter_one_edge(i, (VA*)&attr_array_head[i], num_out_edges, t_edge);
                         //Make sure this update existd!
                         assert(t_update);
 
@@ -239,9 +628,10 @@ struct cpu_work{
 
                         //find out the corresponding value for update-buffer
                         map_value = *(my_update_map_head + strip_num * gen_config.num_processors + cpu_offset);
+
                         if (map_value < (per_cpu_strip_cap - 1))
                         {
-                            //There are enough space for the current update
+
                             update_buf_offset = strip_num * my_strip_cap + map_value * gen_config.num_processors + cpu_offset;
                             *(my_update_buf_head + update_buf_offset) = *t_update;
                             map_value++;
@@ -315,22 +705,34 @@ struct cpu_work{
                 }
 				break;
 			}
-            case GATHER:
-            {
+            case GLOBAL_GATHER:
+            case TARGET_GATHER:
+            case SCC_FORWARD_GATHER:
+            case SCC_BACKWARD_GATHER:
+            case CC_GATHER:
+            {                
                 gather_param * p_gather_param = (gather_param *)state_param; 
                 update_map_manager * my_update_map_manager;
                 u32_t my_strip_cap;
                 u32_t * my_update_map_head;
                 VA * attr_array_head;
-                update<VA> * my_update_buf_head;
+                update<U> * my_update_buf_head;
 
-                update<VA> * t_update;
+                update<U> * t_update;
                 u32_t map_value, update_buf_offset;
                 u32_t dest_vert;
                 int strip_id;
                 u32_t threshold;
                 u32_t vert_index;
+                context_data * my_context_data = NULL;
+                sched_bitmap_manager * my_sched_bitmap_manager = NULL;
 
+                if (engine_state == SCC_BACKWARD_GATHER)
+                {
+                    my_sched_bitmap_manager = seg_config->per_cpu_info_list[processor_id]->target_sched_manager;
+                    my_context_data = (1-p_gather_param->PHASE) > 0 ? my_sched_bitmap_manager->p_context_data1:
+                        my_sched_bitmap_manager->p_context_data0;
+                }
                 my_strip_cap = seg_config->per_cpu_info_list[processor_id]->strip_cap;
                 attr_array_head = (VA *)p_gather_param->attr_array_head;
                 strip_id = p_gather_param->strip_id;
@@ -341,14 +743,24 @@ struct cpu_work{
                 {
                     my_update_map_manager = seg_config->per_cpu_info_list[buf_id]->update_manager;
                     my_update_map_head = my_update_map_manager->update_map_head;
-                    my_update_buf_head = (update<VA> *)(seg_config->per_cpu_info_list[buf_id]->strip_buf_head);
+                    my_update_buf_head = (update<U> *)(seg_config->per_cpu_info_list[buf_id]->strip_buf_head);
                     map_value = *(my_update_map_head + strip_id * gen_config.num_processors + processor_id);
+                    if (engine_state == SCC_BACKWARD_GATHER && buf_id != processor_id 
+                            && my_context_data->signal_to_scatter != STEAL_SCATTER 
+                            && my_context_data->signal_to_scatter != SPECIAL_STEAL_SCATTER)
+                        assert(map_value == 0);
                     if (map_value == 0)
                         continue;
 
                     for (u32_t update_id = 0; update_id < map_value; update_id++)
                     {
-                        update_buf_offset = strip_id * my_strip_cap + update_id * gen_config.num_processors + processor_id;
+                        if (engine_state == SCC_BACKWARD_GATHER && 
+                                my_context_data->signal_to_scatter != STEAL_SCATTER
+                                && my_context_data->signal_to_scatter != SPECIAL_STEAL_SCATTER)
+                            update_buf_offset = strip_id * my_strip_cap + update_id ;//* gen_config.num_processors + processor_id;
+                        else
+                            update_buf_offset = strip_id * my_strip_cap + update_id * gen_config.num_processors + processor_id;
+
                         t_update = (my_update_buf_head + update_buf_offset);
                         assert(t_update);
                         dest_vert = t_update->dest_vert;
@@ -357,7 +769,7 @@ struct cpu_work{
                         else
                             vert_index = dest_vert;
                             
-                        A::gather_one_update(dest_vert, (VA *)&attr_array_head[vert_index], t_update);
+                            A::gather_one_update(dest_vert, (VA *)&attr_array_head[vert_index], t_update, p_gather_param->PHASE);
                     }
                     map_value = 0;
                     *(my_update_map_head + strip_id * gen_config.num_processors + processor_id) = 0;
@@ -371,47 +783,7 @@ struct cpu_work{
         sync->wait();
 	}
 
-/*
-	//return value:
-	//0: added successfully
-	//-1: failed on adding
-	int add_update_to_sched_update( 
-				seg_config,
-				map_head, 
-				buf_head, 
-				p_update, 
-				per_cpu_strip_cap )
-	{
-
-		t_update = (update<VA>*)(my_aux_manager->update_head + i);
-		strip_num = VID_TO_SEGMENT( t_update->dest_vert );
-		cpu_offset = VID_TO_PARTITION( t_update->dest_vert );
-
-//						assert( strip_num < seg_config->num_segments );
-//						assert( cpu_offset < gen_config.num_processors );
-
-		//update map layout
-		//			cpu0				cpu1				.....
-		//strip 0-> map_value(s0,c0)	map_value(s0, c1)	.....
-		//strip 1-> map_value(s1,c0)	map_value(s1, c1)	.....
-		//strip 2-> map_value(s2,c0)	map_value(s2, c1)	.....
-		//		... ...
-		map_value = *(my_update_map_head + strip_num*gen_config.num_processors + cpu_offset);
-
-		if( map_value < per_cpu_strip_cap ){
-			update_buf_offset = strip_num*per_cpu_strip_cap*gen_config.num_processors
-				+ map_value*gen_config.num_processors 
-				+ cpu_offset;
-
-		*(my_update_buf_head + update_buf_offset) = *t_update;
-
-		//update the map
-		map_value ++;
-	}
-*/
-
-    //void show_update_map( int processor_id, segment_config<VA, sched_list_manager>* seg_config, u32_t* map_head )
-    void show_update_map( int processor_id, segment_config<VA, sched_list_context_data>* seg_config, u32_t* map_head )
+    void show_update_map( int processor_id, segment_config<VA>* seg_config, u32_t* map_head )
     {
         //print title
         PRINT_SHORT( "--------------- update map of CPU%d begin-----------------\n", processor_id );
@@ -428,53 +800,22 @@ struct cpu_work{
         }
         PRINT_SHORT( "--------------- update map of CPU%d end-----------------\n", processor_id );
     }
-
-	//return current sched_task
-	//return NULL when there is no more tasks
-	static sched_task * get_sched_task( sched_list_manager* sched_manager )
-	{
-		if( sched_manager->sched_task_counter == 0 ) return NULL;
-
-		return sched_manager->current;
-	}
-
-	//delete current sched_task
-	//note: Must be the current sched_task!
-	// After deletion, current pointer should move forward by one
-	void del_sched_task( sched_list_manager* sched_manager )
-	{
-		assert( sched_manager->sched_task_counter > 0 );
-
-		sched_manager->sched_task_counter --;
-
-		//move forward current pointer
-        if( sched_manager->current >= (sched_manager->sched_buf_head
-                    + sched_manager->sched_buf_size) )
-                sched_manager->current = sched_manager->sched_buf_head;
-        else
-                sched_manager->current++;
-
-		//move forward head
-		sched_manager->head = sched_manager->current;
-	}
 };
 
-template <typename A, typename VA>
+template <typename A, typename VA, typename U>
 class cpu_thread {
 public:
     const unsigned long processor_id; 
 	index_vert_array* vert_index;
-	segment_config<VA, sched_list_context_data>* seg_config;
-	//segment_config<VA, sched_list_manager>* seg_config;
+	segment_config<VA>* seg_config;
 	int status;
 
 	//following members will be shared among all cpu threads
     static barrier *sync;
     static volatile bool terminate;
-    static struct cpu_work<A,VA> * volatile work_to_do;
+    static struct cpu_work<A,VA,U> * volatile work_to_do;
 
-    //cpu_thread(u32_t processor_id_in, index_vert_array * vert_index_in, segment_config<VA, sched_list_manager>* seg_config_in )
-    cpu_thread(u32_t processor_id_in, index_vert_array * vert_index_in, segment_config<VA, sched_list_context_data>* seg_config_in )
+    cpu_thread(u32_t processor_id_in, index_vert_array * vert_index_in, segment_config<VA>* seg_config_in )
     :processor_id(processor_id_in), vert_index(vert_index_in), seg_config(seg_config_in)
     {   
         if(sync == NULL) { //as it is shared, be created for one time
@@ -490,7 +831,9 @@ public:
 	            break;
             }
             else {
-	            (*work_to_do)(processor_id, sync, vert_index, seg_config, &status );
+                //PRINT_DEBUG("Before operator, this is processor:%ld\n", processor_id);
+                sync->wait();
+	            (*work_to_do)(processor_id, sync, vert_index, seg_config, &status);
 
             sync->wait(); // Must synchronize before p0 exits (object is on stack)
             }
@@ -505,13 +848,13 @@ public:
 
 };
 
-template <typename A, typename VA>
-barrier * cpu_thread<A, VA>::sync;
+template <typename A, typename VA, typename U>
+barrier * cpu_thread<A, VA, U>::sync;
 
-template <typename A, typename VA>
-volatile bool cpu_thread<A, VA>::terminate;
+template <typename A, typename VA, typename U>
+volatile bool cpu_thread<A, VA, U>::terminate;
 
-template <typename A, typename VA>
-cpu_work<A,VA> * volatile cpu_thread<A, VA>::work_to_do;
+template <typename A, typename VA, typename U>
+cpu_work<A,VA,U> * volatile cpu_thread<A, VA, U>::work_to_do;
 
 #endif
