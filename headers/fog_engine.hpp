@@ -1058,7 +1058,7 @@ class fog_engine{
                                     offset = (u64_t)next_strip_id * (u64_t)seg_config->segment_cap * sizeof(VA);
                                     if (next_strip_id == (int)(seg_config->num_segments - 1))
                                     {
-                                        size = (u64_t)(gen_config.max_vert_id%seg_config->segment_cap)*sizeof(VA); 
+                                        size = (u64_t)(gen_config.max_vert_id%seg_config->segment_cap+1)*sizeof(VA); 
                                     }
                                     else
                                         size = (u64_t)(seg_config->segment_cap*sizeof(VA));
