@@ -49,8 +49,8 @@ class spmv_program{
 		}
 
 		static update<spmv_update> *scatter_one_edge(u32_t vid,
-        spmv_vert_attr * this_vert,
-        edge * this_edge)
+                spmv_vert_attr * this_vert,
+                edge * this_edge)
         {
         	update<spmv_update> * ret;
 			//float scatter_weight = DAMPING_FACTOR *(this_vert->rank/num_outedge) + (1- DAMPING_FACTOR);
@@ -78,6 +78,11 @@ class spmv_program{
 		static void set_finish_to_vert(u32_t vid, spmv_vert_attr * this_vert){}
         static bool judge_true_false(spmv_vert_attr* va){return false;}
         static bool judge_src_dest(spmv_vert_attr *va_src, spmv_vert_attr *va_dst){return false;}
+
+        static void print_result(u32_t vid, spmv_vert_attr * va)
+        {
+            PRINT_DEBUG("SPMV:result[%d], origin_value = %f, spmv_value = %f\n", vid, va->origin_value, va->spmv_value);
+        }
 
 };
 

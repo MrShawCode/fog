@@ -2,7 +2,7 @@
 #define __SSSP_H__
 
 #include "types.hpp"
-#include "fog_engine_target.hpp"
+#include "fog_engine.hpp"
 
 struct sssp_vert_attr{
 	u32_t predecessor;
@@ -17,7 +17,7 @@ class sssp_program{
 			if ( vid == start_vid ){
 				va->value = 0;
                 PRINT_DEBUG("VID = %d\n", vid);
-				fog_engine_target<sssp_program, sssp_vert_attr, sssp_vert_attr>::add_schedule( vid, 
+				fog_engine<sssp_program, sssp_vert_attr, sssp_vert_attr>::add_schedule( vid, 
                         PHASE /*phase:decide which buf to read and write */
                         );
 			}
@@ -62,7 +62,7 @@ class sssp_program{
 			if( this_update->vert_attr.value < this_vert->value ){
 				*this_vert = this_update->vert_attr;
 				//should add schedule of {vid,0}, need api from engine
-				fog_engine_target<sssp_program, sssp_vert_attr, sssp_vert_attr>::add_schedule( vid, PHASE);
+				fog_engine<sssp_program, sssp_vert_attr, sssp_vert_attr>::add_schedule( vid, PHASE);
                     //PRINT_DEBUG("this_update.value = %f, this_vert->value = %f\n", this_update->vert_attr.value, this_vert->value);
 			}
 		}
@@ -72,6 +72,10 @@ class sssp_program{
         static void set_finish_to_vert(u32_t vid, sssp_vert_attr * this_vert){}
         static bool judge_true_false(sssp_vert_attr* va){return false;}
         static bool judge_src_dest(sssp_vert_attr *va_src, sssp_vert_attr *va_dst){return false;}
+        static void print_result(u32_t vid, sssp_vert_attr * va)
+        {
+            PRINT_DEBUG("SSSP:result[%d], predecessor = %d, value = %f\n", vid, va->predecessor, va->value);
+        }
 };
 
 unsigned int sssp_program::start_vid = 0;

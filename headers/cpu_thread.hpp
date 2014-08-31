@@ -279,7 +279,7 @@ struct cpu_work{
                             A::set_finish_to_vert(i, (VA*)&attr_array_head[i]);
                         
                         current_bitmap->clear_value(i);
-                        if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == STEAL_SCATTER)
+                        if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
                             my_context_data->steal_bits_true_size++;
                         else 
                             my_context_data->per_bits_true_size--;
@@ -291,12 +291,12 @@ struct cpu_work{
                         //if ( attr_array_head[i].found_component == true || 
                         //        attr_array_head[i].prev_root == attr_array_head[i].component_root)
                         bool ret = false;
-                        //ret = A::judge_true_false((VA*)&attr_array_head[i]);
+                        ret = A::judge_true_false((VA*)&attr_array_head[i]);
                         //if (A::judge_true_false((VA*)&attr_array_head[i]) == true)
                         if (ret == true)
                         {
                             current_bitmap->clear_value(i);
-                            if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == STEAL_SCATTER)
+                            if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
                                 my_context_data->steal_bits_true_size++;
                             else 
                                 my_context_data->per_bits_true_size--;

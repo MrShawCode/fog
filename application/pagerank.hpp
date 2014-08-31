@@ -12,6 +12,7 @@ struct pagerank_vert_attr{
 class pagerank_program{
 	public:
 		static u32_t iteration_times;	//how many iterations will there be?
+        static u32_t reduce_iters;
 
 		//initialize each vertex of the graph
 		static void init( u32_t vid, pagerank_vert_attr* this_vert )
@@ -68,10 +69,23 @@ class pagerank_program{
                 struct update<pagerank_vert_attr>* this_update, 
                 u32_t PHASE){}
 		static void set_finish_to_vert(u32_t vid, pagerank_vert_attr * this_vert){}
-		static bool judge_true_false(pagerank_vert_attr* va){return false;}
+        //special realization for pagerank
+		static bool judge_true_false(pagerank_vert_attr* va)
+        {
+            reduce_iters++;
+            if (reduce_iters < iteration_times)
+                return false;
+            assert(reduce_iters == iteration_times);
+            return true;
+        }
 		static bool judge_src_dest(pagerank_vert_attr *va_src, pagerank_vert_attr *va_dst){return false;}
+        static void print_result(u32_t vid, pagerank_vert_attr * va)
+        {
+            PRINT_DEBUG("Pagerank:result[%d], rank = %f\n", vid, va->rank);
+        }
 };
 
 u32_t pagerank_program::iteration_times = 0;
+u32_t pagerank_program::reduce_iters = 0;
 
 #endif

@@ -2,7 +2,7 @@
 #define __CC_H__
 
 #include "types.hpp"
-#include "fog_engine_scc.hpp"
+#include "fog_engine.hpp"
 
 struct cc_vert_attr{
 	u32_t component_root;
@@ -15,7 +15,7 @@ class cc_program{
         {
             va->component_root = vid;
             //add schedule for cc work
-            fog_engine_scc<cc_program, cc_vert_attr, cc_vert_attr>::add_schedule( vid, 
+            fog_engine<cc_program, cc_vert_attr, cc_vert_attr>::add_schedule( vid, 
                     PHASE /*phase:decide which buf to read and write */
                     );
 		}
@@ -64,7 +64,7 @@ class cc_program{
             if (this_update->vert_attr.component_root < this_vert->component_root)
             {
                 this_vert->component_root = this_update->vert_attr.component_root;
-                fog_engine_scc<cc_program, cc_vert_attr, cc_vert_attr>::add_schedule(vid, PHASE);
+                fog_engine<cc_program, cc_vert_attr, cc_vert_attr>::add_schedule(vid, PHASE);
             }
 		}
 
@@ -73,6 +73,11 @@ class cc_program{
         static void set_finish_to_vert(u32_t vid, cc_vert_attr * this_vert){}
         static bool judge_true_false(cc_vert_attr* va){return false;}
         static bool judge_src_dest(cc_vert_attr *va_src, cc_vert_attr *va_dst){return false;}
+
+        static void print_result(u32_t vid, cc_vert_attr * va)
+        {
+            PRINT_DEBUG("CC:result[%d], component_root = %d\n",vid, va->component_root);
+        }
 };
 
 #endif
