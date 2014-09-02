@@ -315,17 +315,43 @@ struct cpu_work{
                     for (u32_t z = old_edge_id; z < num_out_edges; z++)
                     {
                         t_edge = vert_index->out_edge(i, z);
+                        if (t_edge->dest_vert == i)
+                        {
+                            delete t_edge;
+                            continue;
+                        }
                         assert(t_edge);//Make sure this edge existd!
                         if (t_edge->dest_vert == (u32_t)-1)
                         {
                             PRINT_ERROR("i = %d, t_edge->dest_vert = %d, z = %d, num_out_edges = %d\n", i, t_edge->dest_vert, z, num_out_edges);
                         }
-                        if (engine_state == SCC_BACKWARD_SCATTER)
+                        if (engine_state == CC_SCATTER)// || engine_state == SCC_FORWARD_SCATTER)
+                        {
+                            if (A::judge_src_dest((VA*)&attr_array_head[i], (VA*)&attr_array_head[t_edge->dest_vert], 0.0) == false)
+                            {
+                                delete t_edge;
+                                continue;
+                            }
+                            t_update = A::scatter_one_edge(i, (VA *)&attr_array_head[i], t_edge);
+                            assert(t_update);
+                        }
+                        if (engine_state == TARGET_SCATTER)
+                        {
+                            assert(t_edge->dest_vert <= gen_config.max_vert_id);
+                            if (A::judge_src_dest((VA*)&attr_array_head[i], (VA*)&attr_array_head[t_edge->dest_vert], t_edge->edge_weight) == false)
+                            {
+                                delete t_edge;
+                                continue;
+                            }
+                            t_update = A::scatter_one_edge(i, (VA *)&attr_array_head[i], t_edge);
+                            assert(t_update);
+                        }
+                        else if (engine_state == SCC_BACKWARD_SCATTER)
                         {
                             //if (attr_array_head[i].prev_root == attr_array_head[t_edge->dest_vert].prev_root && 
                             //        attr_array_head[t_edge->dest_vert].prev_root == attr_array_head[t_edge->dest_vert].component_root &&
                             //        attr_array_head[i].prev_root != attr_array_head[i].component_root &&
-                            if (A::judge_src_dest((VA*)&attr_array_head[i], (VA*)&attr_array_head[t_edge->dest_vert]) == true 
+                            if (A::judge_src_dest((VA*)&attr_array_head[i], (VA*)&attr_array_head[t_edge->dest_vert], 0.0) == true 
                                     && will_be_updated == false)
                             {
 
@@ -337,6 +363,7 @@ struct cpu_work{
                             }
                             else 
                             {
+                                delete t_edge;
                                 continue;
                             }
 

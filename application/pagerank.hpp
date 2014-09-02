@@ -74,11 +74,14 @@ class pagerank_program{
         {
             reduce_iters++;
             if (reduce_iters < iteration_times)
+            {
+                PRINT_DEBUG("iters = %d\n", reduce_iters);
                 return false;
+            }
             assert(reduce_iters == iteration_times);
             return true;
         }
-		static bool judge_src_dest(pagerank_vert_attr *va_src, pagerank_vert_attr *va_dst){return false;}
+		static bool judge_src_dest(pagerank_vert_attr *va_src, pagerank_vert_attr *va_dst, float edge_weight){return false;}
         static void print_result(u32_t vid, pagerank_vert_attr * va)
         {
             PRINT_DEBUG("Pagerank:result[%d], rank = %f\n", vid, va->rank);

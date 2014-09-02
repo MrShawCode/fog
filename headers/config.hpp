@@ -182,6 +182,7 @@ class segment_config{
                 //gen_config.scope_of_attr = 0;
                 PRINT_DEBUG("This is a small graph!\n");
 				attr_buf_len = graph_attr_size;
+				//attr_buf0 = (char*)((u64_t)buf_head + (gen_config.memory_size - graph_attr_size ) );
 				attr_buf0 = (char*)((u64_t)buf_head + (gen_config.memory_size - graph_attr_size ) );
 
 				num_segments = 1;

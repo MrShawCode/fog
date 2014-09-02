@@ -58,7 +58,7 @@ class sssp_program{
                 u32_t PHASE)
         {
 			//compare the value of u, if it is smaller, absorb the update
-            if (FLOAT_EQ(this_update->vert_attr.value, this_vert->value) == 0)
+            //if (FLOAT_EQ(this_update->vert_attr.value, this_vert->value) == 0)
 			if( this_update->vert_attr.value < this_vert->value ){
 				*this_vert = this_update->vert_attr;
 				//should add schedule of {vid,0}, need api from engine
@@ -71,7 +71,17 @@ class sssp_program{
         {}
         static void set_finish_to_vert(u32_t vid, sssp_vert_attr * this_vert){}
         static bool judge_true_false(sssp_vert_attr* va){return false;}
-        static bool judge_src_dest(sssp_vert_attr *va_src, sssp_vert_attr *va_dst){return false;}
+        static bool judge_src_dest(sssp_vert_attr *va_src, sssp_vert_attr *va_dst, float edge_weight)
+        {
+            //if (FLOAT_EQ(va_src->value + edge_weight, va_dst->value ) == 0)
+            assert(va_src != NULL);
+            assert(va_dst != NULL);
+            assert(va_src->value >= 0);
+            assert(va_dst->value >= 0);
+            if ((va_src->value + edge_weight) < va_dst->value)
+                return true;
+            return false;
+        }
         static void print_result(u32_t vid, sssp_vert_attr * va)
         {
             PRINT_DEBUG("SSSP:result[%d], predecessor = %d, value = %f\n", vid, va->predecessor, va->value);

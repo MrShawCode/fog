@@ -2017,11 +2017,12 @@ class fog_engine{
             u32_t old_phase = 1 - CONTEXT_PHASE;
             old_context_data = old_phase > 0 ? my_sched_bitmap_manager->p_context_data1 : my_sched_bitmap_manager->p_context_data0;
 
-            if (seg_config->num_attr_buf == 1 && old_context_data->per_bits_true_size > 0)
+            if (/*seg_config->num_attr_buf == 1 &&*/ old_context_data->per_bits_true_size > 0)
             {
                 assert(old_context_data->per_bits_true_size > 0);
                 old_bitmap = old_context_data->p_bitmap;
-                if (old_bitmap->get_value(task_vid) == 1 && task_vid != (old_context_data->per_min_vert_id))
+                //if (old_bitmap->get_value(task_vid) == 1 && task_vid != (old_context_data->per_min_vert_id))
+                if (old_bitmap->get_value(task_vid) != 0 && task_vid != (old_context_data->per_min_vert_id))
                     schedule_signal = 1;
             }
 

@@ -3,6 +3,7 @@
 
 #include "types.hpp"
 #include "fog_engine.hpp"
+#include "print_debug.hpp"
 
 struct scc_vert_attr{
 	u32_t prev_root;
@@ -165,13 +166,32 @@ class scc_program{
                 return true;
             return false;
         }
-        static bool judge_src_dest(scc_vert_attr *va_src, scc_vert_attr *va_dst)
+        static bool judge_src_dest(scc_vert_attr *va_src, scc_vert_attr *va_dst, float edge_weight)
         {
-            if (va_src->prev_root == va_dst->prev_root && 
-                va_dst->prev_root == va_dst->component_root && 
-                va_src->prev_root != va_src->component_root)
-                return true;
-            return false;
+            if (va_src == NULL || va_dst == NULL)
+                return false;
+            assert(va_src != NULL);
+            assert(va_dst != NULL);
+            if (forward_backward_phase == FORWARD_TRAVERSAL )
+            {
+                if (va_src->component_root < va_dst->component_root)
+                    return true;
+                return false;
+            }
+            else
+            {
+                assert(forward_backward_phase == BACKWARD_TRAVERSAL);
+                if (va_src->prev_root == va_dst->prev_root && 
+                    va_dst->prev_root == va_dst->component_root && 
+                    va_src->prev_root != va_src->component_root)
+                {
+                //PRINT_DEBUG("src:prev = %d, component_root = %d, dst:prev_root = %d, component_root = %d\n", 
+                //        va_src->prev_root, va_src->component_root, 
+                //        va_dst->prev_root, va_dst->component_root);
+                    return true;
+                }
+                return false;
+            }
         }
         static void print_result(u32_t vid, scc_vert_attr * va)
         {

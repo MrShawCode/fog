@@ -77,7 +77,7 @@ class spmv_program{
 
 		static void set_finish_to_vert(u32_t vid, spmv_vert_attr * this_vert){}
         static bool judge_true_false(spmv_vert_attr* va){return false;}
-        static bool judge_src_dest(spmv_vert_attr *va_src, spmv_vert_attr *va_dst){return false;}
+        static bool judge_src_dest(spmv_vert_attr *va_src, spmv_vert_attr *va_dst, float edge_weight){return false;}
 
         static void print_result(u32_t vid, spmv_vert_attr * va)
         {

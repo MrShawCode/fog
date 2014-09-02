@@ -42,7 +42,7 @@ static void setup_options_fog(int argc, const char* argv[])
 	( "application,a", boost::program_options::value<std::string>()->required(), 
 		"The name of the application, e.g., pagerank, sssp, bfs.")
 	//following are system parameters
-    ( "memory,m", boost::program_options::value<unsigned long>()->default_value(4), //default 1GB
+    ( "memory,m", boost::program_options::value<unsigned long>()->default_value(1024), //default 1GB
      "Size of the buffer for writing (unit is MB)")
     ( "processors,p",  boost::program_options::value<unsigned long>()->default_value(4),
       "Number of processors")
@@ -50,14 +50,14 @@ static void setup_options_fog(int argc, const char* argv[])
       "Number of Disk(I/O) threads")
 	//following are the parameters for appilcations
 	// pagerank
-    ("pagerank::niters", boost::program_options::value<unsigned long>()->default_value(4),
+    ("pagerank::niters", boost::program_options::value<unsigned long>()->default_value(10),
      "number of iterations for pagerank.")
 	// sssp
     ("sssp::source", boost::program_options::value<unsigned long>()->default_value(12),
-     "source vertex id for sssp")
+     "source vertex id for sssp");
 	// belief propagation
-    ("bp::niters", boost::program_options::value<unsigned long>()->default_value(5),
-     "number of iterations for belief propagation");
+    //("spmv::niters", boost::program_options::value<unsigned long>()->default_value(10),
+    // "number of iterations for spmv");
 
   try {
     boost::program_options::store(boost::program_options::parse_command_line(argc,

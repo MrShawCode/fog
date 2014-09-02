@@ -72,7 +72,12 @@ class cc_program{
         {}
         static void set_finish_to_vert(u32_t vid, cc_vert_attr * this_vert){}
         static bool judge_true_false(cc_vert_attr* va){return false;}
-        static bool judge_src_dest(cc_vert_attr *va_src, cc_vert_attr *va_dst){return false;}
+        static bool judge_src_dest(cc_vert_attr *va_src, cc_vert_attr *va_dst, float edge_weight)
+        {
+            if (va_src->component_root < va_dst->component_root )
+                return true;
+            return false;
+        }
 
         static void print_result(u32_t vid, cc_vert_attr * va)
         {
