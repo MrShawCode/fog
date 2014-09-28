@@ -6,7 +6,7 @@
 typedef unsigned int u32_t;
 typedef unsigned long long u64_t;
 
-const float EPSILON = 1.00e-02;
+const float EPSILON = 1.00e-03;
 
 #define FLOAT_EQ(x, v)(((v - EPSILON) < x) && (x < (v + EPSILON)))
 

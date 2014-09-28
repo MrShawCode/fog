@@ -75,7 +75,7 @@ class pagerank_program{
             reduce_iters++;
             if (reduce_iters < iteration_times)
             {
-                PRINT_DEBUG("iters = %d\n", reduce_iters);
+                //PRINT_DEBUG("iters = %d\n", reduce_iters);
                 return false;
             }
             assert(reduce_iters == iteration_times);

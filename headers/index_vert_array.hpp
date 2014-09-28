@@ -10,7 +10,7 @@
 #include <fcntl.h>
 
 #include "config.hpp"
-
+#define THRESHOLD_GRAPH_SIZE 20*1024*1024*1024
 class index_vert_array{
 	private:
 		std::string mmapped_vert_file;
@@ -68,6 +68,11 @@ index_vert_array::index_vert_array()
 	//map edge files to edge_array_header
     fstat(edge_file_fd, &st);
     edge_file_length = (u64_t) st.st_size;
+
+    if (edge_file_length >= (u64_t)THRESHOLD_GRAPH_SIZE)
+        gen_config.prev_update = false;
+    else
+        gen_config.prev_update = true;
 
     PRINT_DEBUG( "edge list file size:%lld(MBytes)\n", edge_file_length/(1024*1024) );
     memblock = (char*) mmap( NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, edge_file_fd, 0 );

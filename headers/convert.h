@@ -35,9 +35,7 @@ extern int edge_file, vert_index_file;
 extern unsigned int src_vert, dst_vert;
 
 extern FILE * out_txt;
-extern int old_edge_file, old_vert_index_file;
-extern struct old_edge old_edge_buffer[EDGE_BUFFER_LEN];
-extern struct old_vert_index old_vert_buffer[VERT_BUFFER_LEN];
+extern FILE * old_edge_file;
 
 extern unsigned int min_vertex_id, max_vertex_id;
 extern unsigned long long  num_edges;
@@ -48,8 +46,9 @@ extern struct vert_index vert_buffer[VERT_BUFFER_LEN];
 
 char *get_adjline();
 int flush_buffer_to_file( int fd, char* buffer, unsigned int size );
-void process_adjlist(const char*, const char*, const char*, const char *, const char *, const char *);
-void process_edgelist(const char*, const char*,const char*, const char *, const char *, const char *);
+void process_adjlist(const char*, const char *, const char *, const char *);
+void process_edgelist(const char*, const char *, const char *, const char *);
+void process_in_edge(unsigned long long, const char *);
 int read_one_edge( void );
 float produce_random_weight();
 

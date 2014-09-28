@@ -12,7 +12,7 @@ CXXFLAGS?= -O3 -DDEBUG -Wall -Wno-unused-function -I./$(HEADERS_PATH)
 CXXFLAGS+= -Wfatal-errors
 
 # make selections
-CONVERT_SRC = convert.o process_edgelist.o process_adjlist.o
+CONVERT_SRC = convert.o process_edgelist.o process_adjlist.o process_in_edge.o
 CONVERT_OBJS= $(addprefix $(OBJECT_DIR)/, $(CONVERT_SRC))
 CONVERT_TARGET=$(BINARY_DIR)/convert
 
@@ -44,6 +44,9 @@ $(OBJECT_DIR)/process_edgelist.o:convert/process_edgelist.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(OBJECT_DIR)/process_adjlist.o:convert/process_adjlist.cpp 
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(OBJECT_DIR)/process_in_edge.o:convert/process_in_edge.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(BINARY_DIR)/convert: $(CONVERT_OBJS)

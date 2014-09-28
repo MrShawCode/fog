@@ -16,7 +16,7 @@ class sssp_program{
 		static void init(u32_t vid, sssp_vert_attr* va, u32_t PHASE){
 			if ( vid == start_vid ){
 				va->value = 0;
-                PRINT_DEBUG("VID = %d\n", vid);
+                //PRINT_DEBUG("VID = %d\n", vid);
 				fog_engine<sssp_program, sssp_vert_attr, sssp_vert_attr>::add_schedule( vid, 
                         PHASE /*phase:decide which buf to read and write */
                         );
@@ -58,7 +58,7 @@ class sssp_program{
                 u32_t PHASE)
         {
 			//compare the value of u, if it is smaller, absorb the update
-            //if (FLOAT_EQ(this_update->vert_attr.value, this_vert->value) == 0)
+            if (FLOAT_EQ(this_update->vert_attr.value, this_vert->value) == 0)
 			if( this_update->vert_attr.value < this_vert->value ){
 				*this_vert = this_update->vert_attr;
 				//should add schedule of {vid,0}, need api from engine
@@ -78,8 +78,9 @@ class sssp_program{
             assert(va_dst != NULL);
             assert(va_src->value >= 0);
             assert(va_dst->value >= 0);
-            if ((va_src->value + edge_weight) < va_dst->value)
-                return true;
+            if (FLOAT_EQ((va_src->value + edge_weight), va_dst->value) == 0)
+                if ((va_src->value + edge_weight) < va_dst->value)
+                    return true;
             return false;
         }
         static void print_result(u32_t vid, sssp_vert_attr * va)

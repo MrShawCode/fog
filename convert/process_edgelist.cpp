@@ -20,7 +20,6 @@ FILE * in;
 FILE * out_txt;
 int edge_file, vert_index_file;
 //hejian-debug
-int old_edge_file, old_vert_index_file;
 unsigned long long line_no=0;
 unsigned int src_vert, dst_vert;
 
@@ -28,10 +27,6 @@ unsigned int src_vert, dst_vert;
 // and then, continue reading and populating.
 struct edge edge_buffer[EDGE_BUFFER_LEN];
 struct vert_index vert_buffer[VERT_BUFFER_LEN];
-
-//hejian-debug
-struct old_edge old_edge_buffer[EDGE_BUFFER_LEN];
-struct old_vert_index old_vert_buffer[VERT_BUFFER_LEN];
 
 /*
  * Regarding the vertex indexing:
@@ -48,8 +43,6 @@ struct old_vert_index old_vert_buffer[VERT_BUFFER_LEN];
 void process_edgelist( const char* input_file_name,
 		const char* edge_file_name, 
 		const char* vert_index_file_name,
-        const char * old_edge_file_name,
-        const char * old_vert_index_file_name,
         const char * out_txt_file_name)
 {
 	unsigned int recent_src_vert=0;
@@ -61,9 +54,6 @@ void process_edgelist( const char* input_file_name,
     
     printf( "Start Processing %s.\nWill generate %s and %s in destination folder.\n", 
         input_file_name, edge_file_name, vert_index_file_name );
-    //hejian-debug
-    printf( "Start Processing %s.\nWill generate %s and %s in destination folder.\n", 
-        input_file_name, old_edge_file_name, old_vert_index_file_name );
 
     srand((unsigned int)time(NULL));
 
@@ -73,12 +63,12 @@ void process_edgelist( const char* input_file_name,
 		exit(1);
 	}
 
-    out_txt = fopen(out_txt_file_name, "wt+");
-    if (out_txt == NULL)
-    {
-        printf("Cannot open the output txt file!\n");
-        exit(-1);
-    }
+    //out_txt = fopen(out_txt_file_name, "wt+");
+    //if (out_txt == NULL)
+    //{
+    //    printf("Cannot open the output txt file!\n");
+    //    exit(-1);
+    //}
 
 	edge_file = open( edge_file_name, O_CREAT|O_WRONLY, S_IRUSR );
 	if( edge_file == -1 ){
@@ -87,13 +77,6 @@ void process_edgelist( const char* input_file_name,
 		exit( -1 );
 	}
 	
-	old_edge_file = open( old_edge_file_name, O_CREAT|O_WRONLY, S_IRUSR );
-	if( old_edge_file == -1 ){
-		printf( "Cannot create edge list file:%s\nAborted..\n",
-			old_edge_file_name );
-		exit( -1 );
-    }
-
 	vert_index_file = open( vert_index_file_name, O_CREAT|O_WRONLY, S_IRUSR );
 	if( vert_index_file == -1 ){
 		printf( "Cannot create vertex index file:%s\nAborted..\n",
@@ -101,19 +84,8 @@ void process_edgelist( const char* input_file_name,
 		exit( -1 );
 	}
 
-	old_vert_index_file = open( old_vert_index_file_name, O_CREAT|O_WRONLY, S_IRUSR );
-	if( old_vert_index_file == -1 ){
-		printf( "Cannot create vertex index file:%s\nAborted..\n",
-			old_vert_index_file_name );
-		exit( -1 );
-    }
-
 	memset( (char*)edge_buffer, 0, EDGE_BUFFER_LEN*sizeof(struct edge) );
 	memset( (char*)vert_buffer, 0, VERT_BUFFER_LEN*sizeof(struct vert_index) );
-
-    //hejian-debug
-    memset((char *)old_edge_buffer, 0, EDGE_BUFFER_LEN*sizeof(struct old_edge));
-    memset((char *)old_vert_buffer, 0, VERT_BUFFER_LEN*sizeof(struct old_vert_index));
 
 	//parsing input file now.
 	while ( read_one_edge() != CUSTOM_EOF ){
@@ -141,23 +113,13 @@ void process_edgelist( const char* input_file_name,
 		edge_buffer[edge_suffix].dest_vert = dst_vert;
 		edge_buffer[edge_suffix].edge_weight = produce_random_weight();
         //write to out_txt file
-        fprintf(out_txt, "%d\t%d\t%f\n", src_vert, dst_vert, edge_buffer[edge_suffix].edge_weight);
-
-        //hejian-debug
-		old_edge_buffer[edge_suffix].src_vert = src_vert;
-		old_edge_buffer[edge_suffix].dest_vert = dst_vert;
-		old_edge_buffer[edge_suffix].edge_weight = edge_buffer[edge_suffix].edge_weight;
+        
+        //fprintf(out_txt, "%d\t%d\t%f\n", src_vert, dst_vert, edge_buffer[edge_suffix].edge_weight);
 
 		if (edge_suffix == (EDGE_BUFFER_LEN-1)){
 			flush_buffer_to_file( edge_file, (char*)edge_buffer,
 				EDGE_BUFFER_LEN*sizeof(struct edge) );
 			memset( (char*)edge_buffer, 0, EDGE_BUFFER_LEN*sizeof(struct edge) );
-
-            //hejian-debug
-			flush_buffer_to_file( old_edge_file, (char*)old_edge_buffer,
-				EDGE_BUFFER_LEN*sizeof(struct old_edge) );
-			memset( (char*)old_edge_buffer, 0, EDGE_BUFFER_LEN*sizeof(struct old_edge) );
-			//increment the offset
 			edge_buffer_offset += 1;
 		}
 
@@ -172,19 +134,9 @@ void process_edgelist( const char* input_file_name,
 				flush_buffer_to_file( vert_index_file, (char*)vert_buffer,
 					VERT_BUFFER_LEN*sizeof(struct vert_index) );
 				memset( (char*)vert_buffer, 0, VERT_BUFFER_LEN*sizeof(struct vert_index) );
-
-                //hejian-debug
-				flush_buffer_to_file( old_vert_index_file, (char*)old_vert_buffer,
-					VERT_BUFFER_LEN*sizeof(struct old_vert_index) );
-				memset( (char*)old_vert_buffer, 0, VERT_BUFFER_LEN*sizeof(struct old_vert_index) );
 			}
 			vert_suffix = src_vert - vert_buffer_offset * VERT_BUFFER_LEN;
 			vert_buffer[vert_suffix].offset = num_edges;
-
-            //hejian-debug
-            old_vert_buffer[vert_suffix].offset = num_edges;
-            old_vert_buffer[vert_suffix].vert_id = src_vert;
-
 			//update the recent src vert id
 			recent_src_vert = src_vert;
 		}
@@ -195,20 +147,11 @@ void process_edgelist( const char* input_file_name,
 				EDGE_BUFFER_LEN*sizeof(edge) );
 	flush_buffer_to_file( vert_index_file, (char*)vert_buffer,
 				VERT_BUFFER_LEN*sizeof(vert_index) );
-
-    //hejian-debug
-	flush_buffer_to_file( old_edge_file, (char*)old_edge_buffer,
-				EDGE_BUFFER_LEN*sizeof(old_edge) );
-	flush_buffer_to_file( old_vert_index_file, (char*)old_vert_buffer,
-				VERT_BUFFER_LEN*sizeof(old_vert_index) );
-
 	//finished processing
 	fclose( in );
-    fclose(out_txt);
+    //fclose(out_txt);
 	close( edge_file );
-	close( old_edge_file );
 	close( vert_index_file );
-	close( old_vert_index_file );
 }
 
 /*

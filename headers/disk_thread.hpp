@@ -15,6 +15,9 @@ enum{
 	FILE_WRITE
 };
 
+typedef unsigned int u32_t;
+typedef unsigned long long u64_t;
+
 struct io_work{
 	u32_t operation; //choose from enum
 	volatile int finished;	//is the work finished? 0 means not finished, 1 means finished
@@ -37,10 +40,10 @@ struct io_work{
 		switch( operation ){
 			case FILE_READ:
 			{
-                PRINT_DEBUG( "read to disk content to buffer :0x%llx, offset:%llu, size:%llu\n", 
-                    (u64_t)buffer, offset, size );
+                //PRINT_DEBUG( "read to disk content to buffer :0x%llx, offset:%llu, size:%llu\n", 
+                 //   (u64_t)buffer, offset, size );
                         
-                int finished=0, remain=size, res;
+                int read_finished=0, remain=size, res;
 
                 //the file should exist now
                 fd = open( io_file_name, O_RDWR, S_IRUSR | S_IRGRP | S_IROTH );
@@ -52,23 +55,23 @@ struct io_work{
                     PRINT_ERROR( "Cannot seek the attribute file!\n");
                     exit( -1 );
                 }
-                while( finished < (int)size ){
+                while( read_finished < (int)size ){
                     if( (res = read(fd, buffer, remain)) < 0 ) 
                         PRINT_ERROR( "failure on disk reading!\n" );
-                    finished += res;
+                    read_finished += res;
                     remain -= res;
-                    PRINT_DEBUG("remain = %d\n", remain);
+                    //PRINT_DEBUG("remain = %d\n", remain);
                 }
 
                 close(fd);
-                PRINT_DEBUG("Read work done!~~\n");
+                //PRINT_DEBUG("Read work done!~~\n");
 
 				break;
 			}
 			case FILE_WRITE:
 			{
-				PRINT_DEBUG( "dump to disk tasks is received by disk thread, buffer:0x%llx, offset:%llu, size:%llu\n", 
-					(u64_t)buffer, offset, size );
+				//PRINT_DEBUG( "dump to disk tasks is received by disk thread, buffer:0x%llx, offset:%llu, size:%llu\n", 
+				//	(u64_t)buffer, offset, size );
 					
 				int written=0, remain=size, res;
 
@@ -92,7 +95,7 @@ struct io_work{
                 //fsync(fd);
 
 				close(fd);
-                PRINT_DEBUG("Write work done!~~\n");
+                //PRINT_DEBUG("Write work done!~~\n");
 				break;
 			}
 		}
@@ -225,7 +228,8 @@ void disk_thread::operator() ()
             work_queue->io_queue_sem.wait();
 
             if(work_queue->terminate_all) {
-                PRINT_DEBUG( "disk thread terminating\n" );
+                //PRINT_DEBUG( "disk thread terminating\n" );
+                printf( "disk thread terminating\n" );
                 break;
             }
 
@@ -248,7 +252,8 @@ void disk_thread::operator() ()
 			}
 
 			if( (found==NULL) || (i == work_queue->io_work_queue.size()) ) //nothing found! unlikely to happen
-				PRINT_DEBUG( "IO Thread %lu found no work to do!\n", disk_thread_id );
+				printf( "IO Thread %lu found no work to do!\n", disk_thread_id );
+				//PRINT_DEBUG( "IO Thread %lu found no work to do!\n", disk_thread_id );
 
 			(*found)(disk_thread_id);
 

@@ -195,6 +195,10 @@ struct cpu_work{
             case SCC_BACKWARD_SCATTER:
             case CC_SCATTER:
 			{
+                //if (gen_config.prev_update == true)
+                //{
+                //    PRINT_ERROR("haha!\n");
+                //}
 
                 *status = FINISHED_SCATTER;
                 scatter_param * p_scatter_param = (scatter_param *)state_param; 
@@ -260,8 +264,8 @@ struct cpu_work{
                         signal_to_scatter != STEAL_SCATTER && signal_to_scatter != SPECIAL_STEAL_SCATTER)
                 {
                     *status = FINISHED_SCATTER;
-                    PRINT_DEBUG("Processor %d Finished scatter, has %d bits to scatter!\n", processor_id, 
-                           my_context_data->per_bits_true_size);
+                    //PRINT_DEBUG("Processor %d Finished scatter, has %d bits to scatter!\n", processor_id, 
+                    //       my_context_data->per_bits_true_size);
                     break;
                 }
 
@@ -312,6 +316,8 @@ struct cpu_work{
                         old_edge_id = 0;
 
                     bool will_be_updated = false;
+                    if (engine_state == CC_SCATTER)
+                        old_edge_id = 0;
                     for (u32_t z = old_edge_id; z < num_out_edges; z++)
                     {
                         t_edge = vert_index->out_edge(i, z);
@@ -321,28 +327,46 @@ struct cpu_work{
                             continue;
                         }
                         assert(t_edge);//Make sure this edge existd!
-                        if (t_edge->dest_vert == (u32_t)-1)
+                        if (engine_state == CC_SCATTER)
                         {
-                            PRINT_ERROR("i = %d, t_edge->dest_vert = %d, z = %d, num_out_edges = %d\n", i, t_edge->dest_vert, z, num_out_edges);
-                        }
-                        if (engine_state == CC_SCATTER)// || engine_state == SCC_FORWARD_SCATTER)
-                        {
-                            if (A::judge_src_dest((VA*)&attr_array_head[i], (VA*)&attr_array_head[t_edge->dest_vert], 0.0) == false)
+                            //if (gen_config.prev_update == true)
+                            if (A::judge_src_dest((VA*)&attr_array_head[i], (VA*)&attr_array_head[t_edge->dest_vert], 0.0) == true) 
+                            {
+                                t_update = A::scatter_one_edge(t_edge->dest_vert, (VA *)&attr_array_head[i], t_edge);
+                                assert(t_update);
+                                //delete t_edge;
+                                //continue;
+                            }
+                            else if(A::judge_src_dest((VA*)&attr_array_head[t_edge->dest_vert], (VA*)&attr_array_head[i], 0.0) == true)
+                            {
+                                t_update = A::scatter_one_edge(i, (VA *)&attr_array_head[t_edge->dest_vert], t_edge);
+                                assert(t_update);
+                            }
+                            else
                             {
                                 delete t_edge;
                                 continue;
                             }
+                        }
+                        else if (engine_state == SCC_FORWARD_SCATTER)
+                        {
+                            if (gen_config.prev_update == true)
+                                if (A::judge_src_dest((VA*)&attr_array_head[i], (VA*)&attr_array_head[t_edge->dest_vert], 0.0) == false) 
+                                {
+                                    delete t_edge;
+                                    continue;
+                                }
                             t_update = A::scatter_one_edge(i, (VA *)&attr_array_head[i], t_edge);
                             assert(t_update);
                         }
-                        if (engine_state == TARGET_SCATTER)
+                        else if (engine_state == TARGET_SCATTER)
                         {
-                            assert(t_edge->dest_vert <= gen_config.max_vert_id);
-                            if (A::judge_src_dest((VA*)&attr_array_head[i], (VA*)&attr_array_head[t_edge->dest_vert], t_edge->edge_weight) == false)
-                            {
-                                delete t_edge;
-                                continue;
-                            }
+                            if (gen_config.prev_update == true || (gen_config.prev_update == true && seg_config->num_segments > 4))
+                                if (A::judge_src_dest((VA*)&attr_array_head[i], (VA*)&attr_array_head[t_edge->dest_vert], t_edge->edge_weight) == false)
+                                {
+                                    delete t_edge;
+                                    continue;
+                                }
                             t_update = A::scatter_one_edge(i, (VA *)&attr_array_head[i], t_edge);
                             assert(t_update);
                         }
@@ -418,11 +442,11 @@ struct cpu_work{
                             {
                                 my_context_data->steal_min_vert_id = i;
                                 my_context_data->steal_context_edge_id = z;
-                                PRINT_DEBUG("In steal-scatter, update_buffer is fulled, need to store the context data!\n");
+                                //PRINT_DEBUG("In steal-scatter, update_buffer is fulled, need to store the context data!\n");
                             }
                             else
                             {
-                                PRINT_DEBUG("Update_buffer is fulled, need to store the context data!\n");
+                                //PRINT_DEBUG("Update_buffer is fulled, need to store the context data!\n");
                                 my_context_data->per_min_vert_id = i;
                                 my_context_data->per_num_edges = z;
                                 my_context_data->partition_gather_signal = processor_id;//just be different from origin status
@@ -491,11 +515,12 @@ struct cpu_work{
                 {
                     if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
                     {
-                        PRINT_DEBUG("Steal-cpu %d has scatter %d bits\n", processor_id, my_context_data->steal_bits_true_size);
+                        //PRINT_DEBUG("Steal-cpu %d has scatter %d bits\n", processor_id, my_context_data->steal_bits_true_size);
                     }
                     else
-                        PRINT_DEBUG("Processor %d have not finished scatter,  UPDATE_BUF_FULL, has %d bits to scatter!\n", processor_id, 
-                            my_context_data->per_bits_true_size);
+                    {}
+                        //PRINT_DEBUG("Processor %d have not finished scatter,  UPDATE_BUF_FULL, has %d bits to scatter!\n", processor_id, 
+                          //  my_context_data->per_bits_true_size);
                 }
                 else
                 {
@@ -517,12 +542,12 @@ struct cpu_work{
                     }
                     if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
                     {
-                        PRINT_DEBUG("Steal-cpu %d has scatter %d bits\n", processor_id, my_context_data->steal_bits_true_size);
+                        //PRINT_DEBUG("Steal-cpu %d has scatter %d bits\n", processor_id, my_context_data->steal_bits_true_size);
                     }
                     else
                     {
-                        PRINT_DEBUG("Processor %d Finished scatter, has %d bits to scatter!\n", processor_id, 
-                               my_context_data->per_bits_true_size);
+                        //PRINT_DEBUG("Processor %d Finished scatter, has %d bits to scatter!\n", processor_id, 
+                          //     my_context_data->per_bits_true_size);
                         if (my_context_data->per_bits_true_size != 0)
                         {
                             PRINT_ERROR("Error, processor %d still has %d bits to scatter!\n", processor_id, 
@@ -572,22 +597,22 @@ struct cpu_work{
                 {
                     min_vert = my_sched_list_manager->normal_sched_min_vert;
                     max_vert = my_sched_list_manager->normal_sched_max_vert;
-                    PRINT_DEBUG("cpu %d normal scatter, min_vert = %d, max_vert = %d\n",
-                            processor_id, min_vert, max_vert);
+                    //PRINT_DEBUG("cpu %d normal scatter, min_vert = %d, max_vert = %d\n",
+                    //        processor_id, min_vert, max_vert);
                 }
                 else if (signal_to_scatter == CONTEXT_SCATTER)
                 {
                     min_vert = my_sched_list_manager->context_vert_id;
                     max_vert = my_sched_list_manager->normal_sched_max_vert;
-                    PRINT_DEBUG("cpu %d context scatter, min_vert = %d, max_vert = %d\n",
-                            processor_id, min_vert, max_vert);
+                    //PRINT_DEBUG("cpu %d context scatter, min_vert = %d, max_vert = %d\n",
+                      //      processor_id, min_vert, max_vert);
                 }
                 else if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
                 {
                     min_vert = my_sched_list_manager->context_steal_min_vert;
                     max_vert = my_sched_list_manager->context_steal_max_vert;
-                    PRINT_DEBUG("cpu %d steal scatter, min_vert = %d, max_vert = %d\n",
-                            processor_id, min_vert, max_vert);
+                    //PRINT_DEBUG("cpu %d steal scatter, min_vert = %d, max_vert = %d\n",
+                      //      processor_id, min_vert, max_vert);
                 }
 
                 if (my_sched_list_manager->num_vert_to_scatter == 0 
@@ -672,16 +697,16 @@ struct cpu_work{
                                 my_sched_list_manager->context_steal_min_vert = i;
                                 my_sched_list_manager->context_steal_max_vert = max_vert;
                                 my_sched_list_manager->context_steal_edge_id = z;
-                                PRINT_DEBUG("In steal-scatter, update-buf is fulled, need to store the context data!\n");
-                                PRINT_DEBUG("min_vert = %d, max_vert = %d, edge = %d\n", i, max_vert, z);
+                                //PRINT_DEBUG("In steal-scatter, update-buf is fulled, need to store the context data!\n");
+                                //PRINT_DEBUG("min_vert = %d, max_vert = %d, edge = %d\n", i, max_vert, z);
                             }
                             else
                             {
-                                PRINT_DEBUG("other-scatter, update-buf is fulled, need to store the context data!\n");
+                                //PRINT_DEBUG("other-scatter, update-buf is fulled, need to store the context data!\n");
                                 my_sched_list_manager->context_vert_id = i;
                                 my_sched_list_manager->context_edge_id = z;
                                 my_sched_list_manager->partition_gather_strip_id = (int)strip_num;
-                                PRINT_DEBUG("vert = %d, edge = %d, strip_num = %d\n", i, z, strip_num);
+                                //PRINT_DEBUG("vert = %d, edge = %d, strip_num = %d\n", i, z, strip_num);
                             }
                             *status = UPDATE_BUF_FULL;
                             delete t_edge;
@@ -708,25 +733,27 @@ struct cpu_work{
                 if (*status == UPDATE_BUF_FULL)
                 {
                     if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
-                        PRINT_DEBUG("Steal-cpu %d has scatter %d vertex\n", processor_id, 
-                                my_sched_list_manager->context_steal_num_vert);
-                    else
-                        PRINT_DEBUG("Processor %d has not finished scatter, has %d vertices to scatter~\n", processor_id,
-                                my_sched_list_manager->num_vert_to_scatter);
+                        {}
+                        //PRINT_DEBUG("Steal-cpu %d has scatter %d vertex\n", processor_id, 
+                          //      my_sched_list_manager->context_steal_num_vert);
+                    else{}
+                        //PRINT_DEBUG("Processor %d has not finished scatter, has %d vertices to scatter~\n", processor_id,
+                          //      my_sched_list_manager->num_vert_to_scatter);
                 }
                 else
                 {
                     if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
-                        PRINT_DEBUG("Steal-cpu %d has scatter %d vertex\n", processor_id, 
-                                my_sched_list_manager->context_steal_num_vert);
+                    {}
+                        //PRINT_DEBUG("Steal-cpu %d has scatter %d vertex\n", processor_id, 
+                          //      my_sched_list_manager->context_steal_num_vert);
                     else
                     {
-                        PRINT_DEBUG("Processor %d has finished scatter, and there is %d vertex to scatter\n", processor_id, 
-                                my_sched_list_manager->num_vert_to_scatter);
                         if (my_sched_list_manager->num_vert_to_scatter != 0)
                         {
                             PRINT_ERROR("after scatter, num_vert_to_scatter != 0\n");
                         }
+                        //PRINT_DEBUG("Processor %d has finished scatter, and there is %d vertex to scatter\n", processor_id, 
+                          //      my_sched_list_manager->num_vert_to_scatter);
                     }
                     *status = FINISHED_SCATTER;
                 }

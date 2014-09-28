@@ -28,6 +28,8 @@ struct general_config{
 		std::string vert_file_name;
 		std::string edge_file_name;
 		std::string attr_file_name;
+
+        bool prev_update;
 };
 
 extern general_config gen_config;

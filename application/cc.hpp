@@ -43,7 +43,8 @@ class cc_program{
              */
             update<cc_vert_attr> *ret;
             ret = new update<cc_vert_attr>;
-            ret->dest_vert = this_edge->dest_vert;
+            ret->dest_vert = vid;
+            //ret->dest_vert = this_edge->dest_vert;
             ret->vert_attr.component_root = this_vert->component_root;
             return ret;
 		}

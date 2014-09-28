@@ -154,7 +154,7 @@ class scc_program{
 
         static void set_finish_to_vert(u32_t vid, scc_vert_attr * this_vert)
         {
-            PRINT_DEBUG("seg>1, here!\n");
+            //PRINT_DEBUG("seg>1, here!\n");
             this_vert->found_component = true;
             this_vert->prev_root = this_vert->component_root = vid;
         }

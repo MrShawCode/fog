@@ -149,16 +149,16 @@ class fog_engine{
                 forward_loop++;
                 PRINT_WARNING("In SCC-algorithm forward-converged, SCC_FORWARD_SCATTER and UPDATE loop %d\n", forward_loop);
                 CONTEXT_PHASE = (forward_loop%2);
-                PRINT_DEBUG("before normal-scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
+                //PRINT_DEBUG("before normal-scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
                 scatter_fog_engine_state = SCC_FORWARD_SCATTER;
                 scatter_updates(1-CONTEXT_PHASE);
-                cal_threshold();
-                PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
+                //cal_threshold();
+                //PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
 
                 gather_fog_engine_state = SCC_FORWARD_GATHER;
                 gather_updates(CONTEXT_PHASE, -1);
                 //cal_threshold();
-                PRINT_DEBUG("after normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
+                //PRINT_DEBUG("after normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
 
                 if (cal_true_bits_size(CONTEXT_PHASE) == 0)
                     break;
@@ -188,16 +188,16 @@ class fog_engine{
                 backward_loop++;
                 PRINT_WARNING("In SCC-algorithm backward-converged, SCC_BACKWARD_SCATTER and UPDATE loop %d\n", backward_loop);
                 CONTEXT_PHASE = (backward_loop%2);
-                PRINT_DEBUG("before normal-scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
+                //PRINT_DEBUG("before normal-scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
                 scatter_fog_engine_state = SCC_BACKWARD_SCATTER;
                 scatter_updates(1-CONTEXT_PHASE);
-                cal_threshold();
-                PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
+                //cal_threshold();
+                //PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
 
                 gather_fog_engine_state = SCC_BACKWARD_GATHER;
                 gather_updates(CONTEXT_PHASE, -1);
                 //cal_threshold();
-                PRINT_DEBUG("after normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
+                //PRINT_DEBUG("after normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
                 if (cal_true_bits_size(CONTEXT_PHASE) == 0)
                     break;
             }
@@ -229,9 +229,9 @@ class fog_engine{
                     loop_counter++;
                     PRINT_WARNING( "SPMV-enging starts, SCATTER and UPDATE loop %d\n", loop_counter);               
                     scatter_updates(1-CONTEXT_PHASE);
-                    cal_threshold();
+                    //cal_threshold();
                     gather_updates(CONTEXT_PHASE, -1);
-                    cal_threshold();
+                    //cal_threshold();
                     PRINT_DEBUG("SPMV-ENGINE finished!\n");
                 }
                 else
@@ -244,9 +244,9 @@ class fog_engine{
                         loop_counter++;
                         PRINT_WARNING( "Pagerank engine starts, SCATTER and UPDATE loop %d\n", loop_counter);
                         scatter_updates(1-CONTEXT_PHASE);
-                        cal_threshold();
+                        //cal_threshold();
                         gather_updates(CONTEXT_PHASE, -1);
-                        cal_threshold();
+                        //cal_threshold();
                         if ((A::judge_true_false(NULL)))
                             break;
                         
@@ -267,12 +267,12 @@ class fog_engine{
                     PRINT_WARNING("SSSP engine starts, SCATTER and UPDATE loop %d\n", loop_counter);
                     CONTEXT_PHASE = (loop_counter%2);
 
-                    PRINT_DEBUG("before normal-scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
+                    //PRINT_DEBUG("before normal-scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
                     scatter_updates(1-CONTEXT_PHASE);
-                    cal_threshold();
-                    PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
+                    //cal_threshold();
+                    //PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
                     gather_updates(CONTEXT_PHASE, -1);
-                    PRINT_DEBUG("after normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
+                    //PRINT_DEBUG("after normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
 
                     if (cal_true_bits_size(CONTEXT_PHASE) == 0)
                         break;
@@ -309,8 +309,8 @@ class fog_engine{
                 else
                 {
                     init_fog_engine_state = CC_INIT;
-                    scatter_fog_engine_state = TARGET_SCATTER;
-                    gather_fog_engine_state = TARGET_GATHER;
+                    scatter_fog_engine_state = CC_SCATTER;
+                    gather_fog_engine_state = CC_GATHER;
                     init_phase(CONTEXT_PHASE, -1, 0);
                     while(1)
                     {
@@ -318,12 +318,12 @@ class fog_engine{
                         PRINT_WARNING("CC engine starts, SCATTER and UPDATE loop %d\n", loop_counter);
                         CONTEXT_PHASE = (loop_counter%2);
 
-                        PRINT_DEBUG("before normal-scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
+                        //PRINT_DEBUG("before normal-scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
                         scatter_updates(1-CONTEXT_PHASE);
-                        cal_threshold();
-                        PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
+                        //cal_threshold();
+                        //PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
                         gather_updates(CONTEXT_PHASE, -1);
-                        PRINT_DEBUG("after normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
+                        //PRINT_DEBUG("after normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
 
                         if (cal_true_bits_size(CONTEXT_PHASE) == 0)
                             break;
@@ -418,7 +418,7 @@ class fog_engine{
 			init_param * p_init_param=new init_param;
             //init_fog_engine_scc_state = SCC_INIT;
 
-			PRINT_DEBUG( "fog engine operator is called, conduct init phase for %d times.\n", seg_config->num_segments );
+			//PRINT_DEBUG( "fog engine operator is called, conduct init phase for %d times.\n", seg_config->num_segments );
 
             p_strip_count = new u32_t[seg_config->num_segments];
             memset(p_strip_count, 0, sizeof(u32_t)*seg_config->num_segments);
@@ -432,7 +432,7 @@ class fog_engine{
                         ((loop_counter > 1) || (loop_counter == 1 && SCC_PHASE == BACKWARD_TRAVERSAL)))
                 {
                     io_work * read_io_work = NULL;
-                    u32_t offset = 0, read_size = 0;
+                    u64_t offset = 0, read_size = 0;
                     offset = (u64_t)i * (u64_t)seg_config->segment_cap * sizeof(VA);
                     if (i == (seg_config->num_segments - 1))
                     {
@@ -519,7 +519,7 @@ class fog_engine{
 			//FOLLOWING BELONGS TO THE INIT PHASE! wait till the last write work is finished.
 			fog_io_queue->wait_for_io_task( init_io_work );
 			fog_io_queue->del_io_task( init_io_work );
-			PRINT_DEBUG( "fog engine finished initializing attribute files!\n" );
+			//PRINT_DEBUG( "fog engine finished initializing attribute files!\n" );
 			//ABOVE BELONGS TO THE INIT PHASE! wait till the last write work is finished.
 		}
 
@@ -600,23 +600,23 @@ class fog_engine{
                     p_scatter_param->attr_array_head = (void*)attr_array_header;
                 }
 
-                PRINT_DEBUG("scatter phase:%d\n", phase);
-                if (global_or_target != GLOBAL_ENGINE && ret == 1)
-                    PRINT_DEBUG("before context scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
+                //PRINT_DEBUG("scatter phase:%d\n", phase);
+                //if (global_or_target != GLOBAL_ENGINE && ret == 1)
+                    //PRINT_DEBUG("before context scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
                 scatter_cpu_work = new cpu_work<A, VA, U>(scatter_fog_engine_state, (void *)p_scatter_param);
                 pcpu_threads[0]->work_to_do = scatter_cpu_work;
                 (*pcpu_threads[0])();
 
                 delete scatter_cpu_work;
                 scatter_cpu_work = NULL;
-                PRINT_DEBUG("After scatter computation!\n");
+                //PRINT_DEBUG("After scatter computation!\n");
 
                 ret = 0;
                 unemployed = 0; //assume there is no unemployed
                 int cpu_unfinished[gen_config.num_processors];
                 int num_unfinished = 0;
                 for( u32_t i=0; i<gen_config.num_processors; i++ ){
-                    PRINT_DEBUG( "Processor %d status %d\n", i, pcpu_threads[i]->status );
+                    //PRINT_DEBUG( "Processor %d status %d\n", i, pcpu_threads[i]->status );
                     if ( pcpu_threads[i]->status != FINISHED_SCATTER )
                     {
                         cpu_unfinished[num_unfinished] = i;
@@ -633,7 +633,7 @@ class fog_engine{
                 }
                 if (ret == 0 && unemployed == 1)
                 {
-                    PRINT_DEBUG("num_unfinished = %d\n", num_unfinished);
+                    //PRINT_DEBUG("num_unfinished = %d\n", num_unfinished);
                     assert(num_unfinished == 0);
                     signal_of_partition_gather = NORMAL_GATHER;
                 }
@@ -641,17 +641,17 @@ class fog_engine{
                 {
                     assert(num_unfinished == (int)gen_config.num_processors);
                     signal_of_partition_gather = CONTEXT_GATHER;
-                    cal_threshold();
+                    //cal_threshold();
                     gather_updates(1-CONTEXT_PHASE, phase);
-                    cal_threshold();
+                    //cal_threshold();
                 }
                 if ((global_or_target == TARGET_ENGINE || global_or_target == BACKWARD_ENGINE ) && ret == 1 && unemployed == 1)
                 {
                     if ((cal_true_bits_size(CONTEXT_PHASE)) < (gen_config.num_processors * 8))
                     {
-                        PRINT_DEBUG("special gather happens!\n");
+                        //PRINT_DEBUG("special gather happens!\n");
                         signal_of_partition_gather = CONTEXT_GATHER;
-                        cal_threshold();
+                        //cal_threshold();
                         gather_updates(1-CONTEXT_PHASE, phase);
                     }
                     else 
@@ -659,7 +659,7 @@ class fog_engine{
                         assert(num_unfinished > 0);
                         assert((u32_t)num_unfinished < gen_config.num_processors);
                         signal_of_partition_gather = STEAL_GATHER;
-                        cal_threshold();
+                        //cal_threshold();
                         gather_updates(1-CONTEXT_PHASE, -1);
                         //loop for all unfinished-cpus
                         for (u32_t k = 0; k < (u32_t)num_unfinished; k++)
@@ -668,7 +668,7 @@ class fog_engine{
                             u32_t ret_value = rebalance_sched_bitmap(cpu_unfinished[k], CONTEXT_PHASE);
                             if (ret_value == 2)
                             {
-                                PRINT_DEBUG("cpu-%d has so few bits to steal!To be continued\n", cpu_unfinished[k]);
+                                //PRINT_DEBUG("cpu-%d has so few bits to steal!To be continued\n", cpu_unfinished[k]);
                                 /*scatter_cpu_work = new cpu_work<A, VA>(scatter_fog_engine_state, (void *)p_scatter_param);
                                 pcpu_threads[0]->work_to_do = scatter_cpu_work;
                                 (*pcpu_threads[0])();
@@ -701,7 +701,7 @@ class fog_engine{
                                 delete scatter_cpu_work;
                                 scatter_cpu_work = NULL;
 
-                                PRINT_DEBUG("After steal scatter!\n");
+                                //PRINT_DEBUG("After steal scatter!\n");
                                 for (u32_t i = 0; i < gen_config.num_processors; i++)
                                 {
                                     context_data * context_data_steal = CONTEXT_PHASE > 0 ? 
@@ -726,18 +726,18 @@ class fog_engine{
                                     }
                                     
                                     context_data_not_finished->per_bits_true_size -= context_data_steal->steal_bits_true_size;
-                                    PRINT_DEBUG("per_bits_not_continued = %d\n", 
-                                            context_data_not_finished->per_bits_true_size);
+                                    //PRINT_DEBUG("per_bits_not_continued = %d\n", 
+                                      //      context_data_not_finished->per_bits_true_size);
                                     context_data_steal->steal_bits_true_size = 0;
                                     if(pcpu_threads[i]->status != FINISHED_SCATTER)
                                     {
-                                        PRINT_DEBUG("In steal-mode, processor:%d has not finished scatter!Not very good!\n", i);
+                                        //PRINT_DEBUG("In steal-mode, processor:%d has not finished scatter!Not very good!\n", i);
                                         special_signal = 1;
                                         set_signal_to_scatter(SPECIAL_STEAL_SCATTER, i, CONTEXT_PHASE);
                                     }
                                     if (pcpu_threads[i]->status != UPDATE_BUF_FULL )
                                     {
-                                        PRINT_DEBUG("Steal round %d, Processor: %d has finished scatter, and the update buffer is not full!\n", k, i);
+                                        //PRINT_DEBUG("Steal round %d, Processor: %d has finished scatter, and the update buffer is not full!\n", k, i);
                                         set_signal_to_scatter(STEAL_SCATTER, i, CONTEXT_PHASE);
                                         context_data_steal->steal_min_vert_id = 0;
                                         context_data_steal->steal_max_vert_id = 0;
@@ -747,15 +747,15 @@ class fog_engine{
                                 if (special_signal == 1)
                                 {
                                     signal_of_partition_gather = STEAL_GATHER;
-                                    cal_threshold();
+                                    //cal_threshold();
                                     gather_updates(1-CONTEXT_PHASE, -1);
-                                    cal_threshold();
+                                    //cal_threshold();
                                 }
                             }while(special_signal == 1);
                         }
-                        PRINT_DEBUG("After steal!\n");
-                        cal_threshold();
-                        PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
+                        //PRINT_DEBUG("After steal!\n");
+                        //cal_threshold();
+                        //PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
                         if (scatter_fog_engine_state == SCC_BACKWARD_SCATTER)
                             gather_fog_engine_state = SCC_BACKWARD_GATHER;
                         gather_updates(1-CONTEXT_PHASE, -1);
@@ -767,7 +767,7 @@ class fog_engine{
                     assert(num_unfinished > 0);
                     assert((u32_t)num_unfinished < gen_config.num_processors);
                     signal_of_partition_gather = STEAL_GATHER;
-                    cal_threshold();
+                    //cal_threshold();
                     gather_updates(1-CONTEXT_PHASE, -1);
 
                     //loop for all unfinished-cpus
@@ -788,29 +788,29 @@ class fog_engine{
                             scatter_cpu_work = NULL;
 
                             //after computation, check the status of cpu threads, and return
-                            PRINT_DEBUG( "After scatter computation\n" );
+                            //PRINT_DEBUG( "After scatter computation\n" );
                             for( u32_t i=0; i<gen_config.num_processors; i++ ){
-                                PRINT_DEBUG( "Processor %d status %d\n", i, pcpu_threads[i]->status );
+                                //PRINT_DEBUG( "Processor %d status %d\n", i, pcpu_threads[i]->status );
                                 sched_list_context_data * context_data_steal = 
                                     seg_config->per_cpu_info_list[i]->global_sched_manager;
                                 sched_list_context_data * context_data_unfinished = 
                                     seg_config->per_cpu_info_list[cpu_unfinished[k]]->global_sched_manager;
 
                                 context_data_unfinished->num_vert_to_scatter -= context_data_steal->context_steal_num_vert;
-                                PRINT_DEBUG("unfinished->num_vert_to_scatter = %d\n", 
-                                        context_data_unfinished->num_vert_to_scatter);
-                                PRINT_DEBUG("context_data_steal->context_steal_num_vert = %d\n", 
-                                        context_data_steal->context_steal_num_vert);
+                                //PRINT_DEBUG("unfinished->num_vert_to_scatter = %d\n", 
+                                    //    context_data_unfinished->num_vert_to_scatter);
+                                //PRINT_DEBUG("context_data_steal->context_steal_num_vert = %d\n", 
+                                     //   context_data_steal->context_steal_num_vert);
                                 context_data_steal->context_steal_num_vert = 0;
                                 if ( pcpu_threads[i]->status != FINISHED_SCATTER )
                                 {
-                                    PRINT_DEBUG("In steal-mode, processor:%d has not finished scatter, not very good!\n", i);
+                                    //PRINT_DEBUG("In steal-mode, processor:%d has not finished scatter, not very good!\n", i);
                                     special_signal = 1;
                                     set_signal_to_scatter(SPECIAL_STEAL_SCATTER, i, CONTEXT_PHASE);
                                 }
                                 if ( pcpu_threads[i]->status != UPDATE_BUF_FULL )
                                 {
-                                    PRINT_DEBUG("Steal round %d. Processor %d has finished scatter!\n", k, i);
+                                    //PRINT_DEBUG("Steal round %d. Processor %d has finished scatter!\n", k, i);
                                     set_signal_to_scatter(STEAL_SCATTER, i, CONTEXT_PHASE);
                                     context_data_steal->context_steal_min_vert = 
                                         context_data_steal->context_steal_max_vert = 0;
@@ -819,20 +819,20 @@ class fog_engine{
                             if (special_signal == 1)
                             {
                                 signal_of_partition_gather = STEAL_GATHER;
-                                cal_threshold();
+                                //cal_threshold();
                                 gather_updates(1-CONTEXT_PHASE, -1);
                             }
            
                         }while(special_signal == 1);
                     }
-                    PRINT_DEBUG("After steal!\n");
+                    //PRINT_DEBUG("After steal!\n");
                     ret = 0;
                 }
                 phase++; 
             }while(ret == 1);
             //return ret;
             signal_of_partition_gather = 0;
-            PRINT_DEBUG("After all the phase in this scatter!\n");
+            //PRINT_DEBUG("After all the phase in this scatter!\n");
             memset(p_strip_count, 0, sizeof(u32_t) * seg_config->num_segments);
             if (global_or_target == GLOBAL_ENGINE)
                 reset_global_manager(CONTEXT_PHASE);
@@ -873,7 +873,7 @@ class fog_engine{
                 //my_context_data->p_bitmap->memset_buffer();
 
             }
-            PRINT_DEBUG("Finish reset!\n");
+            //PRINT_DEBUG("Finish reset!\n");
         }
 
         void reset_global_manager(u32_t CONTEXT_PHASE)
@@ -912,8 +912,8 @@ class fog_engine{
             u32_t min_vert = context_data_not_finished->per_min_vert_id;
             u32_t max_vert = context_data_not_finished->per_max_vert_id;
             u32_t average_num = (max_vert - min_vert + 1)/(gen_config.num_processors);
-            PRINT_DEBUG("In cpu %d, min_vert = %d, max_vert = %d, average_num = %d\n",
-                            cpu_not_finished_id, min_vert, max_vert, average_num);
+            //PRINT_DEBUG("In cpu %d, min_vert = %d, max_vert = %d, average_num = %d\n",
+              //              cpu_not_finished_id, min_vert, max_vert, average_num);
                 
             if ((average_num/8) == 0)
             {
@@ -952,7 +952,7 @@ class fog_engine{
                     tmp_min_vert = tmp_max_vert + gen_config.num_processors;
                 }
                 context_data_steal->steal_min_vert_id = tmp_min_vert; 
-                PRINT_DEBUG("Processor-%d's steal_min_vert = %d\n", cpu_id,tmp_min_vert);
+                //PRINT_DEBUG("Processor-%d's steal_min_vert = %d\n", cpu_id,tmp_min_vert);
 
                 if (cpu_id == gen_config.num_processors - 1)
                 {
@@ -979,7 +979,7 @@ class fog_engine{
                     }
                 }
                 context_data_steal->steal_max_vert_id = tmp_max_vert;
-                PRINT_DEBUG("Processor-%d's steal_max_vert = %d\n", cpu_id, tmp_max_vert);
+                //PRINT_DEBUG("Processor-%d's steal_max_vert = %d\n", cpu_id, tmp_max_vert);
             }
             return 1;
         }
@@ -993,8 +993,8 @@ class fog_engine{
                     my_context_data->num_vert_to_scatter);
             if (my_context_data->num_vert_to_scatter < gen_config.num_processors)
             {
-                PRINT_DEBUG("There are only %d vertices to scatter in processor %d\n", 
-                        my_context_data->num_vert_to_scatter, cpu_unfinished_id);
+                //PRINT_DEBUG("There are only %d vertices to scatter in processor %d\n", 
+                        //my_context_data->num_vert_to_scatter, cpu_unfinished_id);
                 for (u32_t i = 0; i < my_context_data->num_vert_to_scatter; i++)
                 {
                     set_signal_to_scatter(STEAL_SCATTER, i, CONTEXT_PHASE);
@@ -1003,15 +1003,15 @@ class fog_engine{
                             min_vert + i * gen_config.num_processors;
                     //seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_num_vert = 1;
 
-                    PRINT_DEBUG("Processor-%d's context_steal_min_vert = %d, max = %d\n",
-                            i, seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert,
-                            seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert);
+                    //PRINT_DEBUG("Processor-%d's context_steal_min_vert = %d, max = %d\n",
+                      //      i, seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert,
+                        //    seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert);
                 }
             }
             else
             {
-                PRINT_DEBUG("There are %d vertices to scatter in processor %d\n", 
-                        my_context_data->num_vert_to_scatter, cpu_unfinished_id);
+                //PRINT_DEBUG("There are %d vertices to scatter in processor %d\n", 
+                  //      my_context_data->num_vert_to_scatter, cpu_unfinished_id);
                 u32_t average_num = my_context_data->num_vert_to_scatter/(gen_config.num_processors);
 
                 for (u32_t i = 0; i < gen_config.num_processors; i++)
@@ -1025,9 +1025,9 @@ class fog_engine{
                         seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert = 
                             seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert + 
                             (average_num-1) * gen_config.num_processors;
-                    PRINT_DEBUG("Processor-%d's context_steal_min_vert = %d, max = %d\n",
-                            i, seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert,
-                            seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert);
+                    //PRINT_DEBUG("Processor-%d's context_steal_min_vert = %d, max = %d\n",
+                      //      i, seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert,
+                        //    seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert);
                 }
             }
         }
@@ -1064,10 +1064,10 @@ class fog_engine{
             
                 if (signal_of_partition_gather == NORMAL_GATHER || signal_of_partition_gather == STEAL_GATHER)
                 {
-                    if (signal_of_partition_gather == NORMAL_GATHER)
-                        PRINT_DEBUG("Normal gather starts!\n");
-                    else if (signal_of_partition_gather == STEAL_GATHER)
-                        PRINT_DEBUG("Steal gather starts!\n");
+                    //if (signal_of_partition_gather == NORMAL_GATHER)
+                    //    PRINT_DEBUG("Normal gather starts!\n");
+                    //else if (signal_of_partition_gather == STEAL_GATHER)
+                     //   PRINT_DEBUG("Steal gather starts!\n");
                     /*
                      * Because there are seg_config->num_attr_buf segments(if nessary) which have been used
                      * in context_gather, so we need to gather them before  other segments.
@@ -1183,14 +1183,14 @@ class fog_engine{
                         ret = cal_strip_size(i, 0, 0);
                         if (ret == 0 || (int)i == seg_config->buf0_holder  || (int)i == seg_config->buf1_holder)
                             continue;
-                        PRINT_DEBUG( "i=%d, buf_index = %d, one_io_work=%llx\n", i, buf_index, (u64_t)one_io_work );
+                        //PRINT_DEBUG( "i=%d, buf_index = %d, one_io_work=%llx\n", i, buf_index, (u64_t)one_io_work );
 
                         mmap_ret = cal_strip_size(i, 1, 1);
 
                         //this strip will be gather by mmap
                         if (mmap_ret == 0)
                         {
-                            PRINT_DEBUG("for strip %d, mmap_gather starts!\n", i);
+                            //PRINT_DEBUG("for strip %d, mmap_gather starts!\n", i);
                             p_gather_param->attr_array_head = (void *)attr_array_header;
                             p_gather_param->PHASE = CONTEXT_PHASE;
                             p_gather_param->threshold = 0;
@@ -1216,7 +1216,7 @@ class fog_engine{
                             fog_io_queue->wait_for_io_task(one_io_work);
                             fog_io_queue->del_io_task(one_io_work);
                             one_io_work = NULL;
-                            PRINT_DEBUG("Finish reading the first segment!\n");
+                            //PRINT_DEBUG("Finish reading the first segment!\n");
                             p_gather_param->threshold = 1;
                             p_gather_param->strip_id = (int)i;
                             p_gather_param->PHASE = CONTEXT_PHASE;
@@ -1269,7 +1269,7 @@ class fog_engine{
                 }
                 else if (signal_of_partition_gather == CONTEXT_GATHER) // means ALL cpus's buffer are FULL
                 {
-                    PRINT_DEBUG("CONTEXT gather starts!\n");
+                    //PRINT_DEBUG("CONTEXT gather starts!\n");
                     u32_t num_hits = 0;
                     int partition_gather_array[(gen_config.num_processors)];
                     u32_t tmp_num = 0;
@@ -1304,7 +1304,7 @@ class fog_engine{
                         }
 
 
-                        PRINT_DEBUG("tmp_strip_id = %d\n", tmp_strip_id);
+                        //PRINT_DEBUG("tmp_strip_id = %d\n", tmp_strip_id);
                         if (tmp_strip_id == -1)
                             continue;
                         u32_t out_signal = 0;
@@ -1373,17 +1373,17 @@ class fog_engine{
                                 num_hits++;
                         }
                     }
-                    for (u32_t i = 0; i < tmp_num; i++)
-                        PRINT_DEBUG("tmp_strip_id[%d] = %d\n",i ,partition_gather_array[i]);
-                    PRINT_DEBUG("In phase:%d, tmp_num = %d, num_hits = %d\n", phase, tmp_num, num_hits);
+                    //for (u32_t i = 0; i < tmp_num; i++)
+                    //    PRINT_DEBUG("tmp_strip_id[%d] = %d\n",i ,partition_gather_array[i]);
+                    //PRINT_DEBUG("In phase:%d, tmp_num = %d, num_hits = %d\n", phase, tmp_num, num_hits);
 
                     //gather every strip in this for-loop
                     for (u32_t i = 0; i < tmp_num; i++)
                     {
                         int tmp_strip_id = partition_gather_array[i];
-                        PRINT_DEBUG("seg_config->buf0_holder = %d, seg_config->buf1_holder = %d\n", seg_config->buf0_holder, seg_config->buf1_holder);
-                        PRINT_DEBUG("tmp_strip_id = %d\n", tmp_strip_id);
-                        PRINT_DEBUG("count_seg_config->buf0_holder = %d, count_seg_config->buf1_holder = %d\n", p_strip_count[seg_config->buf0_holder], p_strip_count[seg_config->buf1_holder]);
+                        //PRINT_DEBUG("seg_config->buf0_holder = %d, seg_config->buf1_holder = %d\n", seg_config->buf0_holder, seg_config->buf1_holder);
+                        //PRINT_DEBUG("tmp_strip_id = %d\n", tmp_strip_id);
+                        //PRINT_DEBUG("count_seg_config->buf0_holder = %d, count_seg_config->buf1_holder = %d\n", p_strip_count[seg_config->buf0_holder], p_strip_count[seg_config->buf1_holder]);
                         int ret = -1;
                         ret = lru_hit_target(tmp_strip_id);
                         if (i > 0)
@@ -1441,11 +1441,11 @@ class fog_engine{
                                 //PRINT_DEBUG("num_free_bufs = %d\n", num_free_bufs);
                                 if (num_free_bufs == 0)
                                 {
-                                    PRINT_DEBUG("this is the strip:%d, need to change 1 segment out~!\n", tmp_strip_id);
+                                    //PRINT_DEBUG("this is the strip:%d, need to change 1 segment out~!\n", tmp_strip_id);
                                     int changed_strip_id = -1;
                                     //seg_config->buf1_holder will be changed out
-                                    PRINT_DEBUG("seg_config->buf0_holder = %d, seg_config->buf1_holder = %d\n", seg_config->buf0_holder, seg_config->buf1_holder);
-                                    PRINT_DEBUG("count_seg_config->buf0_holder = %d, count_seg_config->buf1_holder = %d\n", p_strip_count[seg_config->buf0_holder], p_strip_count[seg_config->buf1_holder]);
+                                    //PRINT_DEBUG("seg_config->buf0_holder = %d, seg_config->buf1_holder = %d\n", seg_config->buf0_holder, seg_config->buf1_holder);
+                                    //PRINT_DEBUG("count_seg_config->buf0_holder = %d, count_seg_config->buf1_holder = %d\n", p_strip_count[seg_config->buf0_holder], p_strip_count[seg_config->buf1_holder]);
                                     if (p_strip_count[seg_config->buf0_holder] >= p_strip_count[seg_config->buf1_holder])
                                     {
                                         changed_strip_id = seg_config->buf1_holder;
@@ -1482,15 +1482,15 @@ class fog_engine{
                                         fog_io_queue->del_io_task(one_io_work);
                                         one_io_work = NULL;
                                     }
-                                    PRINT_DEBUG("Strip:%d has been changed out!\n", changed_strip_id);
+                                    //PRINT_DEBUG("Strip:%d has been changed out!\n", changed_strip_id);
 
                                     //must wait before next read
                                     read_buf = get_target_buf_addr(tmp_strip_id);
                                     if (read_buf == NULL)
                                         PRINT_ERROR("caOCACOAOCAO\n");
-                                    PRINT_DEBUG("tmp_strip_id = %d\n", tmp_strip_id);
-                                    PRINT_DEBUG("seg_config->buf0_holder = %d, seg_config->buf1_holder = %d\n", seg_config->buf0_holder, seg_config->buf1_holder);
-                                    PRINT_DEBUG("count_seg_config->buf0_holder = %d, count_seg_config->buf1_holder = %d\n", p_strip_count[seg_config->buf0_holder], p_strip_count[seg_config->buf1_holder]);
+                                    //PRINT_DEBUG("tmp_strip_id = %d\n", tmp_strip_id);
+                                    //PRINT_DEBUG("seg_config->buf0_holder = %d, seg_config->buf1_holder = %d\n", seg_config->buf0_holder, seg_config->buf1_holder);
+                                    //PRINT_DEBUG("count_seg_config->buf0_holder = %d, count_seg_config->buf1_holder = %d\n", p_strip_count[seg_config->buf0_holder], p_strip_count[seg_config->buf1_holder]);
                                     if (one_io_work != NULL)
                                     {
                                         fog_io_queue->wait_for_io_task(one_io_work);
@@ -1561,7 +1561,7 @@ class fog_engine{
                         if ((i+1) < tmp_num )
                         {
                             int next_strip_id = partition_gather_array[i+1];
-                            PRINT_DEBUG("next_strip_id = %d\n", next_strip_id);
+                            //PRINT_DEBUG("next_strip_id = %d\n", next_strip_id);
                             ret = lru_hit_target(next_strip_id);
                             if (ret == 0)
                             {
@@ -1623,7 +1623,7 @@ class fog_engine{
                                     }
                                     else 
                                         PRINT_ERROR("no strip to change out~!\n");
-                                    PRINT_DEBUG("next_strip_id = %d, need to changed strip:%d out\n", next_strip_id, changed_strip_id);
+                                    //PRINT_DEBUG("next_strip_id = %d, need to changed strip:%d out\n", next_strip_id, changed_strip_id);
                                     
                                     //first, we shold store the changed_strip
                                     write_buf = get_target_buf_addr(next_strip_id);
@@ -1685,7 +1685,7 @@ class fog_engine{
                     }
                 } 
             }
-            PRINT_DEBUG("After Gather!\n");
+            //PRINT_DEBUG("After Gather!\n");
         }
 
         int lru_hit_target(int strip_id)
@@ -1792,7 +1792,7 @@ class fog_engine{
                     for (u32_t j = 0; j < (seg_config->num_segments*gen_config.num_processors); j++)
                         total_updates += *(map_head+j);
                     util_rate = (double)total_updates/((double)strip_cap*seg_config->num_segments);
-                    PRINT_DEBUG("THere are %u update in processor %d, utilization rate is %f\n", total_updates, i, util_rate);
+                    //PRINT_DEBUG("THere are %u update in processor %d, utilization rate is %f\n", total_updates, i, util_rate);
                     if (util_rate > THRESHOLD)
                     {
                         util_ret = 1;
@@ -1874,7 +1874,7 @@ class fog_engine{
                     total_updates += *(map_head+j);
 
                 util_rate = (double)total_updates/((double)strip_cap*seg_config->num_segments);
-                PRINT_DEBUG("THere are %u update in processor %d, utilization rate is %f\n", total_updates, i, util_rate);
+                //PRINT_DEBUG("THere are %u update in processor %d, utilization rate is %f\n", total_updates, i, util_rate);
 
                 if (util_rate > THRESHOLD)
                 {
@@ -2003,8 +2003,8 @@ class fog_engine{
             int schedule_signal = 0;
 
             partition_id = VID_TO_PARTITION(task_vid);
-            if (task_vid > gen_config.max_vert_id)
-                PRINT_DEBUG("task_vid = %d\n", task_vid);
+            //if (task_vid > gen_config.max_vert_id)
+            //    PRINT_DEBUG("task_vid = %d\n", task_vid);
             assert(task_vid <= gen_config.max_vert_id);
             assert(partition_id < gen_config.num_processors);
             sched_bitmap_manager * my_sched_bitmap_manager;
@@ -2228,11 +2228,11 @@ class fog_engine{
 					+ update_map_size
 					;
 
-			PRINT_DEBUG( "init_sched_update_buffer of fog_engine_scc of sched_bitmap_manager:%lu,  size of update map manager:%lu\n", 
-				sizeof(sched_bitmap_manager), sizeof(update_map_manager));
-			PRINT_DEBUG( "init_sched_update_buffer--update_map_size:%u, bitmap_buf_size:%u, total_head_len:%u\n", 
-				update_map_size, bitmap_buf_size, total_header_len );
-            PRINT_DEBUG("sizeof(context_data) = %ld\n", sizeof(context_data));
+			//PRINT_DEBUG( "init_sched_update_buffer of fog_engine_scc of sched_bitmap_manager:%lu,  size of update map manager:%lu\n", 
+			//	sizeof(sched_bitmap_manager), sizeof(update_map_manager));
+			//PRINT_DEBUG( "init_sched_update_buffer--update_map_size:%u, bitmap_buf_size:%u, total_head_len:%u\n", 
+			//	update_map_size, bitmap_buf_size, total_header_len );
+            //PRINT_DEBUG("sizeof(context_data) = %ld\n", sizeof(context_data));
 
 			//total_header_length should be round up according to the size of updates.
 			total_header_len = ROUND_UP( total_header_len, sizeof(update<U>) );
@@ -2306,7 +2306,7 @@ class fog_engine{
             //u32_t tmp_min_offset = gen_config.min_vert_id%gen_config.num_processors;
             //PRINT_DEBUG("tmp_min_offset = %d\n", tmp_min_offset);
             u32_t tmp_max_offset = gen_config.max_vert_id%gen_config.num_processors;
-            PRINT_DEBUG("tmp_max_offset = %d\n", tmp_max_offset);
+            //PRINT_DEBUG("tmp_max_offset = %d\n", tmp_max_offset);
             //u32_t tmp_min_value;
             u32_t tmp_max_value;
 
@@ -2468,10 +2468,10 @@ class fog_engine{
                     + sizeof(update_map_manager)
                     + update_map_size;
 
-            PRINT_DEBUG( "init_sched_update_buffer--size of sched_list_context_data:%lu, size of update map manager:%lu\n", 
-                sizeof(sched_list_context_data), sizeof(update_map_manager)/*, sizeof(aux_update_buf_manager<VA>)*/ );
-            PRINT_DEBUG( "init_sched_update_buffer--update_map_size:%u,  total_head_len:%u\n", 
-                update_map_size, total_header_len );
+            //PRINT_DEBUG( "init_sched_update_buffer--size of sched_list_context_data:%lu, size of update map manager:%lu\n", 
+            //    sizeof(sched_list_context_data), sizeof(update_map_manager)/*, sizeof(aux_update_buf_manager<VA>)*/ );
+            //PRINT_DEBUG( "init_sched_update_buffer--update_map_size:%u,  total_head_len:%u\n", 
+             //   update_map_size, total_header_len );
             //populate the buffer managers
             for(u32_t i=0; i<gen_config.num_processors; i++){
                 //headers
@@ -2549,10 +2549,10 @@ class fog_engine{
         //cpu3 : 3 7 11 ...
         void add_all_task_to_cpu( sched_task * task )
         {
-            PRINT_DEBUG( "first adding all tasks to all cpu :task from %d to %d.\n", task->start, task->term );
+            //PRINT_DEBUG( "first adding all tasks to all cpu :task from %d to %d.\n", task->start, task->term );
             
             if( task->term == 0 ){
-                PRINT_DEBUG("task->term == 0;\n");
+                //PRINT_DEBUG("task->term == 0;\n");
                 assert( task->start <= gen_config.max_vert_id );
                 add_sched_task_to_processor( VID_TO_PARTITION(task->start), task, 1 );
                 return;
@@ -2574,18 +2574,18 @@ class fog_engine{
                 else if (i > start_remain)
                     p_task->start = task->start + i - start_remain;
 
-                PRINT_DEBUG("the start of processor %d is %d\n", i, p_task->start);
+               // PRINT_DEBUG("the start of processor %d is %d\n", i, p_task->start);
                 if (i == end_remain)
                     p_task->term = task->term;
                 else if (i < end_remain)
                     p_task->term = task->term - end_remain + i;
                 else if(i > end_remain)
                     p_task->term = task->term - gen_config.num_processors - end_remain + i;
-                PRINT_DEBUG("the term of processor %d is %d\n", i, p_task->term);
+               // PRINT_DEBUG("the term of processor %d is %d\n", i, p_task->term);
                 assert(((p_task->term - i)%gen_config.num_processors) == 0);
                 assert(((p_task->start - i)%gen_config.num_processors) == 0);
                 u32_t p_task_len = (p_task->term - p_task->start)/gen_config.num_processors + 1;
-                PRINT_DEBUG("task length of processor %d is %d\n", i, p_task_len);
+               // PRINT_DEBUG("task length of processor %d is %d\n", i, p_task_len);
 
                 add_sched_task_to_processor( i, p_task, p_task_len );
             }

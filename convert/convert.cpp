@@ -46,6 +46,7 @@ std::ofstream desc_file;
 int main( int argc, const char**argv)
 {
 	unsigned int pos;
+    unsigned long long mem_size;
 	//input files
 	std::string input_graph_name, input_file_name, temp;
 	//output files
@@ -53,7 +54,6 @@ int main( int argc, const char**argv)
 		out_index_file_name, out_desc_file_name, 
 		out_desc_file1_name;
     //hejian-debug
-    std::string old_out_edge_file_name, old_out_index_file_name, old_out_desc_file_name, old_out_dest_file1_name;
 	std::string snap_type;
     std::string out_txt_file_name;
 
@@ -71,13 +71,11 @@ int main( int argc, const char**argv)
 	out_index_file_name = out_dir+ input_file_name +".index";
 	out_desc_file_name = out_dir+ input_file_name +".desc";
 
-    //hejian-debug
-	old_out_edge_file_name = out_dir+ input_file_name +"-old.type1";
-	old_out_index_file_name = out_dir+ input_file_name +"-old.index";
-	old_out_desc_file_name = out_dir+ input_file_name +"-old.desc";
-
     out_txt_file_name = out_dir + input_file_name + "-type1.txt";
     
+    mem_size = (unsigned long long)(vm["memory"].as<unsigned long>())*1024*1024;
+    std::cout << "mem_size = " << mem_size << std::endl;
+    //process_in_edge(mem_size, out_edge_file_name.c_str());
 
 	snap_type = vm["type"].as<std::string>();
 
@@ -92,15 +90,11 @@ int main( int argc, const char**argv)
 		process_edgelist( input_graph_name.c_str(), 
 				out_edge_file_name.c_str(), 
 				out_index_file_name.c_str() ,
-                old_out_edge_file_name.c_str(),
-                old_out_index_file_name.c_str(),
                 out_txt_file_name.c_str());
 	else if (snap_type == "adjlist" )
 		process_adjlist( input_graph_name.c_str(), 
 				out_edge_file_name.c_str(), 
 				out_index_file_name.c_str(),
-                old_out_edge_file_name.c_str(),
-                old_out_index_file_name.c_str(),
                 out_txt_file_name.c_str());
 	else{
 		std::cout << "input parameter (type) error!\n";
@@ -115,14 +109,9 @@ int main( int argc, const char**argv)
 	desc_file << "num_of_edges = " << num_edges << "\n";
 	desc_file << "max_out_edges = " << max_out_edges << "\n";
     desc_file.close();
-	//old-graph description
-	desc_file.open( old_out_desc_file_name.c_str() );
-	desc_file << "[description]\n";
-	desc_file << "min_vertex_id = " << min_vertex_id << "\n";
-	desc_file << "max_vertex_id = " << max_vertex_id << "\n";
-	desc_file << "num_of_edges = " << num_edges << "\n";
-	desc_file << "max_out_edges = " << max_out_edges << "\n";
-    desc_file.close();
+
+    //process in-edge
+    //process_in_edge(mem_size, out_edge_file_name.c_str());
 }
 
 
