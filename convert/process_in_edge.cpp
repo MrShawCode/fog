@@ -246,7 +246,7 @@ void wake_up_sort(u32_t file_id, u64_t buf_size, bool final_call)
         }
 
         memset( (char*)in_edge_buffer, 0, EDGE_BUFFER_LEN*sizeof(struct in_edge) );
-        memset( (char*)vert_buffer, 0, VERT_BUFFER_LEN*sizeof(struct vert_index) );
+        memset( (char*)in_vert_buffer, 0, VERT_BUFFER_LEN*sizeof(struct vert_index) );
         //std::cout << "hrereer!" << std::endl;
 
         //read every edge
@@ -278,12 +278,12 @@ void wake_up_sort(u32_t file_id, u64_t buf_size, bool final_call)
                 if (dest_vert >= (vert_buffer_offset + 1)*VERT_BUFFER_LEN)
                 {
                     vert_buffer_offset += 1;
-                    flush_buffer_to_file( tmp_out_in_index_file, (char*)vert_buffer,
+                    flush_buffer_to_file( tmp_out_in_index_file, (char*)in_vert_buffer,
                             VERT_BUFFER_LEN*sizeof(struct vert_index) );
-                    memset( (char*)vert_buffer , 0, VERT_BUFFER_LEN*sizeof(struct vert_index) );
+                    memset( (char*)in_vert_buffer , 0, VERT_BUFFER_LEN*sizeof(struct vert_index) );
                 }
                 vert_suffix = dest_vert - vert_buffer_offset * VERT_BUFFER_LEN;
-                vert_buffer[vert_suffix].offset = tmp_num_edges;
+                in_vert_buffer[vert_suffix].offset = tmp_num_edges;
 
                 recent_src_vert = dest_vert;
             }
@@ -291,7 +291,7 @@ void wake_up_sort(u32_t file_id, u64_t buf_size, bool final_call)
 
         flush_buffer_to_file( tmp_out_in_edge_file, (char*)in_edge_buffer,
                 EDGE_BUFFER_LEN*sizeof(in_edge) );
-        flush_buffer_to_file( tmp_out_in_index_file, (char*)vert_buffer,
+        flush_buffer_to_file( tmp_out_in_index_file, (char*)in_vert_buffer,
                 VERT_BUFFER_LEN*sizeof(vert_index) );
 
         close(tmp_out_in_edge_file);
