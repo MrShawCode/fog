@@ -111,7 +111,7 @@ template <typename T>
 unsigned int cc_program<T>::num_tasks_to_sched = 0;
 
 template <typename T>
-int cc_program<T>::forward_backward_phase = FORWARD_BACKWARD_TRAVERSAL;
+int cc_program<T>::forward_backward_phase = FORWARD_TRAVERSAL;
 
 template <typename T>
 int cc_program<T>::CONTEXT_PHASE = 0;
