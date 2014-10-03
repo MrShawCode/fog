@@ -16,6 +16,7 @@ class cc_program{
         static int CONTEXT_PHASE;
         static int loop_counter;
         static bool init_sched;
+        static bool set_forward_backward;
         
 		static void init(u32_t vid, cc_vert_attr* va, index_vert_array<T> * vert_index)
         {
@@ -72,16 +73,30 @@ class cc_program{
         }
         static int after_iteration()
         {
-            PRINT_DEBUG("CC engine has finished the %d iteration, there are %d tasks to schedule at next iteration!\n",
-                    loop_counter, num_tasks_to_sched);
-            if (num_tasks_to_sched == 0)
-                return ITERATION_STOP;
+            if (forward_backward_phase == FORWARD_TRAVERSAL)
+            {
+                forward_backward_phase = BACKWARD_TRAVERSAL;
+                loop_counter--;
+                return ENGINE_CONTINUE;
+            }
             else
-                return ITERATION_CONTINUE;
+            {
+                assert(forward_backward_phase == BACKWARD_TRAVERSAL);
+                forward_backward_phase = FORWARD_TRAVERSAL;
+                //return ENGINE_STOP;
+                PRINT_DEBUG("CC engine has finished the %d iteration, there are %d tasks to schedule at next iteration!\n",
+                        loop_counter, num_tasks_to_sched);
+
+                if (num_tasks_to_sched == 0)
+                    return ITERATION_STOP;
+                else
+                    return ITERATION_CONTINUE;
+            }
         }
         static int finalize()
         {
-            if (forward_backward_phase == FORWARD_TRAVERSAL)
+            return ENGINE_STOP;
+            /*if (forward_backward_phase == FORWARD_TRAVERSAL)
             {
                 forward_backward_phase = BACKWARD_TRAVERSAL;
                 loop_counter = 0;
@@ -92,7 +107,7 @@ class cc_program{
             {
                 assert(forward_backward_phase == BACKWARD_TRAVERSAL);
                 return ENGINE_STOP;
-            }
+            }*/
         }
 
         static void print_result(u32_t vid, cc_vert_attr * va)
@@ -112,6 +127,9 @@ unsigned int cc_program<T>::num_tasks_to_sched = 0;
 
 template <typename T>
 int cc_program<T>::forward_backward_phase = FORWARD_TRAVERSAL;
+
+template <typename T>
+bool cc_program<T>::set_forward_backward = true;
 
 template <typename T>
 int cc_program<T>::CONTEXT_PHASE = 0;

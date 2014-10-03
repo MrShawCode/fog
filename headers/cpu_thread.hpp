@@ -216,6 +216,14 @@ struct cpu_work{
                     min_vert = my_context_data->per_min_vert_id;
                     if (signal_to_scatter == NORMAL_SCATTER)
                         all_vertex_to_be_updated = false;
+
+                    if (signal_to_scatter == NORMAL_SCATTER && A::set_forward_backward == true 
+                            && A::forward_backward_phase == FORWARD_TRAVERSAL)
+                    {
+                        my_context_data->alg_per_max_vert_id = my_context_data->per_max_vert_id;
+                        my_context_data->alg_per_min_vert_id = my_context_data->per_min_vert_id;
+                        my_context_data->alg_per_bits_true_size = my_context_data->per_bits_true_size;
+                    }
                 }
                 if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
                 {
@@ -257,7 +265,10 @@ struct cpu_work{
                         //if (seg_config->num_segments == 1 && 
                         //        ( engine_state == SCC_BACKWARD_SCATTER || engine_state == SCC_FORWARD_SCATTER))
                         //    A::set_finish_to_vert(i, (VA*)&attr_array_head[i]);
-                        current_bitmap->clear_value(i);
+                        if ((A::set_forward_backward == true && A::forward_backward_phase == BACKWARD_TRAVERSAL) 
+                               || A::set_forward_backward == false)
+                            current_bitmap->clear_value(i);
+
                         if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
                             my_context_data->steal_bits_true_size++;
                         else 
@@ -265,20 +276,6 @@ struct cpu_work{
                         continue;
                     }
 
-                    /*if (engine_state == SCC_BACKWARD_SCATTER)
-                    {
-                        bool ret = false;
-                        ret = A::judge_true_false((VA*)&attr_array_head[i]);
-                        if (ret == true)
-                        {
-                            current_bitmap->clear_value(i);
-                            if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
-                                my_context_data->steal_bits_true_size++;
-                            else 
-                                my_context_data->per_bits_true_size--;
-                            continue;
-                        }
-                    }*/
                     if ((signal_to_scatter == CONTEXT_SCATTER) && (i == my_context_data->per_min_vert_id))
                         old_edge_id = my_context_data->per_num_edges;
                     else if ((signal_to_scatter == SPECIAL_STEAL_SCATTER) && (my_context_data->steal_min_vert_id == i))
@@ -362,7 +359,9 @@ struct cpu_work{
                     else
                     {
                        	assert(*status == FINISHED_SCATTER);
-                        current_bitmap->clear_value(i);
+                        if ((A::set_forward_backward == true && A::forward_backward_phase == BACKWARD_TRAVERSAL) 
+                                || A::set_forward_backward == false)
+                            current_bitmap->clear_value(i);
                         if (signal_to_scatter == 1 && my_context_data->per_bits_true_size == 0)
                             PRINT_ERROR("i = %d\n", i);
                         if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)

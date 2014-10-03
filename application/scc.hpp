@@ -25,6 +25,8 @@ class scc_program{
         static int CONTEXT_PHASE;
         static int loop_counter;
         static bool init_sched;
+
+        static bool set_forward_backward;
         
         static int out_loop;
         static void init( u32_t vid, scc_vert_attr* va, index_vert_array<T> * vert_index)
@@ -203,6 +205,9 @@ int scc_program<T>::loop_counter = 0;
 template <typename T>
 bool scc_program<T>::init_sched = true;
 //if you want add_schedule when init(), please set this to be true~!
+
+template <typename T>
+bool scc_program<T>::set_forward_backward = false;
 
 
 #endif

@@ -18,6 +18,7 @@ class sssp_program{
         static int CONTEXT_PHASE;
         static int loop_counter;
         static bool init_sched;
+        static bool set_forward_backward;
 		//init the vid-th vertex
 		static void init(u32_t vid, sssp_vert_attr* va, index_vert_array<T> * vert_index){
 			if ( vid == start_vid ){
@@ -111,6 +112,8 @@ int sssp_program<T>::CONTEXT_PHASE = 0;
 template <typename T>
 int sssp_program<T>::loop_counter = 0;
 
+template <typename T>
+bool sssp_program<T>::set_forward_backward = false;
 
 template <typename T>
 bool sssp_program<T>::init_sched = false;

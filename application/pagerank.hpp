@@ -19,6 +19,7 @@ class pagerank_program{
         static int CONTEXT_PHASE;
         static int loop_counter;
         static bool init_sched;
+        static bool set_forward_backward;
 
 		//initialize each vertex of the graph
 		static void init( u32_t vid, pagerank_vert_attr* this_vert, index_vert_array<T> * vert_index )
@@ -89,6 +90,9 @@ class pagerank_program{
             PRINT_DEBUG("Pagerank:result[%d], rank = %f\n", vid, va->rank);
         }
 };
+
+template <typename T>
+bool pagerank_program<T>::set_forward_backward = false;
 
 template <typename T>
 u32_t pagerank_program<T>::num_tasks_to_sched = 0;

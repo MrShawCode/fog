@@ -708,7 +708,15 @@ class fog_engine{
                 if(my_context_data->per_bits_true_size != 0)
                     PRINT_ERROR("Per_bits_true_size != 0, impossible!\n");
                     //PRINT_ERROR("Per_bits_true_size != 0, impossible!\n");
-                my_context_data->per_bits_true_size = 0;
+                if (A::set_forward_backward == true && A::forward_backward_phase == FORWARD_TRAVERSAL)
+                {
+                    my_context_data->per_bits_true_size = my_context_data->alg_per_bits_true_size;
+                    my_context_data->per_min_vert_id = my_context_data->alg_per_min_vert_id;
+                    my_context_data->per_max_vert_id = my_context_data->alg_per_max_vert_id;
+                }
+                else
+                    my_context_data->per_bits_true_size = 0;
+
                 my_context_data->steal_min_vert_id = 0;
                 my_context_data->steal_max_vert_id = 0;
                 my_context_data->signal_to_scatter = 0;
@@ -1866,7 +1874,7 @@ class fog_engine{
             u32_t old_phase = 1 - CONTEXT_PHASE;
             old_context_data = old_phase > 0 ? my_sched_bitmap_manager->p_context_data1 : my_sched_bitmap_manager->p_context_data0;
 
-            if (/*seg_config->num_attr_buf == 1 &&*/ old_context_data->per_bits_true_size > 0)
+            if (A::set_forward_backward == false && old_context_data->per_bits_true_size > 0)
             {
                 assert(old_context_data->per_bits_true_size > 0);
                 old_bitmap = old_context_data->p_bitmap;

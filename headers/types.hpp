@@ -109,6 +109,7 @@ struct sched_list_context_data
 
     //gather param
     int partition_gather_strip_id;
+
 }__attribute__((aligned(8)));
 
 //manage the bitmap buffer, add by hejian
@@ -149,6 +150,11 @@ struct context_data{
     u32_t next_steal_min_vert_id;
 
     u32_t signal_to_gather;
+
+    //for backward-algorithm
+    u32_t alg_per_bits_true_size;
+    u32_t alg_per_min_vert_id;
+    u32_t alg_per_max_vert_id;
 }__attribute__ ((aligned(8)));
 
 //manage the update buffer.

@@ -23,6 +23,7 @@ class spmv_program{
         static int CONTEXT_PHASE;
         static int loop_counter;
         static bool init_sched;
+        static bool set_forward_backward;
 		//initialize each vertex of the graph
 		static void init( u32_t vid, spmv_vert_attr* this_vert, index_vert_array<T> * vert_index )
 		{
@@ -87,6 +88,8 @@ int spmv_program<T>::CONTEXT_PHASE = 0;
 template <typename T>
 int spmv_program<T>::loop_counter = 0;
 
+template <typename T>
+bool spmv_program<T>::set_forward_backward = false;
 
 template <typename T>
 bool spmv_program<T>::init_sched = false;
