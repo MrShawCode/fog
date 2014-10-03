@@ -15,8 +15,9 @@ static void setup_options_convert(int argc, const char* argv[])
 	( "type,t", boost::program_options::value<std::string>()->required(), "Type of the snap file(edgelist or adjlist)")
 	( "graph,g", boost::program_options::value<std::string>()->required(), "Name of the graph in snap format")
 	( "destination,d",  boost::program_options::value<std::string>()->required(), "Destination folder that will contain the index and edge file")
-    ( "memory,m", boost::program_options::value<unsigned long>()->default_value(1024), //default 1GB
-     "Size of the buffer for writing (unit is MB)");
+    ( "memory,m", boost::program_options::value<unsigned long>()->required(), "Size of the buffer for writing (unit is MB)")//default 1GB
+    ("out-type,o", boost::program_options::value<std::string>()->required(), "Type of out edge file, type1(with edge value) or type2(no edge value)")
+    ("in-edge,i", boost::program_options::value<bool>()->required(),"With or without in-edge, backtrace-algorithm(WCC, SCC) must be true!");
   try {
     boost::program_options::store(boost::program_options::parse_command_line(argc,
 									     argv,
@@ -42,6 +43,7 @@ static void setup_options_fog(int argc, const char* argv[])
 		"The name of the graph to be processed (i.e., the .desc file).")
 	( "application,a", boost::program_options::value<std::string>()->required(), 
 		"The name of the application, e.g., pagerank, sssp, bfs.")
+    ("in-edge,i", boost::program_options::value<bool>()->required(),"With or without in-edge, backtrace-algorithm(WCC, SCC) must be true!")
 	//following are system parameters
     ( "memory,m", boost::program_options::value<unsigned long>()->default_value(512), //default 1GB
      "Size of the buffer for writing (unit is MB)")

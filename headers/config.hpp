@@ -29,6 +29,10 @@ struct general_config{
 		std::string edge_file_name;
 		std::string attr_file_name;
 
+		std::string in_vert_file_name;
+		std::string in_edge_file_name;
+        bool with_in_edge;
+
         bool prev_update;
 };
 

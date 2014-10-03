@@ -8,56 +8,45 @@ struct cc_vert_attr{
 	u32_t component_root;
 };
 
+template <typename T>
 class cc_program{
 	public:
+        static u32_t num_tasks_to_sched ;
+        static int forward_backward_phase;
+        static int CONTEXT_PHASE;
+        static int loop_counter;
+        static bool init_sched;
         
-		static void init(u32_t vid, cc_vert_attr* va, u32_t PHASE)
+		static void init(u32_t vid, cc_vert_attr* va, index_vert_array<T> * vert_index)
         {
             va->component_root = vid;
             //add schedule for cc work
-            fog_engine<cc_program, cc_vert_attr, cc_vert_attr>::add_schedule( vid, 
-                    PHASE /*phase:decide which buf to read and write */
+            fog_engine<cc_program<T>, cc_vert_attr, cc_vert_attr, T>::add_schedule( vid, 
+                    CONTEXT_PHASE /*phase:decide which buf to read and write */
                     );
 		}
-        static void init(u32_t vid, cc_vert_attr* va, u32_t PHASE, u32_t init_forward_backward_phase, u32_t loop_counter,
-            index_vert_array * vert_index){}
-        static void init( u32_t vid, cc_vert_attr* this_vert ){}
-
 		//scatter updates at vid-th vertex 
-		static update<cc_vert_attr> *scatter_one_edge(u32_t vid,
+		static update<cc_vert_attr> *scatter_one_edge(
                 cc_vert_attr * this_vert,
-                edge * this_edge)//, bool forward_in_backward)
+                T * this_edge,
+                u32_t backward_update_dest)//, bool forward_in_backward)
         {
-            /*
-             * Conditions to enter this function:
-             * 1.this_vert->found_component = false
-             * 2.if scc_phase is forward traversal, this_edge->dest_vert = vid, and this_vert is vid's attr;
-             * 3.if scc_phase is backward traversal, this_edge->src = vid, and this vert is vid's attr;
-             *
-             * backword traversal: 
-             * if this is an edge:A->B, and A's component is little than B, 
-             * then after forward traversal, A has pass the component-root to B,
-             * now, if this is an edge B->A, we can see A<->B, so A,B share the 
-             * same component, so, after init to respring B's component,
-             * when backward traversal, we transfer A's component to B
-             */
             update<cc_vert_attr> *ret;
             ret = new update<cc_vert_attr>;
-            ret->dest_vert = vid;
-            //ret->dest_vert = this_edge->dest_vert;
+            if (forward_backward_phase == FORWARD_TRAVERSAL)
+                ret->dest_vert = this_edge->get_dest_value();
+            else
+            {
+                assert(forward_backward_phase == BACKWARD_TRAVERSAL);
+                ret->dest_vert = backward_update_dest;
+            }
             ret->vert_attr.component_root = this_vert->component_root;
             return ret;
 		}
 
-        static update<cc_vert_attr>* scatter_one_edge( u32_t vid, 
-            cc_vert_attr* this_vert, 
-            u32_t num_outedge, 
-            edge* this_edge ){return NULL;}
-
 		//gather one update "u" from outside
 		static void gather_one_update( u32_t vid, cc_vert_attr* this_vert, 
-                struct update<cc_vert_attr>* this_update, 
-                u32_t PHASE)
+                struct update<cc_vert_attr>* this_update) 
         {
             /*
              * just gather everything
@@ -65,19 +54,45 @@ class cc_program{
             if (this_update->vert_attr.component_root < this_vert->component_root)
             {
                 this_vert->component_root = this_update->vert_attr.component_root;
-                fog_engine<cc_program, cc_vert_attr, cc_vert_attr>::add_schedule(vid, PHASE);
+                fog_engine<cc_program<T>, cc_vert_attr, cc_vert_attr, T>::add_schedule(vid, CONTEXT_PHASE);
             }
 		}
 
-        static void gather_one_update( u32_t vid, cc_vert_attr * dest_vert_attr, update<cc_vert_attr> * u )
-        {}
-        static void set_finish_to_vert(u32_t vid, cc_vert_attr * this_vert){}
-        static bool judge_true_false(cc_vert_attr* va){return false;}
-        static bool judge_src_dest(cc_vert_attr *va_src, cc_vert_attr *va_dst, float edge_weight)
+        static void before_iteration()
         {
-            if (va_src->component_root < va_dst->component_root )
-                return true;
-            return false;
+            if (forward_backward_phase == FORWARD_TRAVERSAL)
+                PRINT_DEBUG("CC engine is running FORWARD_TRAVERSAL for the %d iteration, there are %d tasks to schedule!\n",
+                        loop_counter, num_tasks_to_sched);
+            else
+            {
+                assert(forward_backward_phase == BACKWARD_TRAVERSAL);
+                PRINT_DEBUG("CC engine is running BACKWARD_TRAVERSAL for the %d iteration, there are %d tasks to schedule!\n",
+                        loop_counter, num_tasks_to_sched);
+            }
+        }
+        static int after_iteration()
+        {
+            PRINT_DEBUG("CC engine has finished the %d iteration, there are %d tasks to schedule at next iteration!\n",
+                    loop_counter, num_tasks_to_sched);
+            if (num_tasks_to_sched == 0)
+                return ITERATION_STOP;
+            else
+                return ITERATION_CONTINUE;
+        }
+        static int finalize()
+        {
+            if (forward_backward_phase == FORWARD_TRAVERSAL)
+            {
+                forward_backward_phase = BACKWARD_TRAVERSAL;
+                loop_counter = 0;
+                CONTEXT_PHASE = 0;
+                return ENGINE_CONTINUE;
+            }
+            else
+            {
+                assert(forward_backward_phase == BACKWARD_TRAVERSAL);
+                return ENGINE_STOP;
+            }
         }
 
         static void print_result(u32_t vid, cc_vert_attr * va)
@@ -85,5 +100,28 @@ class cc_program{
             PRINT_DEBUG("CC:result[%d], component_root = %d\n",vid, va->component_root);
         }
 };
+/*
+ * forward_backward_phase is setup for backward algorithms,
+ * we will let the fog-engine read in-edge for backward algorithms.
+ * -1 for initilization, you can set in main() and finalize(). 
+ * FORWARD_TRAVERSAL = 0
+ * BACKWARD_TRAVERSAL = 1
+ */
+template <typename T>
+unsigned int cc_program<T>::num_tasks_to_sched = 0;
+
+template <typename T>
+int cc_program<T>::forward_backward_phase = FORWARD_BACKWARD_TRAVERSAL;
+
+template <typename T>
+int cc_program<T>::CONTEXT_PHASE = 0;
+
+template <typename T>
+int cc_program<T>::loop_counter = 0;
+
+
+template <typename T>
+bool cc_program<T>::init_sched = true;
+//if you want add_schedule when init(), please set this to be true~!
 
 #endif

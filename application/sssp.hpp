@@ -9,16 +9,22 @@ struct sssp_vert_attr{
 	float	value;
 };
 
+template <typename T>
 class sssp_program{
 	public:
-		static unsigned int start_vid;
+        static u32_t num_tasks_to_sched;
+		static u32_t start_vid;
+        static int forward_backward_phase;
+        static int CONTEXT_PHASE;
+        static int loop_counter;
+        static bool init_sched;
 		//init the vid-th vertex
-		static void init(u32_t vid, sssp_vert_attr* va, u32_t PHASE){
+		static void init(u32_t vid, sssp_vert_attr* va, index_vert_array<T> * vert_index){
 			if ( vid == start_vid ){
 				va->value = 0;
                 //PRINT_DEBUG("VID = %d\n", vid);
-				fog_engine<sssp_program, sssp_vert_attr, sssp_vert_attr>::add_schedule( vid, 
-                        PHASE /*phase:decide which buf to read and write */
+				fog_engine<sssp_program<T>, sssp_vert_attr, sssp_vert_attr, T>::add_schedule( vid, 
+                        CONTEXT_PHASE /*phase:decide which buf to read and write */
                         );
 			}
             else
@@ -27,68 +33,87 @@ class sssp_program{
             }
                 va->predecessor = (u32_t)-1;
 		}
-		static void init(u32_t vid, sssp_vert_attr * va, u32_t PHASE, u32_t init_forward_backward_phase, u32_t loop_counter,
-            index_vert_array * vert_index){}
-		static void init( u32_t vid, sssp_vert_attr* this_vert ){}
 
 		//scatter updates at vid-th vertex 
-		static update<sssp_vert_attr> *scatter_one_edge(u32_t vid,
+        /*
+         * params:
+         * 1.attribute
+         * 2.edge(type1, type2, in_edge)
+         * 3.update_src
+         */
+		static update<sssp_vert_attr> *scatter_one_edge(
                 sssp_vert_attr * this_vert,
-                edge * this_edge)
+                T * this_edge,
+                u32_t update_src)
         {
+            assert(forward_backward_phase == FORWARD_TRAVERSAL);
             update<sssp_vert_attr> *ret;
-            float scatter_weight = this_vert->value + this_edge->edge_weight;
-            u32_t scatter_predecessor = vid;
+            float scatter_weight = this_vert->value + this_edge->get_edge_value();
+            u32_t scatter_predecessor = update_src;
             ret = new update<sssp_vert_attr>; 
-            ret->dest_vert = this_edge->dest_vert;
+            ret->dest_vert = this_edge->get_dest_value();
             ret->vert_attr.value = scatter_weight;
             ret->vert_attr.predecessor = scatter_predecessor;
             return ret;
 		}
 
-
-        static update<sssp_vert_attr>* scatter_one_edge( u32_t vid, 
-            sssp_vert_attr* this_vert, 
-            u32_t num_outedge, 
-            edge* this_edge ){return NULL;}
-
 		//gather one update "u" from outside
 		static void gather_one_update( u32_t vid, sssp_vert_attr* this_vert, 
-                struct update<sssp_vert_attr>* this_update, 
-                u32_t PHASE)
+                struct update<sssp_vert_attr>* this_update)
         {
 			//compare the value of u, if it is smaller, absorb the update
             if (FLOAT_EQ(this_update->vert_attr.value, this_vert->value) == 0)
 			if( this_update->vert_attr.value < this_vert->value ){
 				*this_vert = this_update->vert_attr;
 				//should add schedule of {vid,0}, need api from engine
-				fog_engine<sssp_program, sssp_vert_attr, sssp_vert_attr>::add_schedule( vid, PHASE);
+				fog_engine<sssp_program<T>, sssp_vert_attr, sssp_vert_attr, T>::add_schedule( vid, CONTEXT_PHASE);
                     //PRINT_DEBUG("this_update.value = %f, this_vert->value = %f\n", this_update->vert_attr.value, this_vert->value);
 			}
 		}
 
-        static void gather_one_update( u32_t vid, sssp_vert_attr * dest_vert_attr, update<sssp_vert_attr> * u )
-        {}
-        static void set_finish_to_vert(u32_t vid, sssp_vert_attr * this_vert){}
-        static bool judge_true_false(sssp_vert_attr* va){return false;}
-        static bool judge_src_dest(sssp_vert_attr *va_src, sssp_vert_attr *va_dst, float edge_weight)
+        static void before_iteration()
         {
-            //if (FLOAT_EQ(va_src->value + edge_weight, va_dst->value ) == 0)
-            assert(va_src != NULL);
-            assert(va_dst != NULL);
-            assert(va_src->value >= 0);
-            assert(va_dst->value >= 0);
-            if (FLOAT_EQ((va_src->value + edge_weight), va_dst->value) == 0)
-                if ((va_src->value + edge_weight) < va_dst->value)
-                    return true;
-            return false;
+            PRINT_DEBUG("SSSP engine is running for the %d iteration, there are %d tasks to schedule!\n",
+                    loop_counter, num_tasks_to_sched);
         }
+        static int after_iteration()
+        {
+            PRINT_DEBUG("SSSP engine has finished the %d iteration, there are %d tasks to schedule at next iteration!\n",
+                    loop_counter, num_tasks_to_sched);
+            if (num_tasks_to_sched == 0)
+                return ITERATION_STOP;
+            else
+                return ITERATION_CONTINUE;
+        }
+        static int finalize()
+        {
+            return ENGINE_STOP;
+        }
+
         static void print_result(u32_t vid, sssp_vert_attr * va)
         {
             PRINT_DEBUG("SSSP:result[%d], predecessor = %d, value = %f\n", vid, va->predecessor, va->value);
         }
 };
 
-unsigned int sssp_program::start_vid = 0;
+template <typename T>
+unsigned int sssp_program<T>::num_tasks_to_sched = 0;
+
+template <typename T>
+unsigned int sssp_program<T>::start_vid = 0;
+
+template <typename T>
+int sssp_program<T>::forward_backward_phase = FORWARD_TRAVERSAL;
+
+template <typename T>
+int sssp_program<T>::CONTEXT_PHASE = 0;
+
+template <typename T>
+int sssp_program<T>::loop_counter = 0;
+
+
+template <typename T>
+bool sssp_program<T>::init_sched = false;
+//if you want add_schedule when init(), please set this to be true~!
 
 #endif

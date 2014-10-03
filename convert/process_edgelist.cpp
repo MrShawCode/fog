@@ -19,6 +19,7 @@ char line_buffer[MAX_LINE_LEN];
 FILE * in;
 FILE * out_txt;
 int edge_file, vert_index_file;
+int file_id;
 //hejian-debug
 unsigned long long line_no=0;
 unsigned int src_vert, dst_vert;
@@ -27,6 +28,7 @@ unsigned int src_vert, dst_vert;
 // and then, continue reading and populating.
 struct edge edge_buffer[EDGE_BUFFER_LEN];
 struct vert_index vert_buffer[VERT_BUFFER_LEN];
+struct type2_edge type2_edge_buffer[EDGE_BUFFER_LEN];
 
 /*
  * Regarding the vertex indexing:
@@ -43,7 +45,9 @@ struct vert_index vert_buffer[VERT_BUFFER_LEN];
 void process_edgelist( const char* input_file_name,
 		const char* edge_file_name, 
 		const char* vert_index_file_name,
-        const char * out_txt_file_name)
+        const char * out_txt_file_name,
+        bool with_type1,
+        bool with_in_edge)
 {
 	unsigned int recent_src_vert=0;
 	unsigned int vert_buffer_offset=0;
@@ -65,10 +69,10 @@ void process_edgelist( const char* input_file_name,
 
     //out_txt = fopen(out_txt_file_name, "wt+");
     //if (out_txt == NULL)
-    //{
-    //    printf("Cannot open the output txt file!\n");
-    //    exit(-1);
-    //}
+   // {
+   //     printf("Cannot open the output txt file!\n");
+   //     exit(-1);
+   // }
 
 	edge_file = open( edge_file_name, O_CREAT|O_WRONLY, S_IRUSR );
 	if( edge_file == -1 ){
@@ -85,6 +89,7 @@ void process_edgelist( const char* input_file_name,
 	}
 
 	memset( (char*)edge_buffer, 0, EDGE_BUFFER_LEN*sizeof(struct edge) );
+	memset( (char*)type2_edge_buffer, 0, EDGE_BUFFER_LEN*sizeof(struct type2_edge) );
 	memset( (char*)vert_buffer, 0, VERT_BUFFER_LEN*sizeof(struct vert_index) );
 
 	//parsing input file now.
@@ -110,16 +115,52 @@ void process_edgelist( const char* input_file_name,
 		//HANDLE THE EDGES
 		//fill in the edge buffer, as well as the vertex id buffer
 		edge_suffix = num_edges - (edge_buffer_offset * EDGE_BUFFER_LEN);
-		edge_buffer[edge_suffix].dest_vert = dst_vert;
-		edge_buffer[edge_suffix].edge_weight = produce_random_weight();
+        if (with_type1)
+        {
+            edge_buffer[edge_suffix].dest_vert = dst_vert;
+            edge_buffer[edge_suffix].edge_weight = produce_random_weight();
+        }
+        else
+        {
+            type2_edge_buffer[edge_suffix].dest_vert = dst_vert;
+        }
+
+
+        //add for in-edge if nessary
+        if (with_in_edge)
+        {
+            (*(buf1 + current_buf_size)).src_vert = src_vert;
+            (*(buf1 + current_buf_size)).dest_vert = dst_vert;
+            current_buf_size++;
+            if (current_buf_size == each_buf_size)
+            {
+                //call function to sort and write back
+                std::cout << "copy " << current_buf_size << " edges to radix sort process." << std::endl;
+                wake_up_sort(file_id, current_buf_size, false);
+                current_buf_size = 0;
+                file_id++;
+            }
+        }
+
         //write to out_txt file
-        
         //fprintf(out_txt, "%d\t%d\t%f\n", src_vert, dst_vert, edge_buffer[edge_suffix].edge_weight);
 
+        //write to tmp-in-edge file
+        //insert_sort_for_buf(src_vert, dst_vert);
+
 		if (edge_suffix == (EDGE_BUFFER_LEN-1)){
-			flush_buffer_to_file( edge_file, (char*)edge_buffer,
-				EDGE_BUFFER_LEN*sizeof(struct edge) );
-			memset( (char*)edge_buffer, 0, EDGE_BUFFER_LEN*sizeof(struct edge) );
+            if (with_type1)
+            {
+                flush_buffer_to_file( edge_file, (char*)edge_buffer,
+                    EDGE_BUFFER_LEN*sizeof(struct edge) );
+                memset( (char*)edge_buffer, 0, EDGE_BUFFER_LEN*sizeof(struct edge) );
+            }
+            else
+            {
+                flush_buffer_to_file( edge_file, (char*)type2_edge_buffer,
+                    EDGE_BUFFER_LEN*sizeof(struct type2_edge) );
+                memset( (char*)type2_edge_buffer, 0, EDGE_BUFFER_LEN*sizeof(struct type2_edge) );
+            }
 			edge_buffer_offset += 1;
 		}
 
@@ -142,9 +183,21 @@ void process_edgelist( const char* input_file_name,
 		}
 	}//while EOF
 
+    if (current_buf_size)
+    {
+        std::cout << "copy " << current_buf_size << " edges to radix sort process" << std::endl;
+        wake_up_sort(file_id, current_buf_size, true);
+        current_buf_size = 0;
+    }
+
 	//should flush the remaining data of both edge buffer and vertex index buffer to file!
-	flush_buffer_to_file( edge_file, (char*)edge_buffer,
+    if (with_type1)
+        flush_buffer_to_file( edge_file, (char*)edge_buffer,
 				EDGE_BUFFER_LEN*sizeof(edge) );
+    else
+        flush_buffer_to_file( edge_file, (char*)type2_edge_buffer,
+				EDGE_BUFFER_LEN*sizeof(type2_edge) );
+
 	flush_buffer_to_file( vert_index_file, (char*)vert_buffer,
 				VERT_BUFFER_LEN*sizeof(vert_index) );
 	//finished processing

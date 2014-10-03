@@ -9,27 +9,28 @@ struct pagerank_vert_attr{
 	float rank;
 };
 
+template <typename T>
 class pagerank_program{
 	public:
+        static u32_t num_tasks_to_sched;
 		static u32_t iteration_times;	//how many iterations will there be?
         static u32_t reduce_iters;
+        static int forward_backward_phase;
+        static int CONTEXT_PHASE;
+        static int loop_counter;
+        static bool init_sched;
 
 		//initialize each vertex of the graph
-		static void init( u32_t vid, pagerank_vert_attr* this_vert )
+		static void init( u32_t vid, pagerank_vert_attr* this_vert, index_vert_array<T> * vert_index )
 		{
 			this_vert->rank = 1.0;
 		}
-
-		static void init(u32_t vid, pagerank_vert_attr* va, u32_t PHASE, u32_t init_forward_backward_phase, u32_t loop_counter,
-            index_vert_array * vert_index){}
-
-		static void init(u32_t vid, pagerank_vert_attr* va, u32_t PHASE){}
 
 		//This member function is defined to process one of the out edges of vertex "vid".
 		//Explain the parameters:
 		// vid: the id of the vertex to be scattered.
 		// this_vert: point to the attribute of vertex to be scattered.
-		// num_outedge: the number of out edges of the vertex to be scattered.
+		// num_edge: the number of out edges of the vertex to be scattered.
 		// this_edge: the edge to be scattered this time. 
 		//Notes: 
 		// 1) this member fuction will be used to scatter ONE edge of a vertex.
@@ -38,22 +39,22 @@ class pagerank_program{
 		//	In that case, this member function should return NULL.
 		// 3) This function should be "re-enterable", therefore, no global variables
 		//	should be visited, or visited very carefully.
-		static update<pagerank_vert_attr>* scatter_one_edge( u32_t vid, 
-					pagerank_vert_attr* this_vert, 
-					u32_t num_outedge, 
-					edge* this_edge )
+		static update<pagerank_vert_attr>* scatter_one_edge(
+                    pagerank_vert_attr* this_vert, 
+					T * this_edge, // type1 or type2 , only available for FORWARD_TRAVERSAL
+					u32_t num_edges) 
 		{
+            if (forward_backward_phase == BACKWARD_TRAVERSAL)
+                PRINT_ERROR("forward_backward_phase must set to FORWARD_TRAVERSAL\n");
 			update<pagerank_vert_attr> * ret;
-			float scatter_weight = DAMPING_FACTOR *(this_vert->rank/num_outedge) + (1- DAMPING_FACTOR);
 			ret = new update<pagerank_vert_attr>;
-			ret->dest_vert = this_edge->dest_vert;
-			ret->vert_attr.rank = scatter_weight;
+            ret->dest_vert = this_edge->get_dest_value();
+
+            assert(forward_backward_phase == FORWARD_TRAVERSAL);
+            float scatter_weight = DAMPING_FACTOR *(this_vert->rank/num_edges) + (1- DAMPING_FACTOR);
+            ret->vert_attr.rank = scatter_weight;
 			return ret;
 		}
-
-		static update<pagerank_vert_attr> *scatter_one_edge(u32_t vid,
-        pagerank_vert_attr * this_vert,
-        edge * this_edge){return NULL;}
 
 		// Gather one update. Explain the parameters:
 		// vid: the vertex id of destination vertex;
@@ -65,30 +66,49 @@ class pagerank_program{
 			dest_vert_attr->rank += u->vert_attr.rank;
 		}
 
-		static void gather_one_update( u32_t vid, pagerank_vert_attr* this_vert, 
-                struct update<pagerank_vert_attr>* this_update, 
-                u32_t PHASE){}
-		static void set_finish_to_vert(u32_t vid, pagerank_vert_attr * this_vert){}
-        //special realization for pagerank
-		static bool judge_true_false(pagerank_vert_attr* va)
+        static void before_iteration()
         {
-            reduce_iters++;
-            if (reduce_iters < iteration_times)
-            {
-                //PRINT_DEBUG("iters = %d\n", reduce_iters);
-                return false;
-            }
-            assert(reduce_iters == iteration_times);
-            return true;
+            PRINT_DEBUG("PageRank engine is running for the %d iteration, there are %d tasks to schedule!\n",
+                    loop_counter, num_tasks_to_sched);
         }
-		static bool judge_src_dest(pagerank_vert_attr *va_src, pagerank_vert_attr *va_dst, float edge_weight){return false;}
+        static int after_iteration()
+        {
+            reduce_iters = iteration_times - loop_counter;
+            PRINT_DEBUG("Pagerank engine has finished the %d iteration!\n", loop_counter);
+            if (reduce_iters == 0)
+                return ITERATION_STOP;
+            return ITERATION_CONTINUE;
+        }
+        static int finalize()
+        {
+            PRINT_DEBUG("Pagerank engine stops!\n");
+            return ENGINE_STOP;
+        }
         static void print_result(u32_t vid, pagerank_vert_attr * va)
         {
             PRINT_DEBUG("Pagerank:result[%d], rank = %f\n", vid, va->rank);
         }
 };
 
-u32_t pagerank_program::iteration_times = 0;
-u32_t pagerank_program::reduce_iters = 0;
+template <typename T>
+u32_t pagerank_program<T>::num_tasks_to_sched = 0;
 
+template <typename T>
+u32_t pagerank_program<T>::iteration_times = 0;
+
+template <typename T>
+u32_t pagerank_program<T>::reduce_iters = 0;
+
+template <typename T>
+int pagerank_program<T>::forward_backward_phase = FORWARD_TRAVERSAL;
+
+template <typename T>
+int pagerank_program<T>::CONTEXT_PHASE = 0;
+
+template <typename T>
+int pagerank_program<T>::loop_counter = 0;
+
+template <typename T>
+bool pagerank_program<T>::init_sched = false;
+//if you want add_schedule when init(), please set this to be true~!
 #endif

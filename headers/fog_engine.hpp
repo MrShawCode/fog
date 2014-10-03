@@ -30,14 +30,6 @@
 #define THRESHOLD 0.8
 #define MMAP_THRESHOLD 0.02
 
-enum algorithm_fog_engine
-{
-    PAGERANK_ENGINE = 0,
-    SPMV_ENGINE,
-    SSSP_ENGINE,
-    SCC_ENGINE,
-    CC_ENGINE
-};
 enum global_target
 {
     GLOBAL_ENGINE = 0,
@@ -46,11 +38,11 @@ enum global_target
 };
 //A stands for the algorithm (i.e., ???_program)
 //VA stands for the vertex attribute
-template <typename A, typename VA, typename U>
+template <typename A, typename VA, typename U, typename T>
 class fog_engine{
 
         //global variables
-		static index_vert_array* vert_index;
+		static index_vert_array<T>* vert_index;
 
 		static segment_config<VA> *seg_config;
         char * buf_for_write;
@@ -63,7 +55,7 @@ class fog_engine{
         //io work queue
         static io_queue * fog_io_queue;
 
-        cpu_thread<A,VA,U> ** pcpu_threads;
+        cpu_thread<A,VA,U,T> ** pcpu_threads;
         boost::thread ** boost_pcpu_threads;
 
         u32_t * p_strip_count;
@@ -84,24 +76,32 @@ class fog_engine{
         VA *attr_array_header;
 
         int signal_of_partition_gather;
-        int  loop_counter;
         u32_t global_or_target;
-        u32_t alg_fog_engine;
 
 
 	public:
 
-		fog_engine(u32_t alg_engine, u32_t global_target)
+		fog_engine(u32_t global_target)
 		{
             //create the index array for indexing the out-going edges
-            vert_index = new index_vert_array;
+            vert_index = new index_vert_array<T>;
+
+            //in_edge * t_edge;
+            //for (u32_t i = 0; i <= gen_config.max_vert_id; i++)
+           // {
+            //    u32_t num_edges = vert_index->num_edges(i, IN_EDGE);
+            //    std::cout << "num_edges = " << num_edges << std::endl;
+            //    for (u32_t j = 0; j < num_edges; j++)
+            //    {
+            //        t_edge = vert_index->get_in_edge(i, j);
+            //        std::cout << "src->dst, value " << t_edge->src_vert << "->" << i << std::endl;
+            //    }
+            //}
+            //exit(-1);
             //verify_vertex_indexing();
             global_or_target = global_target;
-            alg_fog_engine = alg_engine;
 
             signal_of_partition_gather = 0;
-
-            loop_counter = 0;
 
             //allocate buffer for writting
             buf_for_write = (char *)map_anon_memory(gen_config.memory_size, true, true );
@@ -113,11 +113,11 @@ class fog_engine{
             fog_io_queue = new io_queue;
 
             //create cpu threads
-            pcpu_threads = new cpu_thread<A,VA,U> *[gen_config.num_processors];
+            pcpu_threads = new cpu_thread<A,VA,U,T> *[gen_config.num_processors];
             boost_pcpu_threads = new boost::thread *[gen_config.num_processors];
             for (u32_t i = 0; i < gen_config.num_processors; i++)
             {
-                pcpu_threads[i] = new cpu_thread<A,VA,U>(i, vert_index, seg_config);
+                pcpu_threads[i] = new cpu_thread<A,VA,U,T>(i, vert_index, seg_config);
                 if(i > 0)
                     boost_pcpu_threads[i] = new boost::thread(boost::ref(*pcpu_threads[i]));
             }
@@ -136,213 +136,91 @@ class fog_engine{
             reclaim_everything();
         }
 
-        int scc_forward_traversal()
-        {
-            u32_t CONTEXT_PHASE = 0; 
-            init_phase(CONTEXT_PHASE, FORWARD_TRAVERSAL, loop_counter);
-            if (cal_true_bits_size(CONTEXT_PHASE) == 0)
-                return 1;
-            u32_t forward_loop = 0;
-            //do while loop until convergence
-            while(1)
-            {
-                forward_loop++;
-                PRINT_WARNING("In SCC-algorithm forward-converged, SCC_FORWARD_SCATTER and UPDATE loop %d\n", forward_loop);
-                CONTEXT_PHASE = (forward_loop%2);
-                //PRINT_DEBUG("before normal-scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
-                scatter_fog_engine_state = SCC_FORWARD_SCATTER;
-                scatter_updates(1-CONTEXT_PHASE);
-                //cal_threshold();
-                //PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
-
-                gather_fog_engine_state = SCC_FORWARD_GATHER;
-                gather_updates(CONTEXT_PHASE, -1);
-                //cal_threshold();
-                //PRINT_DEBUG("after normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
-
-                if (cal_true_bits_size(CONTEXT_PHASE) == 0)
-                    break;
-            }
-            PRINT_DEBUG("Forward traversal finished\n");
-            return 0;
-        }
-        int scc_backward_traversal()
-        {
-            u32_t CONTEXT_PHASE = 0; 
-            //u32_t ret = 0;
-            //sched_task * t_task = new sched_task;
-            //t_task->start = 0;
-            //t_task->term = gen_config.max_vert_id;
-            //add_all_task_to_cpu(t_task);
-            //show_all_sched_tasks();
-
-            init_phase(CONTEXT_PHASE, BACKWARD_TRAVERSAL, loop_counter);
-            //print_attr_result();
-            //exit(-1);
-            if (cal_true_bits_size(CONTEXT_PHASE) == 0)
-                return 1;
-            u32_t backward_loop = 0;
-            //do while loop until convergence
-            while(1)
-            {
-                backward_loop++;
-                PRINT_WARNING("In SCC-algorithm backward-converged, SCC_BACKWARD_SCATTER and UPDATE loop %d\n", backward_loop);
-                CONTEXT_PHASE = (backward_loop%2);
-                //PRINT_DEBUG("before normal-scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
-                scatter_fog_engine_state = SCC_BACKWARD_SCATTER;
-                scatter_updates(1-CONTEXT_PHASE);
-                //cal_threshold();
-                //PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
-
-                gather_fog_engine_state = SCC_BACKWARD_GATHER;
-                gather_updates(CONTEXT_PHASE, -1);
-                //cal_threshold();
-                //PRINT_DEBUG("after normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
-                if (cal_true_bits_size(CONTEXT_PHASE) == 0)
-                    break;
-            }
-            PRINT_DEBUG("BACKward traversal finished\n");
-            return 0;
-        }
-		void operator() ()
+        void operator() ()
 		{
-            /*
-             * operator() for all algorithm
-             * SCC: first, do cc algorithm -> convergence, 
-             *      then, do backward traversal
-             * Pagerank:    
-             * SSSP:
-             */
-             u32_t CONTEXT_PHASE = 0;
-             loop_counter = 0;
-             if (alg_fog_engine == PAGERANK_ENGINE || alg_fog_engine == SPMV_ENGINE 
-                || global_or_target == GLOBAL_ENGINE)
+            
+             assert(A::CONTEXT_PHASE == 0);
+             assert(A::loop_counter == 0);
+             int ret;
+             //while loop to do iteration
+             int glo_loop = 0;
+             while(1)
              {
-                init_fog_engine_state = GLOBAL_INIT;
-                gather_fog_engine_state = GLOBAL_GATHER;
-                init_phase(CONTEXT_PHASE, -1, 0);
-                
-                if (alg_fog_engine == SPMV_ENGINE)
-                {
-                    scatter_fog_engine_state = SPMV_SCATTER;
-                    
-                    loop_counter++;
-                    PRINT_WARNING( "SPMV-enging starts, SCATTER and UPDATE loop %d\n", loop_counter);               
-                    scatter_updates(1-CONTEXT_PHASE);
-                    //cal_threshold();
-                    gather_updates(CONTEXT_PHASE, -1);
-                    //cal_threshold();
-                    PRINT_DEBUG("SPMV-ENGINE finished!\n");
-                }
-                else
-                {
+                 glo_loop++;
+                 PRINT_DEBUG("The %d global-loop\n", glo_loop);
+                 init_fog_engine_state = INIT;
+                 PRINT_DEBUG("forward_backward : %d\n", A::forward_backward_phase);
+                 init_phase(glo_loop);
+                 if (global_or_target == TARGET_ENGINE)
+                 {
+                    A::num_tasks_to_sched = cal_true_bits_size(A::CONTEXT_PHASE);
+                    if( A::num_tasks_to_sched == 0)
+                         break;
+                 }
+                 if (global_or_target == GLOBAL_ENGINE)
+                 {
                     scatter_fog_engine_state = GLOBAL_SCATTER;
-                   //start scatter & gather
-                    //while(loop_counter <= (int)(pagerank_program::iteration_times))
+                    gather_fog_engine_state = GLOBAL_GATHER;
+                   //start iteration
                     while(1)
                     {
-                        loop_counter++;
-                        PRINT_WARNING( "Pagerank engine starts, SCATTER and UPDATE loop %d\n", loop_counter);
-                        scatter_updates(1-CONTEXT_PHASE);
+                        A::loop_counter++;
+                        A::CONTEXT_PHASE = (A::loop_counter%2);
+                        A::num_tasks_to_sched = gen_config.max_vert_id + 1;
+                        A::before_iteration();
+                        scatter_updates(1-A::CONTEXT_PHASE);
                         //cal_threshold();
-                        gather_updates(CONTEXT_PHASE, -1);
+                        gather_updates(A::CONTEXT_PHASE, -1);
                         //cal_threshold();
-                        if ((A::judge_true_false(NULL)))
-                            break;
                         
-                    }
-                    PRINT_DEBUG("GLOBAL_ENGINE finished!\n");
-                }
-
-            }
-             else if (alg_fog_engine == SSSP_ENGINE || (global_or_target == TARGET_ENGINE && alg_fog_engine != CC_ENGINE))
-             {
-                init_fog_engine_state = TARGET_INIT;
-                scatter_fog_engine_state = TARGET_SCATTER;
-                gather_fog_engine_state = TARGET_GATHER;
-                init_phase(CONTEXT_PHASE, -1, 0);
-                while(1)
-                {
-                    loop_counter++;
-                    PRINT_WARNING("SSSP engine starts, SCATTER and UPDATE loop %d\n", loop_counter);
-                    CONTEXT_PHASE = (loop_counter%2);
-
-                    //PRINT_DEBUG("before normal-scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
-                    scatter_updates(1-CONTEXT_PHASE);
-                    //cal_threshold();
-                    //PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
-                    gather_updates(CONTEXT_PHASE, -1);
-                    //PRINT_DEBUG("after normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
-
-                    if (cal_true_bits_size(CONTEXT_PHASE) == 0)
-                        break;
-                }
-                PRINT_DEBUG("SSSP_ENGINE finished!\n");
-                print_attr_result(SSSP_ENGINE);
-             }
-             else if ((alg_fog_engine == SCC_ENGINE && global_or_target == BACKWARD_ENGINE) 
-                || (alg_fog_engine == CC_ENGINE && global_or_target == TARGET_ENGINE))
-             {
-                int ret = 0;
-                init_fog_engine_state = SCC_INIT;
-                if (alg_fog_engine == SCC_ENGINE)
-                {
-                    while(1)
-                    {
-                        loop_counter++;
-                        PRINT_WARNING("SCC_SCATTER and UPDATE loop %d\n", loop_counter);
-
-                        ret = scc_forward_traversal();
-                        //print_attr_result();
-                        if (ret == 1)
+                        ret = A::after_iteration();
+                        if (ret == ITERATION_STOP)
                             break;
-                        if (alg_fog_engine == SCC_ENGINE && global_or_target == BACKWARD_ENGINE)
-                        {
-                            ret = scc_backward_traversal();
-                            if (ret == 1)
-                            {
-                                break;                        
-                            }
-                        }
+                        assert(ret == ITERATION_CONTINUE);
                     }
-                }
-                else
-                {
-                    init_fog_engine_state = CC_INIT;
-                    scatter_fog_engine_state = CC_SCATTER;
-                    gather_fog_engine_state = CC_GATHER;
-                    init_phase(CONTEXT_PHASE, -1, 0);
+                    PRINT_DEBUG("Iteration finished!\n");
+                 }
+                 else
+                 {
+                    assert(global_or_target == TARGET_ENGINE);
+
+                    scatter_fog_engine_state = TARGET_SCATTER;
+                    gather_fog_engine_state = TARGET_GATHER;
                     while(1)
                     {
-                        loop_counter++;
-                        PRINT_WARNING("CC engine starts, SCATTER and UPDATE loop %d\n", loop_counter);
-                        CONTEXT_PHASE = (loop_counter%2);
-
-                        //PRINT_DEBUG("before normal-scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
-                        scatter_updates(1-CONTEXT_PHASE);
+                        A::loop_counter++;
+                        A::CONTEXT_PHASE = (A::loop_counter%2);
+                        A::num_tasks_to_sched = cal_true_bits_size(1-A::CONTEXT_PHASE);
+                        A::before_iteration();
+                        //PRINT_DEBUG("before normal-scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-A::CONTEXT_PHASE));
+                        scatter_updates(1-A::CONTEXT_PHASE);
+                        //after scatter
                         //cal_threshold();
-                        //PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
-                        gather_updates(CONTEXT_PHASE, -1);
-                        //PRINT_DEBUG("after normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
+                        //PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-A::CONTEXT_PHASE));
+                        gather_updates(A::CONTEXT_PHASE, -1);
+                        //PRINT_DEBUG("after normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(A::CONTEXT_PHASE));
 
-                        if (cal_true_bits_size(CONTEXT_PHASE) == 0)
+                        //after gather
+                        A::num_tasks_to_sched = cal_true_bits_size(A::CONTEXT_PHASE);
+
+                        ret = A::after_iteration();
+                        if (ret == ITERATION_STOP)
                             break;
+                        assert(ret == ITERATION_CONTINUE);
                     }
-                }
-                if (alg_fog_engine == CC_ENGINE && global_or_target == TARGET_ENGINE)
-                    print_attr_result(CC_ENGINE);
-                else
-                    print_attr_result(SCC_ENGINE);
-
-
-             }
-             else
-             {
-                PRINT_ERROR("You need to add some code in fog_engine!\n");
+                    PRINT_DEBUG("Iteration finished!\n");
+                 }
+                 ret = A::finalize();
+                 if (ret == ENGINE_STOP)
+                 {
+                     print_attr_result();
+                     break;
+                 }
+                 assert(ret == ENGINE_CONTINUE);
              }
         }
-
-        void print_attr_result(u32_t alg_engine)
+             
+        void print_attr_result()
         {
             u32_t i = 0;
             VA * attr_array_head = NULL;
@@ -362,20 +240,7 @@ class fog_engine{
             for (i = 0; i < 10000; i++)
             {
                 A::print_result(i, (VA*)&attr_array_head[i]);
-                //if (alg_engine == SCC_ENGINE)
-                //    PRINT_DEBUG("attr[%d].prev_root = %d, component_root = %d\n",i, attr_array_head[i].prev_root, attr_array_head[i].component_root);
-                //else if (alg_engine == CC_ENGINE)
-                //    PRINT_DEBUG("attr[%d].component_root = %d\n",i, attr_array_head[i].component_root);
-                //else if (alg_engine == SSSP_ENGINE)
-                //    PRINT_DEBUG("attr[%d].predecessor = %d, value = %f\n",i, attr_array_head[i].predecessor, attr_array_head[i].value);
-                //else if (alg_engine == PAGERANK_ENGINE)
-                //    PRINT_DEBUG("attr[%d].rank = %f\n",i, attr_array_head[i].rank);
-                //else if (alg_engine == SPMV_ENGINE)
-                //    PRINT_DEBUG("attr[%d].origin_value = %f, spmv_value = %f\n",i, attr_array_head[i].origin_value, attr_array_head[i].spmv_value);
             }
-            //if (alg_engine == SCC_ENGINE)
-           //     for (i = 0; i <= gen_config.max_vert_id; i++)
-           //         assert(attr_array_head[i].prev_root == attr_array_head[i].component_root);
         }
 
         u32_t cal_true_bits_size(u32_t CONTEXT_PHASE)
@@ -406,13 +271,13 @@ class fog_engine{
             PRINT_DEBUG( "==========================    That's All  ==========================\n" );
         }
         
-		void init_phase(u32_t CONTEXT_PHASE, int SCC_PHASE, u32_t loop_counter)
+		void init_phase(int global_loop)
 		{
 			//initilization loop, loop for seg_config->num_segment times,
 			// each time, invoke cpu threads that called A::init to initialize
 			// the value in the attribute buffer, dump the content to file after done,
 			// then swap the attribute buffer (between 0 and 1)
-			cpu_work<A,VA,U>* new_cpu_work = NULL;
+			cpu_work<A,VA,U,T>* new_cpu_work = NULL;
 			io_work * init_io_work = NULL;
 			char * buf_to_dump = NULL;
 			init_param * p_init_param=new init_param;
@@ -429,7 +294,7 @@ class fog_engine{
 				else buf_to_dump = (char*)seg_config->attr_buf1;
 
                 if (seg_config->num_segments > 1 && 
-                        ((loop_counter > 1) || (loop_counter == 1 && SCC_PHASE == BACKWARD_TRAVERSAL)))
+                        ((global_loop > 1) || (global_loop == 1 && A::forward_backward_phase == BACKWARD_TRAVERSAL)))
                 {
                     io_work * read_io_work = NULL;
                     u64_t offset = 0, read_size = 0;
@@ -453,19 +318,13 @@ class fog_engine{
 					p_init_param->attr_buf_head = buf_to_dump;
 					p_init_param->start_vert_id = seg_config->segment_cap*i;
 					p_init_param->num_of_vertices = seg_config->segment_cap;
-                    p_init_param->PHASE = CONTEXT_PHASE;
-                    p_init_param->scc_phase = SCC_PHASE;
-                    p_init_param->loop_counter = loop_counter;
-					new_cpu_work = new cpu_work<A,VA,U>( init_fog_engine_state, 
+					new_cpu_work = new cpu_work<A,VA,U,T>( init_fog_engine_state, 
 						(void*)p_init_param);
 				}else{	//the last segment, should be smaller than a full segment
 					p_init_param->attr_buf_head = buf_to_dump;
 					p_init_param->start_vert_id = seg_config->segment_cap*i;
 					p_init_param->num_of_vertices = gen_config.max_vert_id%seg_config->segment_cap+1;
-                    p_init_param->PHASE = CONTEXT_PHASE;
-                    p_init_param->scc_phase = SCC_PHASE;
-                    p_init_param->loop_counter = loop_counter;
-					new_cpu_work = new cpu_work<A,VA,U>( init_fog_engine_state, 
+					new_cpu_work = new cpu_work<A,VA,U,T>( init_fog_engine_state, 
 						(void*)p_init_param);
 				}
 				pcpu_threads[0]->work_to_do = new_cpu_work;
@@ -501,7 +360,7 @@ class fog_engine{
 
 				current_attr_segment++;
 			}
-            if (init_fog_engine_state == GLOBAL_INIT )
+            if (global_or_target == GLOBAL_ENGINE)
             {
                 sched_task *t_task = new sched_task;t_task->start = 0;
                 t_task->term = gen_config.max_vert_id;
@@ -533,7 +392,7 @@ class fog_engine{
         //-1:failure
         void set_signal_to_scatter(u32_t signal, u32_t processor_id, u32_t CONTEXT_PHASE)
         {
-            if (scatter_fog_engine_state == GLOBAL_SCATTER || scatter_fog_engine_state == SPMV_SCATTER)
+            if (scatter_fog_engine_state == GLOBAL_SCATTER)
             {
                 sched_list_context_data * my_context_data = seg_config->per_cpu_info_list[processor_id]->global_sched_manager;
                 my_context_data->signal_to_scatter = signal;
@@ -558,7 +417,7 @@ class fog_engine{
         int scatter_updates(u32_t CONTEXT_PHASE)
         {
             int ret = 0, unemployed = 0;
-            cpu_work<A, VA, U> * scatter_cpu_work = NULL;
+            cpu_work<A, VA, U, T> * scatter_cpu_work = NULL;
             scatter_param * p_scatter_param = new scatter_param;
 
             int phase = 0;
@@ -581,10 +440,8 @@ class fog_engine{
                 p_scatter_param->PHASE = CONTEXT_PHASE;
                 p_scatter_param->attr_array_head = (void*)attr_array_header;
             }*/
-            if (scatter_fog_engine_state == SCC_FORWARD_SCATTER)
-                gather_fog_engine_state = SCC_FORWARD_GATHER;
-            if (scatter_fog_engine_state == SCC_BACKWARD_SCATTER)
-                gather_fog_engine_state = SCC_BACKWARD_GATHER;
+            //if (scatter_fog_engine_state == SCC_FORWARD_SCATTER)
+            //    gather_fog_engine_state = TARGET_GATHER;
 
             do{
 
@@ -600,10 +457,10 @@ class fog_engine{
                     p_scatter_param->attr_array_head = (void*)attr_array_header;
                 }
 
-                //PRINT_DEBUG("scatter phase:%d\n", phase);
+                PRINT_DEBUG("sub-iteration:%d\n", phase);
                 //if (global_or_target != GLOBAL_ENGINE && ret == 1)
                     //PRINT_DEBUG("before context scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
-                scatter_cpu_work = new cpu_work<A, VA, U>(scatter_fog_engine_state, (void *)p_scatter_param);
+                scatter_cpu_work = new cpu_work<A, VA, U, T>(scatter_fog_engine_state, (void *)p_scatter_param);
                 pcpu_threads[0]->work_to_do = scatter_cpu_work;
                 (*pcpu_threads[0])();
 
@@ -694,7 +551,7 @@ class fog_engine{
                             do
                             {
                                 special_signal = 0;
-                                scatter_cpu_work = new cpu_work<A, VA, U>(scatter_fog_engine_state, (void *)p_scatter_param);
+                                scatter_cpu_work = new cpu_work<A, VA, U, T>(scatter_fog_engine_state, (void *)p_scatter_param);
                                 pcpu_threads[0]->work_to_do = scatter_cpu_work;
                                 (*pcpu_threads[0])();
 
@@ -710,7 +567,7 @@ class fog_engine{
                                     context_data * context_data_not_finished = CONTEXT_PHASE > 0 ?
                                         seg_config->per_cpu_info_list[cpu_unfinished[k]]->target_sched_manager->p_context_data1: 
                                         seg_config->per_cpu_info_list[cpu_unfinished[k]]->target_sched_manager->p_context_data0;
-                                    if (scatter_fog_engine_state == SCC_BACKWARD_SCATTER)
+                                    /*if (scatter_fog_engine_state == SCC_BACKWARD_SCATTER)
                                     {
                                         context_data * next_context_data_not_finished =(1- CONTEXT_PHASE) > 0 ?
                                             seg_config->per_cpu_info_list[cpu_unfinished[k]]->target_sched_manager->p_context_data1: 
@@ -723,7 +580,7 @@ class fog_engine{
                                         if (next_context_data_not_finished->per_max_vert_id < 
                                                 context_data_steal->next_steal_max_vert_id)
                                             next_context_data_not_finished->per_max_vert_id = context_data_steal->next_steal_max_vert_id;
-                                    }
+                                    }*/
                                     
                                     context_data_not_finished->per_bits_true_size -= context_data_steal->steal_bits_true_size;
                                     //PRINT_DEBUG("per_bits_not_continued = %d\n", 
@@ -756,8 +613,8 @@ class fog_engine{
                         //PRINT_DEBUG("After steal!\n");
                         //cal_threshold();
                         //PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-CONTEXT_PHASE));
-                        if (scatter_fog_engine_state == SCC_BACKWARD_SCATTER)
-                            gather_fog_engine_state = SCC_BACKWARD_GATHER;
+                        //if (scatter_fog_engine_state == SCC_BACKWARD_SCATTER)
+                        gather_fog_engine_state = TARGET_GATHER;
                         gather_updates(1-CONTEXT_PHASE, -1);
                         ret = 0;
                     }
@@ -778,7 +635,7 @@ class fog_engine{
                         u32_t special_signal;
                         do{
                             special_signal = 0;
-                            scatter_cpu_work = new cpu_work<A,VA, U>( scatter_fog_engine_state, (void*)p_scatter_param );
+                            scatter_cpu_work = new cpu_work<A,VA, U, T>( scatter_fog_engine_state, (void*)p_scatter_param );
 
                             pcpu_threads[0]->work_to_do = scatter_cpu_work;
                             (*pcpu_threads[0])();
@@ -1035,7 +892,7 @@ class fog_engine{
         //gather all updates in the update buffer.
         void gather_updates(u32_t CONTEXT_PHASE, int phase)
         {
-            cpu_work<A,VA,U>* gather_cpu_work = NULL;
+            cpu_work<A,VA,U,T>* gather_cpu_work = NULL;
             io_work* one_io_work = NULL;
             char * next_buffer = NULL, *read_buf = NULL;
             char * write_buf = NULL; 
@@ -1046,11 +903,10 @@ class fog_engine{
             if (seg_config->num_attr_buf == 1)
             {
                 p_gather_param->attr_array_head = (void*)seg_config->attr_buf0;
-                p_gather_param->PHASE = CONTEXT_PHASE;
                 p_gather_param->threshold = 0;
                 p_gather_param->strip_id = 0;
 
-                gather_cpu_work = new cpu_work<A, VA, U>(gather_fog_engine_state, (void *)p_gather_param);
+                gather_cpu_work = new cpu_work<A, VA, U,T>(gather_fog_engine_state, (void *)p_gather_param);
                 pcpu_threads[0]->work_to_do = gather_cpu_work;
                 (*pcpu_threads[0])();
 
@@ -1105,12 +961,11 @@ class fog_engine{
                         p_gather_param->threshold = 1;
                         //strip_id will tell the cpu-thread to handle which strip
                         p_gather_param->strip_id = (int)tmp_strip_id;
-                        p_gather_param->PHASE = CONTEXT_PHASE;
 
                         p_gather_param->attr_array_head = (void *)read_buf;
                         //PRINT_DEBUG("Earlier gather strip %d\n", tmp_strip_id);
 
-                        gather_cpu_work = new cpu_work<A, VA, U>(gather_fog_engine_state, (void *)p_gather_param);
+                        gather_cpu_work = new cpu_work<A, VA, U, T>(gather_fog_engine_state, (void *)p_gather_param);
                         pcpu_threads[0]->work_to_do = gather_cpu_work;
                         (*pcpu_threads[0])();
 
@@ -1192,7 +1047,6 @@ class fog_engine{
                         {
                             //PRINT_DEBUG("for strip %d, mmap_gather starts!\n", i);
                             p_gather_param->attr_array_head = (void *)attr_array_header;
-                            p_gather_param->PHASE = CONTEXT_PHASE;
                             p_gather_param->threshold = 0;
                             p_gather_param->strip_id = i;
                         
@@ -1219,7 +1073,6 @@ class fog_engine{
                             //PRINT_DEBUG("Finish reading the first segment!\n");
                             p_gather_param->threshold = 1;
                             p_gather_param->strip_id = (int)i;
-                            p_gather_param->PHASE = CONTEXT_PHASE;
                             p_gather_param->attr_array_head = (void *)read_buf;
 
                             buf_index++;
@@ -1227,7 +1080,7 @@ class fog_engine{
                         else 
                             PRINT_ERROR("return value is false!\n");
 
-                        gather_cpu_work = new cpu_work<A, VA, U>(gather_fog_engine_state, (void *)p_gather_param);
+                        gather_cpu_work = new cpu_work<A, VA, U, T>(gather_fog_engine_state, (void *)p_gather_param);
                         pcpu_threads[0]->work_to_do = gather_cpu_work;
                         (*pcpu_threads[0])();
 
@@ -1293,10 +1146,7 @@ class fog_engine{
                         }
                         else
                         {
-                            assert(gather_fog_engine_state == TARGET_GATHER
-                                || gather_fog_engine_state == SCC_FORWARD_GATHER
-                                || gather_fog_engine_state == SCC_BACKWARD_GATHER
-                                || gather_fog_engine_state == CC_GATHER);
+                            assert(gather_fog_engine_state == TARGET_GATHER);
                             context_data * my_context_data = (1-CONTEXT_PHASE) > 0 ? 
                                 seg_config->per_cpu_info_list[i]->target_sched_manager->p_context_data1
                                 : seg_config->per_cpu_info_list[i]->target_sched_manager->p_context_data0;
@@ -1674,9 +1524,8 @@ class fog_engine{
                         }
                         p_gather_param->threshold = 1;
                         p_gather_param->strip_id = tmp_strip_id;
-                        p_gather_param->PHASE = CONTEXT_PHASE;
 
-                        gather_cpu_work = new cpu_work<A, VA, U>(gather_fog_engine_state, (void *)p_gather_param);
+                        gather_cpu_work = new cpu_work<A, VA, U, T>(gather_fog_engine_state, (void *)p_gather_param);
                         pcpu_threads[0]->work_to_do = gather_cpu_work;
                         (*pcpu_threads[0])();
 
@@ -2618,25 +2467,25 @@ class fog_engine{
         }
 	
 };
-template <typename A, typename VA, typename U>
-index_vert_array * fog_engine<A, VA, U>::vert_index;
+template <typename A, typename VA, typename U, typename T>
+index_vert_array<T> * fog_engine<A, VA, U, T>::vert_index;
 
-template <typename A, typename VA, typename U>
-u32_t fog_engine<A, VA, U>::scatter_fog_engine_state;
+template <typename A, typename VA, typename U, typename T>
+u32_t fog_engine<A, VA, U, T>::scatter_fog_engine_state;
 
-template <typename A, typename VA, typename U>
-u32_t fog_engine<A, VA, U>::init_fog_engine_state;
+template <typename A, typename VA, typename U, typename T>
+u32_t fog_engine<A, VA, U, T>::init_fog_engine_state;
 
-template <typename A, typename VA, typename U>
-u32_t fog_engine<A, VA, U>::gather_fog_engine_state;
+template <typename A, typename VA, typename U, typename T>
+u32_t fog_engine<A, VA, U, T>::gather_fog_engine_state;
 
-template <typename A, typename VA, typename U>
-u32_t fog_engine<A, VA, U>::current_attr_segment;
+template <typename A, typename VA, typename U, typename T>
+u32_t fog_engine<A, VA, U, T>::current_attr_segment;
 
-template <typename A, typename VA, typename U>
-segment_config<VA> * fog_engine<A, VA, U>::seg_config;
+template <typename A, typename VA, typename U, typename T>
+segment_config<VA> * fog_engine<A, VA, U, T>::seg_config;
 
-template <typename A, typename VA, typename U>
-io_queue * fog_engine<A, VA, U>::fog_io_queue;
+template <typename A, typename VA, typename U, typename T>
+io_queue * fog_engine<A, VA, U, T>::fog_io_queue;
 
 #endif

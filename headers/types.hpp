@@ -16,6 +16,43 @@ struct edge{
     float edge_weight;
 }__attribute__ ((aligned(8)));                                     
 
+struct in_edge
+{
+    u32_t src_vert;
+    u32_t get_dest_value(){return (u32_t)-1;}
+    u32_t get_src_value(){return src_vert;}
+    float get_edge_value(){return (float)-1;}
+}__attribute__((aligned(4)));
+
+struct type1_edge
+{
+    u32_t dest_vert;
+    float edge_weight;
+    u32_t get_dest_value()
+    {
+        return dest_vert;
+    }
+    float get_edge_value()
+    {
+        return edge_weight;
+    }
+    u32_t get_src_value(){return (u32_t)-1;}
+}__attribute__((aligned(8)));
+
+struct type2_edge
+{
+    u32_t dest_vert;
+    u32_t get_dest_value()
+    {
+        return dest_vert;
+    }
+    float get_edge_value()
+    {
+        return (float)-1;
+    }
+    u32_t get_src_value(){return (u32_t)-1;}
+}__attribute__((aligned(4)));
+
 //vertex indexing (element in vertex array)
 struct vert_index{
     u64_t  offset;                                    
@@ -120,9 +157,21 @@ struct update_map_manager{
 	u32_t update_map_size;	//the size of update map: num_of_segments*num_of_processors. IN BYTES!!!
 }__attribute__ ((aligned(8)));
 
-enum scc_phase
+enum algorithm_phase
 {
     FORWARD_TRAVERSAL = 0,
-    BACKWARD_TRAVERSAL
+    BACKWARD_TRAVERSAL,
+    FORWARD_BACKWARD_TRAVERSAL
+};
+
+enum iteration_control
+{
+    ITERATION_STOP = 0,
+    ITERATION_CONTINUE
+};
+enum engine_control
+{
+    ENGINE_STOP = 0,
+    ENGINE_CONTINUE
 };
 #endif

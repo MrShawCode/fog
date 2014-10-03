@@ -23,7 +23,9 @@ float produce_random_weight()
 void process_adjlist(const char * input_file_name, 
 		const char * edge_file_name, 
 		const char * vert_index_file_name,
-        const char * out_txt_file_name)
+        const char * out_txt_file_name,
+        bool with_type1, 
+        bool with_in_edge)
 {
     char * res;
     unsigned int edge_buffer_offset = 0;
@@ -40,7 +42,7 @@ void process_adjlist(const char * input_file_name,
 	in = fopen( input_file_name, "r" );
 	if( in == NULL ){
 		printf( "Cannot open the input graph file!\n" );
-    	exit(1);
+		exit(1);
 	}
 
     //out_txt = fopen(out_txt_file_name, "wt+");
@@ -64,6 +66,7 @@ void process_adjlist(const char * input_file_name,
 
     memset((char *)vert_buffer, 0, VERT_BUFFER_LEN * sizeof(struct vert_index) );
 	memset((char *)edge_buffer, 0, EDGE_BUFFER_LEN * sizeof(struct edge) );
+    memset( (char*)type2_edge_buffer, 0, EDGE_BUFFER_LEN*sizeof(struct type2_edge) );
 
     while ((res = (char *) get_adjline()) != '\0')
     {
@@ -105,15 +108,43 @@ void process_adjlist(const char * input_file_name,
                 dst_vert = tmp_int;
                 num_edges++;
                 edge_suffix = num_edges - (edge_buffer_offset * EDGE_BUFFER_LEN);
-                edge_buffer[edge_suffix].dest_vert = dst_vert;
-                edge_buffer[edge_suffix].edge_weight = produce_random_weight();
+                if (with_type1)
+                {
+                    edge_buffer[edge_suffix].dest_vert = dst_vert;
+                    edge_buffer[edge_suffix].edge_weight = produce_random_weight();
+                }
+                else
+                    type2_edge_buffer[edge_suffix].dest_vert = dst_vert;
+
+                if (with_in_edge)
+                {
+                    (*(buf1 + current_buf_size)).src_vert = src_vert;
+                    (*(buf1 + current_buf_size)).dest_vert = dst_vert;
+                    current_buf_size++;
+                    if (current_buf_size == each_buf_size)
+                    {
+                        //call function to sort and write back
+                        std::cout << "copy " << current_buf_size << " edges to radix sort process." << std::endl;
+                        wake_up_sort(file_id, current_buf_size, false);
+                        current_buf_size = 0;
+                        file_id++;
+                    }
+                }
 
                 //fprintf(out_txt, "%d\t%d\t%f\n", src_vert, dst_vert, edge_buffer[edge_suffix].edge_weight);
 
 				num_out_edges ++;
                 if (edge_suffix == (EDGE_BUFFER_LEN - 1)){
-                    flush_buffer_to_file(edge_file, (char *)edge_buffer, EDGE_BUFFER_LEN * sizeof(edge));
-					memset( edge_buffer, 0, EDGE_BUFFER_LEN * sizeof(struct edge) );
+                    if (with_type1)
+                    {
+                        flush_buffer_to_file(edge_file, (char *)edge_buffer, EDGE_BUFFER_LEN * sizeof(edge));
+                        memset( (char*)edge_buffer, 0, EDGE_BUFFER_LEN * sizeof(struct edge) );
+                    }
+                    else
+                    {
+                        flush_buffer_to_file(edge_file, (char *)type2_edge_buffer, EDGE_BUFFER_LEN * sizeof(type2_edge));
+                        memset( (char*)type2_edge_buffer, 0, EDGE_BUFFER_LEN * sizeof(struct type2_edge) );
+                    }
 
                     edge_buffer_offset += 1;
                 }
@@ -143,8 +174,19 @@ void process_adjlist(const char * input_file_name,
 	
     }//while till EOF
 
+    if (current_buf_size)
+    {
+        std::cout << "copy " << current_buf_size << " edges to radix sort process." << std::endl;
+        wake_up_sort(file_id, current_buf_size, true);
+        current_buf_size = 0;
+    }
+
 	//flush the remaining data in vertex index and edge buffer to file
-    flush_buffer_to_file (edge_file, (char *)edge_buffer, EDGE_BUFFER_LEN * sizeof(edge));
+    if (with_type1)
+        flush_buffer_to_file (edge_file, (char *)edge_buffer, EDGE_BUFFER_LEN * sizeof(edge));
+    else
+        flush_buffer_to_file (edge_file, (char *)type2_edge_buffer, EDGE_BUFFER_LEN * sizeof(type2_edge));
+
     flush_buffer_to_file (vert_index_file, (char *)vert_buffer, VERT_BUFFER_LEN * sizeof(vert_index));
 
 	if (res != NULL)

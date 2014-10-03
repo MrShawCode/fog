@@ -41,12 +41,12 @@ COMPACT  | <4 byte dst, 4bytes weight>
 unsigned int min_vertex_id=100000, max_vertex_id=0;
 unsigned long long num_edges=0;
 unsigned long max_out_edges = 0;
+unsigned long long mem_size;
 std::ofstream desc_file;
 
 int main( int argc, const char**argv)
 {
 	unsigned int pos;
-    unsigned long long mem_size;
 	//input files
 	std::string input_graph_name, input_file_name, temp;
 	//output files
@@ -74,8 +74,34 @@ int main( int argc, const char**argv)
     out_txt_file_name = out_dir + input_file_name + "-type1.txt";
     
     mem_size = (unsigned long long)(vm["memory"].as<unsigned long>())*1024*1024;
-    std::cout << "mem_size = " << mem_size << std::endl;
-    //process_in_edge(mem_size, out_edge_file_name.c_str());
+    std::cout << "Pre-allocation memory size is " << mem_size/(1024*1024) << "(MB)" << std::endl;
+
+
+    std::string type1_or_type2 = vm["out-type"].as<std::string>();
+    std::string tmp_type1("type1"); 
+    std::cout << type1_or_type2 << std::endl;
+    bool with_type1 = false;
+    unsigned int type1_type2 = 2;
+    //bool value 1 means type2, 0 means type1
+    if (type1_or_type2.compare(tmp_type1) == 0)
+    {
+        std::cout << "type1 out edge will be generated!" << std::endl;
+        //this is type1, so need to add edge value
+        with_type1 = true;
+        type1_type2 = 1;
+    }
+        
+    bool with_in_edge = (bool)(vm["in-edge"].as<bool>());
+    //std::cout << with_in_edge << std::endl;
+
+    if (with_in_edge)
+    {
+        std::cout << "in-edge will be generated!" <<std::endl;
+        process_in_edge(mem_size, input_file_name.c_str(), out_dir.c_str());
+    }
+    //exit(-1);
+    //need to complete
+    //exit(-1);
 
 	snap_type = vm["type"].as<std::string>();
 
@@ -90,12 +116,14 @@ int main( int argc, const char**argv)
 		process_edgelist( input_graph_name.c_str(), 
 				out_edge_file_name.c_str(), 
 				out_index_file_name.c_str() ,
-                out_txt_file_name.c_str());
+                out_txt_file_name.c_str(),
+                with_type1, with_in_edge);
 	else if (snap_type == "adjlist" )
 		process_adjlist( input_graph_name.c_str(), 
 				out_edge_file_name.c_str(), 
 				out_index_file_name.c_str(),
-                out_txt_file_name.c_str());
+                out_txt_file_name.c_str(),
+                with_type1, with_in_edge);
 	else{
 		std::cout << "input parameter (type) error!\n";
 		exit( -1 );
@@ -108,10 +136,14 @@ int main( int argc, const char**argv)
 	desc_file << "max_vertex_id = " << max_vertex_id << "\n";
 	desc_file << "num_of_edges = " << num_edges << "\n";
 	desc_file << "max_out_edges = " << max_out_edges << "\n";
+    desc_file << "edge_type = " << type1_type2 << "\n";
+    desc_file << "with_in_edge = " << with_in_edge << "\n";
     desc_file.close();
 
     //process in-edge
-    //process_in_edge(mem_size, out_edge_file_name.c_str());
+    if (with_in_edge == true)
+    {
+    }
 }
 
 
