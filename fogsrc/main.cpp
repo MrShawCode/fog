@@ -16,6 +16,7 @@
 #include "../application/scc.hpp"
 #include "../application/spmv.hpp"
 #include "../application/cc.hpp"
+#include "../application/bfs.hpp"
 #include "bitmap.hpp"
 
 //boost::property_tree::ptree pt;
@@ -36,6 +37,13 @@ void start_engine(std::string prog_name)
 		//ready and run
         fog_engine<sssp_program<T>, sssp_vert_attr, sssp_vert_attr, T> *eng;
         (*(eng = new fog_engine<sssp_program<T>, sssp_vert_attr, sssp_vert_attr, T>(TARGET_ENGINE)))();
+        delete eng;
+	}else if( prog_name == "bfs" ){
+		bfs_program<T>::bfs_root = vm["bfs::bfs_root"].as<unsigned long>();
+		PRINT_DEBUG( "bfs_program bfs_root = %d\n", bfs_program<T>::bfs_root);
+		//ready and run
+        fog_engine<bfs_program<T>, bfs_vert_attr, bfs_vert_attr, T> *eng;
+        (*(eng = new fog_engine<bfs_program<T>, bfs_vert_attr, bfs_vert_attr, T>(TARGET_ENGINE)))();
         delete eng;
 	}else if( prog_name == "pagerank" ){
 

@@ -42,10 +42,10 @@ static void setup_options_fog(int argc, const char* argv[])
 	( "graph,g", boost::program_options::value<std::string>()->required(), 
 		"The name of the graph to be processed (i.e., the .desc file).")
 	( "application,a", boost::program_options::value<std::string>()->required(), 
-		"The name of the application, e.g., pagerank, sssp, bfs.")
+		"The name of the application, e.g., pagerank, sssp, bfs, cc, spmv, scc.")
     ("in-edge,i", boost::program_options::value<bool>()->required(),"With or without in-edge, backtrace-algorithm(WCC, SCC) must be true!")
 	//following are system parameters
-    ( "memory,m", boost::program_options::value<unsigned long>()->default_value(512), //default 1GB
+    ( "memory,m", boost::program_options::value<unsigned long>()->default_value(1024), //default 1GB
      "Size of the buffer for writing (unit is MB)")
     ( "processors,p",  boost::program_options::value<unsigned long>()->default_value(4),
       "Number of processors")
@@ -56,8 +56,10 @@ static void setup_options_fog(int argc, const char* argv[])
     ("pagerank::niters", boost::program_options::value<unsigned long>()->default_value(10),
      "number of iterations for pagerank.")
 	// sssp
-    ("sssp::source", boost::program_options::value<unsigned long>()->default_value(12),
-     "source vertex id for sssp");
+    ("sssp::source", boost::program_options::value<unsigned long>()->default_value(0),
+     "source vertex id for sssp")
+    ("bfs::bfs_root", boost::program_options::value<unsigned long>()->default_value(0),
+     "root id for bfs");
 	// belief propagation
     //("spmv::niters", boost::program_options::value<unsigned long>()->default_value(10),
     // "number of iterations for spmv");

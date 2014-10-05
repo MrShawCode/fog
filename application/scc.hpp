@@ -9,7 +9,7 @@ struct scc_vert_attr{
 	u32_t prev_root;
 	u32_t component_root;
     bool found_component;
-};
+}__attribute__((__packed__));
 
 struct scc_update
 {
