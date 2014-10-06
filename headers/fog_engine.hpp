@@ -17,6 +17,8 @@
 #include <fcntl.h>
 #include <stdarg.h>
 
+#include <time.h>
+
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
@@ -78,7 +80,8 @@ class fog_engine{
         int signal_of_partition_gather;
         u32_t global_or_target;
 
-
+        time_t start_time;
+        time_t end_time;
 	public:
 
 		fog_engine(u32_t global_target)
@@ -138,7 +141,8 @@ class fog_engine{
 
         void operator() ()
 		{
-            
+             start_time = time(NULL);
+
              assert(A::CONTEXT_PHASE == 0);
              assert(A::loop_counter == 0);
              int ret;
@@ -218,6 +222,9 @@ class fog_engine{
                  }
                  assert(ret == ENGINE_CONTINUE);
              }
+        
+             end_time = time(NULL);
+             PRINT_DEBUG( "run time = %.f seconds\n", difftime(end_time, start_time));
         }
              
         void print_attr_result()

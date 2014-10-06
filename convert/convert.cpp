@@ -73,9 +73,6 @@ int main( int argc, const char**argv)
 
     out_txt_file_name = out_dir + input_file_name + "-type1.txt";
     
-    mem_size = (unsigned long long)(vm["memory"].as<unsigned long>())*1024*1024;
-    std::cout << "Pre-allocation memory size is " << mem_size/(1024*1024) << "(MB)" << std::endl;
-
 
     std::string type1_or_type2 = vm["out-type"].as<std::string>();
     std::string tmp_type1("type1"); 
@@ -92,11 +89,13 @@ int main( int argc, const char**argv)
     }
         
     bool with_in_edge = (bool)(vm["in-edge"].as<bool>());
-    //std::cout << with_in_edge << std::endl;
+    std::cout << with_in_edge << std::endl;
 
     if (with_in_edge)
     {
         std::cout << "in-edge will be generated!" <<std::endl;
+        mem_size = (unsigned long long)4096*1024*1024;
+        std::cout << "Pre-allocation memory size is " << mem_size/(1024*1024) << "(MB)" << std::endl;
         process_in_edge(mem_size, input_file_name.c_str(), out_dir.c_str());
     }
     //exit(-1);

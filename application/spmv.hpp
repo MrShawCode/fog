@@ -27,7 +27,7 @@ class spmv_program{
 		//initialize each vertex of the graph
 		static void init( u32_t vid, spmv_vert_attr* this_vert, index_vert_array<T> * vert_index )
 		{
-			this_vert->origin_value = (float)1.0 * vid;
+			this_vert->origin_value = (float)1.0;
             this_vert->spmv_value = (float)0.0;
 		}
 

@@ -29,7 +29,6 @@ extern FILE * log_file;
 template <typename T>
 void start_engine(std::string prog_name)
 {
-    
     std::cout << "sizeof T = " << sizeof(T) << std::endl;
     if( prog_name == "sssp" ){
 		sssp_program<T>::start_vid = vm["sssp::source"].as<unsigned long>();
@@ -39,13 +38,12 @@ void start_engine(std::string prog_name)
         (*(eng = new fog_engine<sssp_program<T>, sssp_vert_attr, sssp_vert_attr, T>(TARGET_ENGINE)))();
         delete eng;
 	}else if( prog_name == "bfs" ){
-		bfs_program<T>::bfs_root = vm["bfs::bfs_root"].as<unsigned long>();
-		PRINT_DEBUG( "bfs_program bfs_root = %d\n", bfs_program<T>::bfs_root);
-		//ready and run
+        bfs_program<T>::bfs_root = vm["bfs::bfs_root"].as<unsigned long>();
+        PRINT_DEBUG( "bfs_program bfs_root = %d\n", bfs_program<T>::bfs_root);
         fog_engine<bfs_program<T>, bfs_vert_attr, bfs_vert_attr, T> *eng;
         (*(eng = new fog_engine<bfs_program<T>, bfs_vert_attr, bfs_vert_attr, T>(TARGET_ENGINE)))();
         delete eng;
-	}else if( prog_name == "pagerank" ){
+    }else if( prog_name == "pagerank" ){
 
 		pagerank_program<T>::iteration_times = vm["pagerank::niters"].as<unsigned long>();
 		PRINT_DEBUG( "pagerank_program iteration_times = %d\n", pagerank_program<T>::iteration_times );
@@ -141,7 +139,4 @@ int main( int argc, const char**argv)
         std::cout << "the edge type is type2" << std::endl;
         start_engine<type2_edge>(prog_name_app);
     }
-
 }
-
-
