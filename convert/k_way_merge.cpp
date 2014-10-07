@@ -257,11 +257,11 @@ struct merge_sink
         bufsize_bytes = bufsize_bytes;
         file_name = file_name;
         assert(bufsize_bytes % sizeof(tmp_in_edge) == 0);
-        tmp_txt_file = fopen(file_name.c_str(), "wt+");
-        if (tmp_txt_file == NULL)
-        {
-            assert(false);
-        }
+        //tmp_txt_file = fopen(file_name.c_str(), "wt+");
+        //if (tmp_txt_file == NULL)
+        //{
+        //    assert(false);
+        //}
 
         buffer = (tmp_in_edge *) malloc(bufsize_bytes);
         buf_edges = bufsize_bytes / sizeof(tmp_in_edge);
@@ -338,7 +338,7 @@ struct merge_sink
 
     void finish()
     {
-        fclose(tmp_txt_file);
+        //fclose(tmp_txt_file);
         free(buffer);
         flush_buffer_to_file( in_edge_file, (char*)in_edge_buffer,
                 EDGE_BUFFER_LEN*sizeof(in_edge) );
