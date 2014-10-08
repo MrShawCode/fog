@@ -712,8 +712,8 @@ class fog_engine{
             {
                 my_context_data = CONTEXT_PHASE > 0 ? seg_config->per_cpu_info_list[i]->target_sched_manager->p_context_data1
                     : seg_config->per_cpu_info_list[i]->target_sched_manager->p_context_data0;
-                if(my_context_data->per_bits_true_size != 0)
-                    PRINT_ERROR("Per_bits_true_size != 0, impossible!\n");
+                //if(my_context_data->per_bits_true_size != 0)
+                //    PRINT_ERROR("Per_bits_true_size != 0, impossible!\n");
                     //PRINT_ERROR("Per_bits_true_size != 0, impossible!\n");
                 if (A::set_forward_backward == true && A::forward_backward_phase == FORWARD_TRAVERSAL)
                 {
