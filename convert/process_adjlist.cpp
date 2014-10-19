@@ -74,37 +74,44 @@ void process_adjlist(const char * input_file_name,
 	    unsigned int tmp_int = 0;
 	    unsigned int break_signal = 0;
 		unsigned int num_out_edges = 0;
+        unsigned int origin_num_edges = 0;
         while (res[0] != '#' && res[index] != '\0')
         {
             sscanf((res + index), "%d[^ ]", &tmp_int);
             
             if (index == 0){//means this is the src_vert
                 src_vert = tmp_int;
-
-                if (src_vert < recent_src_vert){
-                    printf("Edge order is not correct at line:%lld.Edge processing terminated.\n", num_edges);
-                    fclose(in);
-                    exit(-1);
-                }
-                if (src_vert < min_vertex_id) min_vertex_id = src_vert;
-                if (src_vert > max_vertex_id) max_vertex_id = src_vert;
-                //printf("src_vert = %d, and all these edges start from this node!\n", src_vert);
-                if (src_vert >= (vert_buffer_offset + 1) * VERT_BUFFER_LEN){
-                    vert_buffer_offset += 1;
-                    //flush the vertex index array to file.
-                    flush_buffer_to_file(vert_index_file, (char *)vert_buffer, VERT_BUFFER_LEN * sizeof(vert_index));
-                    memset((char *)vert_buffer, 0, VERT_BUFFER_LEN * sizeof(struct vert_index));
-                }
-
-                vert_suffix = src_vert - vert_buffer_offset * VERT_BUFFER_LEN;
-
-                vert_buffer[vert_suffix].offset = num_edges + 1;
-
-                //old_vert_buffer[vert_suffix].offset = num_edges + 1;
-                //old_vert_buffer[vert_suffix].vert_id = src_vert;
             }
+            else if (num_out_edges == 0 && index != 0 && origin_num_edges == 0)
+            {
+                assert(index >= 2);
+                origin_num_edges = tmp_int;
+                if (origin_num_edges != 0)
+                {
+                    if (src_vert < recent_src_vert){
+                        printf("Edge order is not correct at line:%lld.Edge processing terminated.\n", num_edges);
+                        fclose(in);
+                        exit(-1);
+                    }
+                    if (src_vert < min_vertex_id) min_vertex_id = src_vert;
+                    if (src_vert > max_vertex_id) max_vertex_id = src_vert;
+                    //printf("src_vert = %d, and all these edges start from this node!\n", src_vert);
+                    if (src_vert >= (vert_buffer_offset + 1) * VERT_BUFFER_LEN){
+                        vert_buffer_offset += 1;
+                        //flush the vertex index array to file.
+                        flush_buffer_to_file(vert_index_file, (char *)vert_buffer, VERT_BUFFER_LEN * sizeof(vert_index));
+                        memset((char *)vert_buffer, 0, VERT_BUFFER_LEN * sizeof(struct vert_index));
+                    }
 
-            if (index > 0){//means this is the dest_node of the src_node
+                    vert_suffix = src_vert - vert_buffer_offset * VERT_BUFFER_LEN;
+
+                    vert_buffer[vert_suffix].offset = num_edges + 1;
+                }
+            }
+            else
+            {
+            //if (index > 0){//means this is the dest_node of the src_node
+                assert(index >= 4);
                 dst_vert = tmp_int;
                 num_edges++;
                 edge_suffix = num_edges - (edge_buffer_offset * EDGE_BUFFER_LEN);
@@ -168,6 +175,11 @@ void process_adjlist(const char * input_file_name,
             if (break_signal == 1)
                 break;
         }//while till EOL
+        if (num_out_edges != origin_num_edges)
+        {
+            printf("num_out_edges = %d, origin_num_edges = %d\n", num_out_edges, origin_num_edges);
+        }
+        assert(num_out_edges == origin_num_edges);
         
         recent_src_vert = src_vert;
 		if( num_out_edges > max_out_edges ) max_out_edges = num_out_edges;

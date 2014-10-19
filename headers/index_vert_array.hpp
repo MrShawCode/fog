@@ -218,6 +218,11 @@ unsigned int index_vert_array<T>::num_edges( unsigned int vid, int mode )
             end_edge = gen_config.num_edges;
         else{
             for( u32_t i=vid+1; i<=gen_config.max_vert_id; i++ ){
+                if (i == gen_config.max_vert_id)
+                {
+                    end_edge = gen_config.num_edges;
+                    break;
+                }
                 if( vert_array_header[i].offset != 0L ){
                     end_edge = vert_array_header[i].offset -1;
                     break;
@@ -243,6 +248,11 @@ unsigned int index_vert_array<T>::num_edges( unsigned int vid, int mode )
             end_edge = gen_config.num_edges;
         else{
             for( u32_t i=vid+1; i<=gen_config.max_vert_id; i++ ){
+                if (i == gen_config.max_vert_id)
+                {
+                    end_edge = gen_config.num_edges;
+                    break;
+                }
                 if( in_vert_array_header[i].offset != 0L ){
                     end_edge = in_vert_array_header[i].offset -1;
                     break;

@@ -482,7 +482,7 @@ struct cpu_work{
                 for (u32_t i = min_vert; i <= max_vert; i += gen_config.num_processors)
                 {
                     
-                    num_out_edges = vert_index->num_out_edges(i);
+                    num_out_edges = vert_index->num_edges(i, OUT_EDGE);
 
                     if (num_out_edges == 0)
                     {
