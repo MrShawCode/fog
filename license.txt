@@ -31,24 +31,9 @@
    
  History:					 
  <contributor>     <time>        <version>       <desc>                   <e-mail/qq>
- Zhiyuan Shao	   2013/12/01					Project proposal		zyshao@hust.edu.cn
- Zhiyuan Shao    														zyshao@hust.edu.cn
- Jian He 		  														122761657
- Huiming Lv		   2014/?/?	     0.1			The first release       626569833
+ Zhiyuan Shao      2013/12/01                  Project proposal         zyshao@hust.edu.cn
+ Zhiyuan Shao                                                           zyshao@hust.edu.cn
+ Jian He                                                                122761657
+ Huiming Lv        2014/?/?        0.1         The first release        626569833
 					 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
