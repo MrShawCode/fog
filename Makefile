@@ -20,7 +20,7 @@ TEST_SRC = test.o
 TEST_OBJS= $(addprefix $(OBJECT_DIR)/, $(TEST_SRC))
 TEST_TARGET=$(BINARY_DIR)/test
 
-FOG_SRC = main.o
+FOG_SRC = main.o fog_engine.o bitmap.o disk_thread.o index_vert_array.o cpu_thread.o
 FOG_HEADERS = types.hpp config.hpp print_debug.hpp disk_thread.hpp index_vert_array.hpp fog_engine.hpp options_utils.h config_parse.h bitmap.hpp cpu_thread.hpp 
 FOG_REL_HEADERS = $(addprefix $(HEADERS_PATH)/, $(FOG_HEADERS))
 FOG_OBJS= $(addprefix $(OBJECT_DIR)/, $(FOG_SRC))
@@ -72,8 +72,21 @@ $(TEST_OBJS): |$(OBJECT_DIR)
 $(TEST_TARGET): |$(BINARY_DIR)
 
 #following lines defined for fog
+
 $(OBJECT_DIR)/main.o:fogsrc/main.cpp $(FOG_REL_HEADERS)
 	$(CXX) $(CXXFLAGS) -c -o $@ fogsrc/main.cpp
+
+#bitmap.cpp...by hejian
+$(OBJECT_DIR)/fog_engine.o:fogsrc/fog_engine.cpp $(FOG_REL_HEADERS)
+	$(CXX) $(CXXFLAGS) -c -o $@ fogsrc/fog_engine.cpp
+$(OBJECT_DIR)/bitmap.o:fogsrc/bitmap.cpp $(FOG_REL_HEADERS)
+	$(CXX) $(CXXFLAGS) -c -o $@ fogsrc/bitmap.cpp
+$(OBJECT_DIR)/disk_thread.o:fogsrc/disk_thread.cpp $(FOG_REL_HEADERS)
+	$(CXX) $(CXXFLAGS) -c -o $@ fogsrc/disk_thread.cpp
+$(OBJECT_DIR)/index_vert_array.o:fogsrc/index_vert_array.cpp $(FOG_REL_HEADERS)
+	$(CXX) $(CXXFLAGS) -c -o $@ fogsrc/index_vert_array.cpp
+$(OBJECT_DIR)/cpu_thread.o:fogsrc/cpu_thread.cpp $(FOG_REL_HEADERS)
+	$(CXX) $(CXXFLAGS) -c -o $@ fogsrc/cpu_thread.cpp
 
 $(BINARY_DIR)/fog: $(FOG_OBJS)
 	$(CXX) -o $@ $(FOG_OBJS) $(SYSLIBS)

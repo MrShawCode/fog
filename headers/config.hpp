@@ -1,6 +1,7 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+#include <iostream>
 #include "types.hpp"
 #include "print_debug.hpp"
 

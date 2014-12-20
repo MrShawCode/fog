@@ -1,15 +1,18 @@
-#include "options_utils.h"
-#include "config_parse.h"
 #include <cassert>
 #include <fstream>
 #include <stdlib.h>
 
+#include "fog_engine.hpp"
+#include "fog_engine.cpp"
+#include "print_debug.hpp"
+#include "options_utils.h"
+#include "config_parse.h"
 #include "config.hpp"
 #include "index_vert_array.hpp"
+#include "index_vert_array.cpp"
+#include "bitmap.hpp"
 //#include "fog_engine_scc.hpp"
-#include "fog_engine.hpp"
 //#include "fog_engine_target.hpp"
-#include "print_debug.hpp"
 
 #include "../application/sssp.hpp"
 #include "../application/pagerank.hpp"
@@ -17,14 +20,13 @@
 #include "../application/spmv.hpp"
 #include "../application/cc.hpp"
 #include "../application/bfs.hpp"
-#include "bitmap.hpp"
 
 //boost::property_tree::ptree pt;
 //boost::program_options::options_description desc;
 //boost::program_options::variables_map vm; 
 
 struct general_config gen_config;
-extern FILE * log_file;
+FILE * log_file;
 
 template <typename T>
 void start_engine(std::string prog_name)
@@ -92,9 +94,9 @@ int main( int argc, const char**argv)
     std::cout << "sizeof type1_edge = " << sizeof(type1_edge) << std::endl;
     std::cout << "sizeof type2_edge = " << sizeof(type2_edge) << std::endl;
     //add by  hejian
-    if (!(log_file = fopen(LOG_FILE, "w"))) //open file for mode
+    if (!(log_file = fopen(LOG_FILE_NAME, "w"))) //open file for mode
     {
-        printf("failed to open %s.\n", LOG_FILE);
+        printf("failed to open %s.\n", LOG_FILE_NAME);
         exit(666);
     }
 
