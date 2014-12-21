@@ -1,3 +1,11 @@
+/**************************************************************************************************
+ * Authors: 
+ *   Zhiyuan Shao
+ *
+ * Routines:
+ *   Disk threads.
+ *************************************************************************************************/
+
 #include <unistd.h>
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <boost/thread.hpp>
@@ -210,3 +218,4 @@ void io_queue::wait_for_io_task( io_work * task_to_wait )
         if( task_to_wait->finished ) break;
     };
 }
+

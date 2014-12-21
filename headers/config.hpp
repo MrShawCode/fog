@@ -1,3 +1,11 @@
+/**************************************************************************************************
+ * Authors: 
+ *   Zhiyuan Shao, Jian He
+ *
+ * Declaration:
+ *   Data structures for segment/strip/partition organization.
+ *************************************************************************************************/
+
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 

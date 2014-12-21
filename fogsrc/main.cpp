@@ -1,3 +1,11 @@
+/**************************************************************************************************
+ * Authors: 
+ *   Zhiyuan Shao, Jian He
+ *
+ * Routines:
+ *   Entrance of the program.
+ *************************************************************************************************/
+
 #include <cassert>
 #include <fstream>
 #include <stdlib.h>
@@ -142,3 +150,4 @@ int main( int argc, const char**argv)
         start_engine<type2_edge>(prog_name_app);
     }
 }
+

@@ -1,3 +1,11 @@
+/**************************************************************************************************
+ * Authors: 
+ *   Zhiyuan Shao, Jian He
+ *
+ * Declaration:
+ *   Parsing program parameters and config files (of the input graph).
+ *************************************************************************************************/
+
 #ifndef _CONFIG_PARSE_
 #define _CONFIG_PARSE_
 #include <string>

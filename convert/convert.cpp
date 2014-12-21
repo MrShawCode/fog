@@ -1,3 +1,11 @@
+/**************************************************************************************************
+ * Authors: 
+ *   Zhiyuan Shao, Jian He
+ *
+ * Routines:
+ *   Graph format conversion.
+ *************************************************************************************************/
+
 /*
  * The purpose of this small utility program is to convert existing snap (edge list or adj list) file to binary format.
  * This program will generate three output files:

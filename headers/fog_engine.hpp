@@ -1,12 +1,11 @@
-//fog_engine is defined for scced queries, such as SSSP.
-// characters of fog_engine:
-// 1) Schedule list with dynamic size
-// 2) need to consider merging and (possibly) the scheduled tasks
-// 3) As the schedule list may grow dramatically, the system may need to consider dump 
-//	(partial) of the list to disk (to alieviate pressure on buffer).
-//Also:
-// 1) Schedule list with fixed size (defined by a MACRO)
-// 2) donot need to sort and merge the scheduled tasks, just FIFO.
+/**************************************************************************************************
+ * Authors: 
+ *   Zhiyuan Shao, Jian He
+ *
+ * Declaration:
+ *   The object for FOG engine
+ *************************************************************************************************/
+
 #ifndef __FOG_ENGINE_H__
 #define __FOG_ENGINE_H__
 

@@ -1,3 +1,11 @@
+/**************************************************************************************************
+ * Authors: 
+ *   Zhiyuan Shao, Jian He
+ *
+ * Declaration:
+ *   Structures and prototypes for graph format conversion.
+ *************************************************************************************************/
+
 #ifndef __CONVERT_H__
 #define __CONVERT_H__
 

@@ -1,4 +1,11 @@
-//definition of index_vert_array, which is the object that manipulate the mmapped files
+/**************************************************************************************************
+ * Authors: 
+ *   Zhiyuan Shao
+ *
+ * Routines:
+ *   Manipulate the mmapped files
+ *************************************************************************************************/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/mman.h>

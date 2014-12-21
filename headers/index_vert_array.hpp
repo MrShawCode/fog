@@ -1,4 +1,11 @@
-//definition of index_vert_array, which is the object that manipulate the mmapped files
+/**************************************************************************************************
+ * Authors: 
+ *   Zhiyuan Shao
+ *
+ * Declaration:
+ *   Prototype mmapped files.
+ *************************************************************************************************/
+
 #ifndef __VERT_ARRAY_H__
 #define __VERT_ARRAY_H__
 

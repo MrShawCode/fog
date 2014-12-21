@@ -1,3 +1,11 @@
+/**************************************************************************************************
+ * Authors: 
+ *   Zhiyuan Shao, Jian He
+ *
+ * Declaration:
+ *   The basic data structures, i.e., the edges, vertex attributes, updates and others.
+ *************************************************************************************************/
+
 #ifndef __TYPES_H__
 #define __TYPES_H__
 

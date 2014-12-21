@@ -1,4 +1,11 @@
-//! Utilities for options
+/**************************************************************************************************
+ * Authors: 
+ *   Zhiyuan Shao, Jian He
+ *
+ * Declaration:
+ *   Program parameter parsing.
+ *************************************************************************************************/
+
 #ifndef _OPTIONS_UTILS_
 #define _OPTIONS_UTILS_
 
