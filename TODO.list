@@ -3,18 +3,29 @@ TODO list
 ---------------------------------------  TODO list for version 0.1  -------------------------------
 date: 12/20/2014
 1) Problems of "convert"
-a) cannot solve disorder in the original SNAP file. 
-    Only supports soc, twitter and ydata. Needs to support more real-world graphs.
-b) no progress bar. 
-    Users don't know where they are.
-c) More flexible weight value input. 
-    Should support the weight column later.
+  a) remove "sudo" right.
+  b) cannot solve disorder in the original SNAP file. 
+      Only supports soc, twitter and ydata. Needs to support more real-world graphs.
+  c) no progress bar. 
+      Users don't know where they are.
+  d) More flexible weight value input. 
+      Should support the weight column or other input methods.
+  e) Objective: more flexible, more adaptable
 
 2) More example algorithms
-a) SCC. Optimize?
-b) Triangle Counting. Optimize?
-c) MSF. Optimize?
+  a) SCC, Triangle counting, MSF.
+      Key problem is how to optimize (achieve reasonable runtime for real large graph). challenge!
+      Study how to combine data-parallel exec. model to task exec. model.
+      Study how to alter CSR/CSC data format at high efficiency.
+  b) Some other types?
 
-3) Use the up-to-date value (in the attribute buffer) to further decrease iteration numbers.
-
+3) The Engine
+  a) Better debugging and further analyzing
+      Should record the resource utilization rates during the sub-iteration/iterations.
+      Study further directions of optimizations.
+  b) Faster convergence
+      Use the up-to-date value (in the attribute buffer) to further decrease iteration numbers.
+      Study the pros. (smaller iteration numbers) and the cons. (overhead by memory visiting)
+  c) Better programmability
+      Absorb vertex-centric programming model in FOG? real challenge!
 
