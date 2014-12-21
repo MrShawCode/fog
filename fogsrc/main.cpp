@@ -1,9 +1,14 @@
 /**************************************************************************************************
  * Authors: 
- *   Zhiyuan Shao, Jian He
+ *   Zhiyuan Shao, Jian He, Huiming Lv 
  *
  * Routines:
  *   Entrance of the program.
+ *
+ * Notes:
+ *   1.modified log_file_name and print the user command to the log file, notifying the user
+ *     when he use the defult value(sssp::source,bfs::root,pagerank::niters)
+ *     modified by Huiming Lv  2014/12/21
  *************************************************************************************************/
 
 #include <cassert>
@@ -42,6 +47,11 @@ void start_engine(std::string prog_name)
     std::cout << "sizeof T = " << sizeof(T) << std::endl;
     if( prog_name == "sssp" ){
 		sssp_program<T>::start_vid = vm["sssp::source"].as<unsigned long>();
+        unsigned int start_vid = sssp_program<T>::start_vid;
+        if(0 == start_vid)
+        {
+            std::cout<<"You didn't input the sssp::source or you chose the default value:0, the program will start at start_vid=0."<<std::endl;
+        }
 		PRINT_DEBUG( "sssp_program start_vid = %d\n", sssp_program<T>::start_vid );
 		//ready and run
         fog_engine<sssp_program<T>, sssp_vert_attr, sssp_vert_attr, T> *eng;
@@ -49,6 +59,11 @@ void start_engine(std::string prog_name)
         delete eng;
 	}else if( prog_name == "bfs" ){
         bfs_program<T>::bfs_root = vm["bfs::bfs_root"].as<unsigned long>();
+        unsigned int root_vid = bfs_program<T>::bfs_root;
+        if(0 == root_vid)
+        {
+            std::cout<<"You didn't input the bfs::bfs_root or you chose the default value:0, the program will start at bfs_root=0."<<std::endl;
+        }
         PRINT_DEBUG( "bfs_program bfs_root = %d\n", bfs_program<T>::bfs_root);
         fog_engine<bfs_program<T>, bfs_vert_attr, bfs_vert_attr, T> *eng;
         (*(eng = new fog_engine<bfs_program<T>, bfs_vert_attr, bfs_vert_attr, T>(TARGET_ENGINE)))();
@@ -56,6 +71,11 @@ void start_engine(std::string prog_name)
     }else if( prog_name == "pagerank" ){
 
 		pagerank_program<T>::iteration_times = vm["pagerank::niters"].as<unsigned long>();
+        unsigned int iteration_times = pagerank_program<T>::iteration_times;
+        if(10 == iteration_times)
+        {
+            std::cout<<"You didn't input the pagerank::niters or you chose the default value:10, the algorithm will run 10 iterations."<<std::endl;
+        }
 		PRINT_DEBUG( "pagerank_program iteration_times = %d\n", pagerank_program<T>::iteration_times );
 		//ready and run
         fog_engine<pagerank_program<T>, pagerank_vert_attr, pagerank_vert_attr, T> * eng;
@@ -83,14 +103,31 @@ void start_engine(std::string prog_name)
 
 int main( int argc, const char**argv)
 {
+    std::string user_command;
+    for(int i = 0; i < argc; i++)
+    {
+        user_command += argv[i];
+        user_command += " ";
+    }
+
 	std::string	prog_name_app;
 	std::string desc_name;
+    std::string log_file_name;
 
     setup_options_fog( argc, argv );
 	prog_name_app = vm["application"].as<std::string>();
 	desc_name = vm["graph"].as<std::string>();
     
+    time_t timep;
+    time(&timep);
+    struct tm *tm_p = localtime(&timep);
+    std::string start_time;
+    char temp[100];
+    sprintf(temp, "%d.%d.%d-%d:%d:%d", tm_p->tm_year+1900, tm_p->tm_mon+1,
+            tm_p->tm_mday, tm_p->tm_hour, tm_p->tm_min, tm_p->tm_sec);
 
+    log_file_name = "print-" + prog_name_app + "-" + std::string(temp) + "-.log";
+    
 	init_graph_desc( desc_name );
 
 	//config subjected to change.
@@ -102,11 +139,12 @@ int main( int argc, const char**argv)
     std::cout << "sizeof type1_edge = " << sizeof(type1_edge) << std::endl;
     std::cout << "sizeof type2_edge = " << sizeof(type2_edge) << std::endl;
     //add by  hejian
-    if (!(log_file = fopen(LOG_FILE_NAME, "w"))) //open file for mode
+    if (!(log_file = fopen(log_file_name.c_str(), "w"))) //open file for mode
     {
-        printf("failed to open %s.\n", LOG_FILE_NAME);
+        printf("failed to open %s.\n", log_file_name.c_str());
         exit(666);
     }
+    PRINT_DEBUG("Your command is: %s\n", user_command.c_str());
 
 	gen_config.min_vert_id = pt.get<u32_t>("description.min_vertex_id");
 	gen_config.max_vert_id = pt.get<u32_t>("description.max_vertex_id");

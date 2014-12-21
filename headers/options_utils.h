@@ -1,9 +1,12 @@
 /**************************************************************************************************
  * Authors: 
- *   Zhiyuan Shao, Jian He
+ *   Zhiyuan Shao, Jian He, Huiming Lv 
  *
  * Declaration:
  *   Program parameter parsing.
+ *
+ * Notes:
+ *   1.modify bfs::bfs_root to bfs::bfs-root by Huiming Lv   2014/12/21 
  *************************************************************************************************/
 
 #ifndef _OPTIONS_UTILS_
@@ -64,7 +67,7 @@ static void setup_options_fog(int argc, const char* argv[])
 	// sssp
     ("sssp::source", boost::program_options::value<unsigned long>()->default_value(0),
      "source vertex id for sssp")
-    ("bfs::bfs_root", boost::program_options::value<unsigned long>()->default_value(0),
+    ("bfs::bfs-root", boost::program_options::value<unsigned long>()->default_value(0),
      "bfs root for bfs");
 	// belief propagation
     //("spmv::niters", boost::program_options::value<unsigned long>()->default_value(10),

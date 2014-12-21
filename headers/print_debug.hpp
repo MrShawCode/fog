@@ -1,9 +1,12 @@
 /**************************************************************************************************
  * Authors: 
- *   Jian He
+ *   Jian He, Huiming Lv
  *
  * Declaration:
  *   For debuggings and message output.
+ *
+ * Notes:
+ *   1.remove the LOG_FILE_NAME by Huiming Lv   2014/12/21
  *************************************************************************************************/
 
 #ifndef __PRINT_DEBUG__HPP__
@@ -20,7 +23,7 @@
 #include <fcntl.h>
   
 
-#define LOG_FILE_NAME  "print.log"
+//#define LOG_FILE_NAME  "print.log"
 #define __PRINT__DEBUG__  2
 /*
  * the values for __PRINT_DEBUG__

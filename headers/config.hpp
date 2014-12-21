@@ -1,9 +1,12 @@
 /**************************************************************************************************
  * Authors: 
- *   Zhiyuan Shao, Jian He
+ *   Zhiyuan Shao, Jian He, Huiming Lv
  *
  * Declaration:
  *   Data structures for segment/strip/partition organization.
+ *
+ * Notes:
+ *   1.modify show_config()      by Huiming Lv   2014/12/21     
  *************************************************************************************************/
 
 #ifndef __CONFIG_H__
@@ -128,6 +131,7 @@ class segment_config{
         // TODO: replace PRINT_DEBUG with PRINT_WARNING or something always show output.	
 		void show_config(const char* buf_head)
 		{
+            /*
             PRINT_DEBUG( "==========\tBegin of segment configuration info\t============\n" );
             PRINT_DEBUG( "(Whole) Buffer Head:0x%llx, (Whole) Buffer Size:0x%llx\n",
 				(u64_t)buf_head, gen_config.memory_size );
@@ -144,6 +148,7 @@ class segment_config{
                 PRINT_DEBUG( "CPU:%d, sched_update buffer begins:0x%llx, size:0x%llx\n", 
                     i, (u64_t)per_cpu_info_list[i]->buf_head, per_cpu_info_list[i]->buf_size );
             }
+            */
 
 			PRINT_DEBUG( "There are %u attribute buffer(s)\n", num_attr_buf );
 			switch( num_attr_buf ){

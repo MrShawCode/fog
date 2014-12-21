@@ -1,9 +1,13 @@
 /**************************************************************************************************
  * Authors: 
- *   Zhiyuan Shao, Jian He
+ *   Zhiyuan Shao, Jian He, Huiming Lv 
  *
  * Routines:
  *   The engine
+ *   
+ * Notes:
+ *   1.after init_sched_update_buf, will not show the buffer's information.
+ *     modified by Huiming Lv  2014/12/21
  *************************************************************************************************/
 
 #include <sstream>
@@ -2216,7 +2220,7 @@ void fog_engine<A, VA, U, T>::target_init_sched_update_buf()
             gen_config.num_processors);
 }
 
-    show_target_sched_update_buf();
+    //show_target_sched_update_buf();
 }
 
 
@@ -2359,7 +2363,7 @@ void fog_engine<A, VA, U, T>::global_init_sched_update_buf()
         seg_config->per_cpu_info_list[i]->strip_buf_len = strip_size;
         seg_config->per_cpu_info_list[i]->strip_cap = strip_cap;
     }
-    show_global_sched_update_buf();
+    //show_global_sched_update_buf();
 }
 
 template <typename A, typename VA, typename U, typename T>
