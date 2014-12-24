@@ -3,6 +3,7 @@
  *   Jian He, Huiming Lv
  *
  * Routines:
+ *   This method is borrowed from GraphChi.
  *   
  *************************************************************************************************/
 

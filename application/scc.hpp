@@ -3,6 +3,7 @@
  *   Jian He
  *
  * Routines:
+ *   Implements strongly connected component algorithm
  *   
  *************************************************************************************************/
 

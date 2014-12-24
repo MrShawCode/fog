@@ -3,6 +3,7 @@
  *   Jian He, 
  *
  * Routines:
+ *   Process graph whose format is adjacency list.
  *   
  *************************************************************************************************/
 

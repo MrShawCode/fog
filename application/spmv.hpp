@@ -3,6 +3,7 @@
  *   Jian He
  *
  * Routines:
+ *   Implements  sparse matrix-vector multiplication algorithm
  *   
  *************************************************************************************************/
 

@@ -3,6 +3,7 @@
  *   Jian He,
  *
  * Routines:
+ *   Implements weakly connected component algorithm
  *   
  *************************************************************************************************/
 
