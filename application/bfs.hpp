@@ -85,9 +85,17 @@ class bfs_program{
             PRINT_DEBUG("BFS engine has finished the %d iteration, there are %d tasks to schedule at next iteration!\n",
                     loop_counter, num_tasks_to_sched);
             if (num_tasks_to_sched == 0)
+            {
+                if(1 == loop_counter)
+                {
+                    PRINT_ERROR("The bfs::root is bad, there is no out-edge of bfs::root=%d!\n", bfs_root);
+                }
                 return ITERATION_STOP;
+            }
             else
+            {
                 return ITERATION_CONTINUE;
+            }
         }
         static int finalize()
         {

@@ -90,9 +90,17 @@ class sssp_program{
             PRINT_DEBUG("SSSP engine has finished the %d iteration, there are %d tasks to schedule at next iteration!\n",
                     loop_counter, num_tasks_to_sched);
             if (num_tasks_to_sched == 0)
+            {
+                if(1 == loop_counter)
+                {
+                    PRINT_ERROR("The sssp::source is bad, there is no out-edge of sssp::source=%d\n!",start_vid);
+                }
                 return ITERATION_STOP;
+            }
             else
+            {
                 return ITERATION_CONTINUE;
+            }
         }
         static int finalize()
         {

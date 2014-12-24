@@ -258,7 +258,7 @@ class segment_config{
 				per_cpu_info_list[i]->buf_head = (char*)((u64_t)buf_head+i*per_cpu_buf_size);
 				per_cpu_info_list[i]->buf_size = per_cpu_buf_size;
 			}
-			show_config(buf_head);
+			//show_config(buf_head);
 		}
 };
 

@@ -40,13 +40,13 @@ index_vert_array<T>::index_vert_array()
     fstat(vert_index_file_fd, &st);
     vert_index_file_length = (u64_t) st.st_size;
 
-    PRINT_DEBUG( "vertex list file size:%lld(MBytes)\n", vert_index_file_length/(1024*1024) );
+    //PRINT_DEBUG( "vertex list file size:%lld(MBytes)\n", vert_index_file_length/(1024*1024) );
     memblock = (char*) mmap( NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, vert_index_file_fd, 0 );
     if( memblock == MAP_FAILED ){
         PRINT_ERROR( "index file mapping failed!\n" );
 		exit( -1 );
 	}
-    PRINT_DEBUG( "index array mmapped at virtual address:0x%llx\n", (u64_t)memblock );
+    //PRINT_DEBUG( "index array mmapped at virtual address:0x%llx\n", (u64_t)memblock );
     vert_array_header = (struct vert_index *) memblock;
 
 	//map edge files to edge_array_header
@@ -58,13 +58,13 @@ index_vert_array<T>::index_vert_array()
     else
         gen_config.prev_update = true;
 
-    PRINT_DEBUG( "edge list file size:%lld(MBytes)\n", edge_file_length/(1024*1024) );
+    //PRINT_DEBUG( "edge list file size:%lld(MBytes)\n", edge_file_length/(1024*1024) );
     memblock = (char*) mmap( NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, edge_file_fd, 0 );
     if( memblock == MAP_FAILED ){
         PRINT_ERROR( "edge file mapping failed!\n" );
 		exit( -1 );
 	}
-    PRINT_DEBUG( "edge array mmapped at virtual address:0x%llx\n", (u64_t)memblock );
+    //PRINT_DEBUG( "edge array mmapped at virtual address:0x%llx\n", (u64_t)memblock );
     //edge_array_header = (struct T *) memblock;
     edge_array_header = (T *) memblock;
 

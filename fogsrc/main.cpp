@@ -52,13 +52,17 @@ void start_engine(std::string prog_name)
         {
             std::cout<<"You didn't input the sssp::source or you chose the default value:0, the program will start at start_vid=0."<<std::endl;
         }
+        if(8 != sizeof(T))
+        {
+            PRINT_ERROR("This algorithm need 'type2' edge file!\n");
+        }
 		PRINT_DEBUG( "sssp_program start_vid = %d\n", sssp_program<T>::start_vid );
 		//ready and run
         fog_engine<sssp_program<T>, sssp_vert_attr, sssp_vert_attr, T> *eng;
         (*(eng = new fog_engine<sssp_program<T>, sssp_vert_attr, sssp_vert_attr, T>(TARGET_ENGINE)))();
         delete eng;
 	}else if( prog_name == "bfs" ){
-        bfs_program<T>::bfs_root = vm["bfs::bfs_root"].as<unsigned long>();
+        bfs_program<T>::bfs_root = vm["bfs::bfs-root"].as<unsigned long>();
         unsigned int root_vid = bfs_program<T>::bfs_root;
         if(0 == root_vid)
         {
@@ -84,17 +88,31 @@ void start_engine(std::string prog_name)
 	}else if(prog_name == "scc"){
         //set FIRST_INIT to init the attr_buf
         PRINT_DEBUG("scc starts!\n");
+        int check = access(gen_config.in_edge_file_name.c_str(), F_OK);
+        if(-1 ==check )
+        {
+            PRINT_ERROR("in_edge file doesn't exit or '-i' is false!\n");
+        }
 
         fog_engine<scc_program<T>, scc_vert_attr, scc_update, T> * eng;
         (*(eng = new fog_engine<scc_program<T>, scc_vert_attr, scc_update, T>(TARGET_ENGINE)))();
         delete eng;
     }else if (prog_name == "spmv"){
         PRINT_DEBUG("spmv starts!\n");
+        if(8 != sizeof(T))
+        {
+            PRINT_ERROR("This algorithm need 'type2' edge file!\n");
+        }
         fog_engine<spmv_program<T>, spmv_vert_attr, spmv_update, T> * eng;
         (*(eng = new fog_engine<spmv_program<T>, spmv_vert_attr, spmv_update, T>(GLOBAL_ENGINE)))();
         delete eng;
     }else if (prog_name == "cc"){
         PRINT_DEBUG("cc starts!\n");
+        int check = access(gen_config.in_edge_file_name.c_str(), F_OK);
+        if(-1 ==check )
+        {
+            PRINT_ERROR("in_edge file doesn't exit or '-i' is false!\n");
+        }
         fog_engine<cc_program<T>, cc_vert_attr, cc_vert_attr, T> *eng;
         (*(eng = new fog_engine<cc_program<T>, cc_vert_attr, cc_vert_attr, T>(TARGET_ENGINE)))();
         delete eng;
@@ -157,11 +175,19 @@ int main( int argc, const char**argv)
 
     unsigned int type1_or_type2 = pt.get<u32_t>("description.edge_type");
     bool with_inedge = pt.get<bool>("description.with_in_edge");
-    if (with_inedge)
+    bool i_in_edge = vm["in-edge"].as<bool>();
+    if(i_in_edge)
     {
-        gen_config.with_in_edge = true;
-        gen_config.in_edge_file_name = desc_name.substr(0, desc_name.find_last_of(".")) + ".in-edge";
-        gen_config.in_vert_file_name = desc_name.substr(0, desc_name.find_last_of(".")) + ".in-index";
+        if (with_inedge)
+        {
+            gen_config.with_in_edge = true;
+            gen_config.in_edge_file_name = desc_name.substr(0, desc_name.find_last_of(".")) + ".in-edge";
+            gen_config.in_vert_file_name = desc_name.substr(0, desc_name.find_last_of(".")) + ".in-index";
+        }
+        else
+        {
+            PRINT_ERROR("in_edge file doesn't exit!\n");
+        }
     }
 
 	PRINT_DEBUG( "Graph name: %s\nApplication name:%s\n", 

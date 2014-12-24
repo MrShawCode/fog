@@ -2044,7 +2044,7 @@ void fog_engine<A, VA, U, T>::target_init_sched_update_buf()
     u32_t update_map_size, total_header_len;
     u64_t strip_buf_size, strip_size/*, aux_update_buf_len*/;
     u32_t strip_cap;
-    u32_t bitmap_buf_size; //bitmap_max_size;
+    //u32_t bitmap_buf_size; //bitmap_max_size;
     //io_work* init_bitmap_io_work = NULL;
     u32_t total_num_vertices;
     u32_t per_bitmap_buf_size;
@@ -2055,12 +2055,12 @@ void fog_engine<A, VA, U, T>::target_init_sched_update_buf()
             * sizeof(u32_t);
     total_num_vertices = gen_config.max_vert_id + 1;
 
-    bitmap_buf_size = (u32_t)((ROUND_UP(total_num_vertices, 8))/8);
+    //bitmap_buf_size = (u32_t)((ROUND_UP(total_num_vertices, 8))/8);
     per_bitmap_buf_size = (u32_t)(ROUND_UP(((ROUND_UP(total_num_vertices, 8))/8), gen_config.num_processors)/gen_config.num_processors);
-    bitmap_buf_size = (u32_t)(per_bitmap_buf_size * gen_config.num_processors);
-    PRINT_DEBUG("num_vertices is %d, the origin bitmap_buf_size is %lf\n", total_num_vertices, (double)(total_num_vertices)/8);
-    PRINT_DEBUG("After round up, the ROUND_UP(total_num_verttices,8) = %d\n", ROUND_UP(total_num_vertices, 8));
-    PRINT_DEBUG("the bitmap_buf_size is %d, per_bitmap_buf_size is %d\n", bitmap_buf_size, per_bitmap_buf_size);
+    //bitmap_buf_size = (u32_t)(per_bitmap_buf_size * gen_config.num_processors);
+    //PRINT_DEBUG("num_vertices is %d, the origin bitmap_buf_size is %lf\n", total_num_vertices, (double)(total_num_vertices)/8);
+    //PRINT_DEBUG("After round up, the ROUND_UP(total_num_verttices,8) = %d\n", ROUND_UP(total_num_vertices, 8));
+    //PRINT_DEBUG("the bitmap_buf_size is %d, per_bitmap_buf_size is %d\n", bitmap_buf_size, per_bitmap_buf_size);
 
     //PRINT_DEBUG("the bitmap_file_size is %d\n", bitmap_file_size);
     //PRINT_DEBUG("the sched_bitmap_size is %d\n", sched_bitmap_size);
