@@ -143,25 +143,25 @@ class scc_program{
         static void before_iteration()
         {
             if (forward_backward_phase == FORWARD_TRAVERSAL)
-                PRINT_DEBUG("SCC engine is running FORWARD_TRAVERSAL for the %d iteration, there are %d tasks to schedule!\n",
+                PRINT_DEBUG("SCC engine is running FORWARD_TRAVERSAL for the %d-th iteration, there are %d tasks to schedule!\n",
                         loop_counter, num_tasks_to_sched);
             else
             {
                 assert(forward_backward_phase == BACKWARD_TRAVERSAL);
-                PRINT_DEBUG("SCC engine is running BACKWARD_TRAVERSAL for the %d iteration, there are %d tasks to schedule!\n",
+                PRINT_DEBUG("SCC engine is running BACKWARD_TRAVERSAL for the %d-th iteration, there are %d tasks to schedule!\n",
                         loop_counter, num_tasks_to_sched);
             }
         }
         static int after_iteration()
         {
-            PRINT_DEBUG("SCC engine has finished the %d iteration, there are %d tasks to schedule at next iteration!\n",
+            PRINT_DEBUG("SCC engine has finished the %d-th iteration, there are %d tasks to schedule at next iteration!\n",
                     loop_counter, num_tasks_to_sched);
             if (num_tasks_to_sched == 0)
                 return ITERATION_STOP;
             else
                 return ITERATION_CONTINUE;
         }
-        static int finalize()
+        static int finalize(scc_vert_attr * va)
         {
             out_loop ++;
             if (forward_backward_phase == FORWARD_TRAVERSAL)
@@ -179,11 +179,6 @@ class scc_program{
                 CONTEXT_PHASE = 0;
                 return ENGINE_CONTINUE;
             }
-        }
-        static void print_result(scc_vert_attr * va)
-        {
-            for (unsigned int id = 0; id < 100; id++)
-                PRINT_DEBUG_LOG("SCC:result[%d], prev_root = %d, component_root = %d\n", id, (va+id)->prev_root, (va+id)->component_root);
         }
 };
 

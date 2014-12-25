@@ -83,12 +83,12 @@ class sssp_program{
 
         static void before_iteration()
         {
-            PRINT_DEBUG("SSSP engine is running for the %d iteration, there are %d tasks to schedule!\n",
+            PRINT_DEBUG("SSSP engine is running for the %d-th iteration, there are %d tasks to schedule!\n",
                     loop_counter, num_tasks_to_sched);
         }
         static int after_iteration()
         {
-            PRINT_DEBUG("SSSP engine has finished the %d iteration, there are %d tasks to schedule at next iteration!\n",
+            PRINT_DEBUG("SSSP engine has finished the %d-th iteration, there are %d tasks to schedule at next iteration!\n",
                     loop_counter, num_tasks_to_sched);
             if (num_tasks_to_sched == 0)
             {
@@ -103,16 +103,14 @@ class sssp_program{
                 return ITERATION_CONTINUE;
             }
         }
-        static int finalize()
-        {
-            return ENGINE_STOP;
-        }
-
-        static void print_result(sssp_vert_attr * va)
+        static int finalize(sssp_vert_attr * va)
         {
             for (unsigned int id = 0; id < 100; id++)
                 PRINT_DEBUG_LOG("SSSP:result[%d], predecessor = %d, value = %f\n", id, (va+id)->predecessor, (va+id)->value);
+            PRINT_DEBUG("SSSP engine stops!\n");
+            return ENGINE_STOP;
         }
+
 };
 
 template <typename T>

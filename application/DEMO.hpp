@@ -123,19 +123,18 @@ class demo_program{
         }
 
         //A function at the end.
-        static int finalize()
+        static int finalize(demo_vert_attr * va)
         {
+            //A function to print all the result
+            for (unsigned int id = 0; id < 100; id++)
+                PRINT_DEBUG("demo:result[%d], xxx = %f\n", id, (va+id)->xxx);
+
             //if you don't do some algorithm like scc.hpp, just write this bellow.
             PRINT_DEBUG("DEMO engine stops!\n");
             return ENGINE_STOP;
         }
 
-        //A function to print all the result
-        static void print_result(demo_vert_attr * va)
-        {
-            for (unsigned int id = 0; id < 100; id++)
-                PRINT_DEBUG("demo:result[%d], xxx = %f\n", id, (va+id)->xxx);
-        }
+        
 };
 
 template <typename T>

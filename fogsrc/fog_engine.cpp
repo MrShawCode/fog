@@ -101,7 +101,7 @@ void fog_engine<A, VA, U, T>::operator() ()
      while(1)
      {
          glo_loop++;
-         PRINT_DEBUG("The %d global-loop\n", glo_loop);
+         PRINT_DEBUG("The %d-th global-loop\n", glo_loop);
          init_fog_engine_state = INIT;
          PRINT_DEBUG("forward_backward : %d\n", A::forward_backward_phase);
          init_phase(glo_loop);
@@ -164,7 +164,22 @@ void fog_engine<A, VA, U, T>::operator() ()
             }
             PRINT_DEBUG("Iteration finished!\n");
          }
-         ret = A::finalize();
+         //prepare something for finalize()
+        VA * attr_array_head = NULL;
+        if (seg_config->num_attr_buf == 1)
+        {
+            attr_array_head =  (VA *)seg_config->attr_buf0;
+        }
+        else
+        {
+            if (remap_attr_file() < 0)
+            {
+                PRINT_ERROR("FOG_ENGINE::scatter_updates failed!\n");
+            }  
+            attr_array_head = (VA*)attr_array_header;
+        }
+
+         ret = A::finalize((VA*)&attr_array_head[0]);
          if (ret == ENGINE_STOP)
          {
              break;
@@ -175,7 +190,7 @@ void fog_engine<A, VA, U, T>::operator() ()
      end_time = time(NULL);
      PRINT_DEBUG( "run time = %.f seconds\n", difftime(end_time, start_time));
      //print-result
-     print_attr_result();
+     //print_attr_result();
 }
      
 template <typename A, typename VA, typename U, typename T>

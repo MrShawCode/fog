@@ -69,25 +69,23 @@ class spmv_program{
 		}
         static void before_iteration()
         {
-            PRINT_DEBUG("SPMV engine is running for the %d iteration, there are %d tasks to schedule!\n",
+            PRINT_DEBUG("SPMV engine is running for the %d-th iteration, there are %d tasks to schedule!\n",
                     loop_counter, num_tasks_to_sched);
         }
         static int after_iteration()
         {
-            PRINT_DEBUG("SPMV engine has finished the %d iteration!\n", loop_counter);
+            PRINT_DEBUG("SPMV engine has finished the %d-th iteration!\n", loop_counter);
             return ITERATION_STOP;
         }
-        static int finalize()
+        static int finalize(spmv_vert_attr * va)
         {
+            for (unsigned int id = 0; id < 100; id++)
+                PRINT_DEBUG_LOG("SPMV:result[%d], origin_value = %f, spmv_value = %f\n", id, (va+id)->origin_value, (va+id)->spmv_value);
+
             PRINT_DEBUG("SPMV engine stops!\n");
             return ENGINE_STOP;
         }
 
-        static void print_result(spmv_vert_attr * va)
-        {
-            for (unsigned int id = 0; id < 100; id++)
-                PRINT_DEBUG_LOG("SPMV:result[%d], origin_value = %f, spmv_value = %f\n", id, (va+id)->origin_value, (va+id)->spmv_value);
-        }
 
 };
 template <typename T>

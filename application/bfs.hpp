@@ -79,12 +79,12 @@ class bfs_program{
 
         static void before_iteration()
         {
-            PRINT_DEBUG("BFS engine is running for the %d iteration, there are %d tasks to schedule!\n",
+            PRINT_DEBUG("BFS engine is running for the %d-th iteration, there are %d tasks to schedule!\n",
                     loop_counter, num_tasks_to_sched);
         }
         static int after_iteration()
         {
-            PRINT_DEBUG("BFS engine has finished the %d iteration, there are %d tasks to schedule at next iteration!\n",
+            PRINT_DEBUG("BFS engine has finished the %d-th iteration, there are %d tasks to schedule at next iteration!\n",
                     loop_counter, num_tasks_to_sched);
             if (num_tasks_to_sched == 0)
             {
@@ -99,15 +99,12 @@ class bfs_program{
                 return ITERATION_CONTINUE;
             }
         }
-        static int finalize()
-        {
-            return ENGINE_STOP;
-        }
-
-        static void print_result(bfs_vert_attr * va)
+        static int finalize(bfs_vert_attr * va)
         {
             for (unsigned int id = 0; id < 100; id++)
                 PRINT_DEBUG_LOG("BFS:result[%d], bfs_level = %d\n", id, (va+id)->bfs_level);
+            return ENGINE_STOP;
+            PRINT_DEBUG("BFS engine stops!\n");
         }
 };
 

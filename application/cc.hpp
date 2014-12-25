@@ -72,12 +72,12 @@ class cc_program{
         static void before_iteration()
         {
             if (forward_backward_phase == FORWARD_TRAVERSAL)
-                PRINT_DEBUG("CC engine is running FORWARD_TRAVERSAL for the %d iteration, there are %d tasks to schedule!\n",
+                PRINT_DEBUG("CC engine is running FORWARD_TRAVERSAL for the %d-th iteration, there are %d tasks to schedule!\n",
                         loop_counter, num_tasks_to_sched);
             else
             {
                 assert(forward_backward_phase == BACKWARD_TRAVERSAL);
-                PRINT_DEBUG("CC engine is running BACKWARD_TRAVERSAL for the %d iteration, there are %d tasks to schedule!\n",
+                PRINT_DEBUG("CC engine is running BACKWARD_TRAVERSAL for the %d-th iteration, there are %d tasks to schedule!\n",
                         loop_counter, num_tasks_to_sched);
             }
         }
@@ -94,7 +94,7 @@ class cc_program{
                 assert(forward_backward_phase == BACKWARD_TRAVERSAL);
                 forward_backward_phase = FORWARD_TRAVERSAL;
                 //return ENGINE_STOP;
-                PRINT_DEBUG("CC engine has finished the %d iteration, there are %d tasks to schedule at next iteration!\n",
+                PRINT_DEBUG("CC engine has finished the %d-th iteration, there are %d tasks to schedule at next iteration!\n",
                         loop_counter, num_tasks_to_sched);
 
                 if (num_tasks_to_sched == 0)
@@ -103,8 +103,13 @@ class cc_program{
                     return ITERATION_CONTINUE;
             }
         }
-        static int finalize()
+        static int finalize(cc_vert_attr * va)
         {
+            //Print the result 
+            for (unsigned int id = 0; id < 100; id++)
+                PRINT_DEBUG_LOG("CC:result[%d], component_root = %d\n",id, (va+id)->component_root);
+
+            PRINT_DEBUG("CC engine stops!\n");
             return ENGINE_STOP;
             /*if (forward_backward_phase == FORWARD_TRAVERSAL)
             {
@@ -118,12 +123,6 @@ class cc_program{
                 assert(forward_backward_phase == BACKWARD_TRAVERSAL);
                 return ENGINE_STOP;
             }*/
-        }
-
-        static void print_result(cc_vert_attr * va)
-        {
-            for (unsigned int id = 0; id < 100; id++)
-                PRINT_DEBUG_LOG("CC:result[%d], component_root = %d\n",id, (va+id)->component_root);
         }
 };
 /*

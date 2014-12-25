@@ -44,7 +44,7 @@ FILE * log_file;
 template <typename T>
 void start_engine(std::string prog_name)
 {
-    std::cout << "sizeof T = " << sizeof(T) << std::endl;
+    //std::cout << "sizeof T = " << sizeof(T) << std::endl;
     if( prog_name == "sssp" ){
 		sssp_program<T>::start_vid = vm["sssp::source"].as<unsigned long>();
         unsigned int start_vid = sssp_program<T>::start_vid;
@@ -162,8 +162,8 @@ int main( int argc, const char**argv)
 	//the unit of memory is MB
 	gen_config.memory_size = (u64_t)(vm["memory"].as<unsigned long>())*1024*1024;
 
-    std::cout << "sizeof type1_edge = " << sizeof(type1_edge) << std::endl;
-    std::cout << "sizeof type2_edge = " << sizeof(type2_edge) << std::endl;
+    //std::cout << "sizeof type1_edge = " << sizeof(type1_edge) << std::endl;
+    //std::cout << "sizeof type2_edge = " << sizeof(type2_edge) << std::endl;
     //add by  hejian
     if (!(log_file = fopen(log_file_name.c_str(), "w"))) //open file for mode
     {
@@ -212,13 +212,13 @@ int main( int argc, const char**argv)
 
     if (type1_or_type2 == 1)
     {
-        std::cout << "the edge type is type1" << std::endl;
+        //std::cout << "the edge type is type1" << std::endl;
         start_engine<type1_edge>(prog_name_app);
     }
     else
     {
         assert(type1_or_type2 == 2);
-        std::cout << "the edge type is type2" << std::endl;
+        //std::cout << "the edge type is type2" << std::endl;
         start_engine<type2_edge>(prog_name_app);
     }
 }
