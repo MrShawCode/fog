@@ -107,9 +107,10 @@ class sssp_program{
             return ENGINE_STOP;
         }
 
-        static void print_result(u32_t vid, sssp_vert_attr * va)
+        static void print_result(sssp_vert_attr * va)
         {
-            PRINT_DEBUG("SSSP:result[%d], predecessor = %d, value = %f\n", vid, va->predecessor, va->value);
+            for (unsigned int id = 0; id < 100; id++)
+                PRINT_DEBUG("SSSP:result[%d], predecessor = %d, value = %f\n", id, (va+id)->predecessor, (va+id)->value);
         }
 };
 

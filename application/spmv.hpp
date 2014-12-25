@@ -79,9 +79,10 @@ class spmv_program{
             return ENGINE_STOP;
         }
 
-        static void print_result(u32_t vid, spmv_vert_attr * va)
+        static void print_result(spmv_vert_attr * va)
         {
-            PRINT_DEBUG("SPMV:result[%d], origin_value = %f, spmv_value = %f\n", vid, va->origin_value, va->spmv_value);
+            for (unsigned int id = 0; id < 100; id++)
+                PRINT_DEBUG("SPMV:result[%d], origin_value = %f, spmv_value = %f\n", id, (va+id)->origin_value, (va+id)->spmv_value);
         }
 
 };

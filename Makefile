@@ -26,7 +26,7 @@ FOG_REL_HEADERS = $(addprefix $(HEADERS_PATH)/, $(FOG_HEADERS))
 FOG_OBJS= $(addprefix $(OBJECT_DIR)/, $(FOG_SRC))
 FOG_TARGET = $(BINARY_DIR)/fog
 
-all: $(FOG_TARGET)
+all: $(CONVERT_TARGET) $(FOG_TARGET)
 #all: $(CONVERT_TARGET) $(FOG_TARGET) $(TEST_TARGET)
 
 #dependencies

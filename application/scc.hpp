@@ -180,9 +180,10 @@ class scc_program{
                 return ENGINE_CONTINUE;
             }
         }
-        static void print_result(u32_t vid, scc_vert_attr * va)
+        static void print_result(scc_vert_attr * va)
         {
-            PRINT_DEBUG("SCC:result[%d], prev_root = %d, component_root = %d\n", vid, va->prev_root, va->component_root);
+            for (unsigned int id = 0; id < 100; id++)
+                PRINT_DEBUG("SCC:result[%d], prev_root = %d, component_root = %d\n", id, (va+id)->prev_root, (va+id)->component_root);
         }
 };
 

@@ -167,7 +167,6 @@ void fog_engine<A, VA, U, T>::operator() ()
          ret = A::finalize();
          if (ret == ENGINE_STOP)
          {
-             print_attr_result();
              break;
          }
          assert(ret == ENGINE_CONTINUE);
@@ -175,6 +174,8 @@ void fog_engine<A, VA, U, T>::operator() ()
 
      end_time = time(NULL);
      PRINT_DEBUG( "run time = %.f seconds\n", difftime(end_time, start_time));
+     //print-result
+     print_attr_result();
 }
      
 template <typename A, typename VA, typename U, typename T>
@@ -194,11 +195,8 @@ void fog_engine<A, VA, U, T>::print_attr_result()
         }  
         attr_array_head = (VA*)attr_array_header;
     }
-     
-    for (i = 0; i < 10000; i++)
-    {
-        A::print_result(i, (VA*)&attr_array_head[i]);
-    }
+
+    A::print_result((VA*)&attr_array_head[i]);
 }
 
 template <typename A, typename VA, typename U, typename T>

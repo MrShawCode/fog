@@ -119,9 +119,10 @@ class cc_program{
             }*/
         }
 
-        static void print_result(u32_t vid, cc_vert_attr * va)
+        static void print_result(cc_vert_attr * va)
         {
-            PRINT_DEBUG("CC:result[%d], component_root = %d\n",vid, va->component_root);
+            for (unsigned int id = 0; id < 100; id++)
+                PRINT_DEBUG("CC:result[%d], component_root = %d\n",id, (va+id)->component_root);
         }
 };
 /*

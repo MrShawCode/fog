@@ -103,9 +103,10 @@ class bfs_program{
             return ENGINE_STOP;
         }
 
-        static void print_result(u32_t vid, bfs_vert_attr * va)
+        static void print_result(bfs_vert_attr * va)
         {
-            PRINT_DEBUG("BFS:result[%d], bfs_level = %d\n", vid, va->bfs_level);
+            for (unsigned int id = 0; id < 100; id++)
+                PRINT_DEBUG("BFS:result[%d], bfs_level = %d\n", id, (va+id)->bfs_level);
         }
 };
 

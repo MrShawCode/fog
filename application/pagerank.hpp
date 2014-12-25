@@ -93,9 +93,10 @@ class pagerank_program{
             PRINT_DEBUG("Pagerank engine stops!\n");
             return ENGINE_STOP;
         }
-        static void print_result(u32_t vid, pagerank_vert_attr * va)
+        static void print_result(pagerank_vert_attr * va)
         {
-            PRINT_DEBUG("Pagerank:result[%d], rank = %f\n", vid, va->rank);
+            for (unsigned int id = 0; id < 100; id++)
+                PRINT_DEBUG("Pagerank:result[%d], rank = %f\n", id, (va+id)->rank);
         }
 };
 
