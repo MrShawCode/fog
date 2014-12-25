@@ -54,7 +54,7 @@ void start_engine(std::string prog_name)
         }
         if(8 != sizeof(T))
         {
-            PRINT_ERROR("This algorithm need 'type2' edge file!\n");
+            PRINT_ERROR("This algorithm need 'type1' edge file!\n");
         }
 		PRINT_DEBUG( "sssp_program start_vid = %d\n", sssp_program<T>::start_vid );
 		//ready and run
@@ -101,7 +101,7 @@ void start_engine(std::string prog_name)
         PRINT_DEBUG("spmv starts!\n");
         if(8 != sizeof(T))
         {
-            PRINT_ERROR("This algorithm need 'type2' edge file!\n");
+            PRINT_ERROR("This algorithm need 'type1' edge file!\n");
         }
         fog_engine<spmv_program<T>, spmv_vert_attr, spmv_update, T> * eng;
         (*(eng = new fog_engine<spmv_program<T>, spmv_vert_attr, spmv_update, T>(GLOBAL_ENGINE)))();

@@ -324,7 +324,7 @@ void fog_engine<A, VA, U, T>::init_phase(int global_loop)
         sched_task *t_task = new sched_task;t_task->start = 0;
         t_task->term = gen_config.max_vert_id;
         add_all_task_to_cpu(t_task);
-        show_all_sched_tasks();
+        //show_all_sched_tasks();
     }
 
     //the INIT phase finished now, ALTHOUGH the last write is still on its way. 
@@ -421,7 +421,7 @@ int fog_engine<A, VA, U, T>::scatter_updates(u32_t CONTEXT_PHASE)
             p_scatter_param->attr_array_head = (void*)attr_array_header;
         }
 
-        PRINT_DEBUG("sub-iteration:%d\n", phase);
+        PRINT_DEBUG_LOG("sub-iteration:%d\n", phase);
         //if (global_or_target != GLOBAL_ENGINE && ret == 1)
             //PRINT_DEBUG("before context scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
         scatter_cpu_work = new cpu_work<A, VA, U, T>(scatter_fog_engine_state, (void *)p_scatter_param);
@@ -2449,7 +2449,7 @@ void * fog_engine<A, VA, U, T>::map_anon_memory( u64_t size,
     void *space = mmap(NULL, size > 0 ? size:4096,
              PROT_READ|PROT_WRITE,
              MAP_ANONYMOUS|MAP_SHARED, -1, 0);
-    PRINT_DEBUG( "Engine::map_anon_memory had allocated 0x%llx bytes at %llx\n", size, (u64_t)space);
+    //PRINT_DEBUG( "Engine::map_anon_memory had allocated 0x%llx bytes at %llx\n", size, (u64_t)space);
 
     if(space == MAP_FAILED) {
         std::cerr << "mmap_anon_mem -- allocation " << "Error!\n";

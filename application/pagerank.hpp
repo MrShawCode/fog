@@ -100,7 +100,7 @@ class pagerank_program{
         static void print_result(pagerank_vert_attr * va)
         {
             for (unsigned int id = 0; id < 100; id++)
-                PRINT_DEBUG("Pagerank:result[%d], rank = %f\n", id, (va+id)->rank);
+                PRINT_DEBUG_LOG("Pagerank:result[%d], rank = %f\n", id, (va+id)->rank);
         }
 };
 

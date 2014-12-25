@@ -7,6 +7,7 @@
  *
  * Notes:
  *   1.remove the LOG_FILE_NAME by Huiming Lv   2014/12/21
+ *   2.add PRINT_DEBUG_LOG by Huiming Lv   2014/12/25
  *************************************************************************************************/
 
 #ifndef __PRINT_DEBUG__HPP__
@@ -88,6 +89,11 @@ extern FILE *log_file;
     fprintf(log_file, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;\
     fprintf(stderr, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;\
 }while(0)
+
+#define PRINT_DEBUG_LOG(format,...) do { \
+    fprintf(log_file, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;\
+}while(0)
+
 #else  
 #define PRINT_DEBUG(format,...)  
 #define PRINT_WARNING(format,...)  

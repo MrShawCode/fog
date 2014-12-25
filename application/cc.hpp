@@ -123,7 +123,7 @@ class cc_program{
         static void print_result(cc_vert_attr * va)
         {
             for (unsigned int id = 0; id < 100; id++)
-                PRINT_DEBUG("CC:result[%d], component_root = %d\n",id, (va+id)->component_root);
+                PRINT_DEBUG_LOG("CC:result[%d], component_root = %d\n",id, (va+id)->component_root);
         }
 };
 /*

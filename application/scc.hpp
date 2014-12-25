@@ -183,7 +183,7 @@ class scc_program{
         static void print_result(scc_vert_attr * va)
         {
             for (unsigned int id = 0; id < 100; id++)
-                PRINT_DEBUG("SCC:result[%d], prev_root = %d, component_root = %d\n", id, (va+id)->prev_root, (va+id)->component_root);
+                PRINT_DEBUG_LOG("SCC:result[%d], prev_root = %d, component_root = %d\n", id, (va+id)->prev_root, (va+id)->component_root);
         }
 };
 

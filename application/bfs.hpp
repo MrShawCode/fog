@@ -107,7 +107,7 @@ class bfs_program{
         static void print_result(bfs_vert_attr * va)
         {
             for (unsigned int id = 0; id < 100; id++)
-                PRINT_DEBUG("BFS:result[%d], bfs_level = %d\n", id, (va+id)->bfs_level);
+                PRINT_DEBUG_LOG("BFS:result[%d], bfs_level = %d\n", id, (va+id)->bfs_level);
         }
 };
 

@@ -111,7 +111,7 @@ class sssp_program{
         static void print_result(sssp_vert_attr * va)
         {
             for (unsigned int id = 0; id < 100; id++)
-                PRINT_DEBUG("SSSP:result[%d], predecessor = %d, value = %f\n", id, (va+id)->predecessor, (va+id)->value);
+                PRINT_DEBUG_LOG("SSSP:result[%d], predecessor = %d, value = %f\n", id, (va+id)->predecessor, (va+id)->value);
         }
 };
 

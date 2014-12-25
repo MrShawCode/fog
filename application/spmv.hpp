@@ -86,7 +86,7 @@ class spmv_program{
         static void print_result(spmv_vert_attr * va)
         {
             for (unsigned int id = 0; id < 100; id++)
-                PRINT_DEBUG("SPMV:result[%d], origin_value = %f, spmv_value = %f\n", id, (va+id)->origin_value, (va+id)->spmv_value);
+                PRINT_DEBUG_LOG("SPMV:result[%d], origin_value = %f, spmv_value = %f\n", id, (va+id)->origin_value, (va+id)->spmv_value);
         }
 
 };
