@@ -11,6 +11,7 @@
 
 #include "types.hpp"
 #include "fog_engine.hpp"
+#include "print_debug.hpp"
 
 struct sssp_vert_attr{
 	u32_t predecessor;

@@ -10,6 +10,10 @@
 #ifndef __SPMV_HPP__
 #define __SPMV_HPP__
 
+#include "fog_engine.hpp"
+#include "types.hpp"
+#include "print_debug.hpp"
+
 #define DAMPING_FACTOR	0.85
 
 //this structure will define the "attribute" of one vertex, the only member will be the rank 

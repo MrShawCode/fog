@@ -116,6 +116,14 @@ void start_engine(std::string prog_name)
         fog_engine<cc_program<T>, cc_vert_attr, cc_vert_attr, T> *eng;
         (*(eng = new fog_engine<cc_program<T>, cc_vert_attr, cc_vert_attr, T>(TARGET_ENGINE)))();
         delete eng;
+    }else if (prog_name == "demo"){
+        PRINT_DEBUG("demo starts!\n");
+
+        //...
+
+        //fog_engine<demo_program<T>, demo_vert_attr, demo_update, T> *eng;
+        //(*(eng = new fog_engine<demo_program<T>, demo_vert_attr, demo_update, T>(GLOBAL_ENGINE OR TARGET_ENGINE)))();
+        //delete eng;
     }
 }
 

@@ -12,6 +12,7 @@
 
 #include "types.hpp"
 #include "fog_engine.hpp"
+#include "print_debug.hpp"
 
 struct cc_vert_attr{
 	u32_t component_root;

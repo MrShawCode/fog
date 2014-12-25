@@ -9,6 +9,10 @@
 #ifndef __PAGERANK_HPP__
 #define __PAGERANK_HPP__
 
+#include "types.hpp"
+#include "fog_engine.hpp"
+#include "print_debug.hpp"
+
 #define DAMPING_FACTOR	0.85
 
 //this structure will define the "attribute" of one vertex, the only member will be the rank 

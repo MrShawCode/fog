@@ -12,6 +12,7 @@
 
 #include "types.hpp"
 #include "fog_engine.hpp"
+#include "print_debug.hpp"
 #include "limits.h"
 
 struct bfs_vert_attr{
