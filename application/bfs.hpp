@@ -103,8 +103,8 @@ class bfs_program{
         {
             for (unsigned int id = 0; id < 100; id++)
                 PRINT_DEBUG_LOG("BFS:result[%d], bfs_level = %d\n", id, (va+id)->bfs_level);
-            return ENGINE_STOP;
             PRINT_DEBUG("BFS engine stops!\n");
+            return ENGINE_STOP;
         }
 };
 
