@@ -188,6 +188,7 @@ void fog_engine<A, VA, U, T>::operator() ()
                 PRINT_DEBUG_TEST_LOG("segments READ counts: %d\n", seg_read_counts);
                 PRINT_DEBUG_TEST_LOG("segments WRITE counts: %d\n", seg_write_counts);
                 PRINT_DEBUG_TEST_LOG( "%d-iteration's runtime = %.f seconds\n", A::loop_counter, difftime(iter_end_time, iter_start_time));
+                PRINT_DEBUG_TEST_LOG("after %d-iteration, the accumulation time = %.f seconds\n", A::loop_counter, difftime(iter_end_time, start_time));
                 //added end
 
                 //after gather
