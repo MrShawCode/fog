@@ -18,6 +18,7 @@
 #include <stdarg.h>
 
 #include <time.h>
+#include <math.h>
 
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -122,11 +123,28 @@ void fog_engine<A, VA, U, T>::operator() ()
                 A::CONTEXT_PHASE = (A::loop_counter%2);
                 A::num_tasks_to_sched = gen_config.max_vert_id + 1;
                 A::before_iteration();
+                
+                //added by lvhuimig
+                //date:2015-1-23
+                PRINT_DEBUG_TEST_LOG("%d-th iteration, there are %d tasks to schedule!\n", A::loop_counter, A::num_tasks_to_sched);
+                iter_start_time = time(NULL);
+                seg_read_counts = 0;
+                seg_write_counts = 0;
+                //added end
+                
                 scatter_updates(1-A::CONTEXT_PHASE);
                 //cal_threshold();
                 gather_updates(A::CONTEXT_PHASE, -1);
                 //cal_threshold();
                 
+                //added by lvhuiming
+                //date:2015-1-23
+                iter_end_time = time(NULL);
+                PRINT_DEBUG_TEST_LOG("segments READ counts: %d\n", seg_read_counts);
+                PRINT_DEBUG_TEST_LOG("segments WRITE counts: %d\n", seg_write_counts);
+                PRINT_DEBUG_TEST_LOG( "%d-iteration's runtime = %.f seconds\n", A::loop_counter, difftime(iter_end_time, iter_start_time));
+                //added end
+
                 ret = A::after_iteration();
                 if (ret == ITERATION_STOP)
                     break;
@@ -147,12 +165,29 @@ void fog_engine<A, VA, U, T>::operator() ()
                 A::num_tasks_to_sched = cal_true_bits_size(1-A::CONTEXT_PHASE);
                 A::before_iteration();
                 //PRINT_DEBUG("before normal-scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-A::CONTEXT_PHASE));
+                
+                //added by lvhuimig
+                //date:2015-1-23
+                PRINT_DEBUG_TEST_LOG("%d-th iteration, there are %d tasks to schedule!\n", A::loop_counter, A::num_tasks_to_sched);
+                iter_start_time = time(NULL);
+                seg_read_counts = 0;
+                seg_write_counts = 0;
+                //added end
+                
                 scatter_updates(1-A::CONTEXT_PHASE);
                 //after scatter
                 //cal_threshold();
                 //PRINT_DEBUG("after normal-scatter and before normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(1-A::CONTEXT_PHASE));
                 gather_updates(A::CONTEXT_PHASE, -1);
                 //PRINT_DEBUG("after normal-gather, num_vert_of_next_phase = %d\n", cal_true_bits_size(A::CONTEXT_PHASE));
+                
+                //added by lvhuiming
+                //date:2015-1-23
+                iter_end_time = time(NULL);
+                PRINT_DEBUG_TEST_LOG("segments READ counts: %d\n", seg_read_counts);
+                PRINT_DEBUG_TEST_LOG("segments WRITE counts: %d\n", seg_write_counts);
+                PRINT_DEBUG_TEST_LOG( "%d-iteration's runtime = %.f seconds\n", A::loop_counter, difftime(iter_end_time, iter_start_time));
+                //added end
 
                 //after gather
                 A::num_tasks_to_sched = cal_true_bits_size(A::CONTEXT_PHASE);
@@ -898,6 +933,11 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
         p_gather_param->threshold = 0;
         p_gather_param->strip_id = 0;
 
+        //added by lvhuimig
+        //date:2015-1-23
+        cal_update_sd(p_gather_param->strip_id);
+        //added end
+        
         gather_cpu_work = new cpu_work<A, VA, U,T>(gather_fog_engine_state, (void *)p_gather_param);
         pcpu_threads[0]->work_to_do = gather_cpu_work;
         (*pcpu_threads[0])();
@@ -957,6 +997,11 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                 p_gather_param->attr_array_head = (void *)read_buf;
                 //PRINT_DEBUG("Earlier gather strip %d\n", tmp_strip_id);
 
+                //added by lvhuimig
+                //date:2015-1-23
+                cal_update_sd(p_gather_param->strip_id);
+                //added end
+                
                 gather_cpu_work = new cpu_work<A, VA, U, T>(gather_fog_engine_state, (void *)p_gather_param);
                 pcpu_threads[0]->work_to_do = gather_cpu_work;
                 (*pcpu_threads[0])();
@@ -984,6 +1029,10 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                             (u64_t)tmp_strip_id * seg_config->segment_cap*sizeof(VA),
                             (u64_t)(gen_config.max_vert_id%seg_config->segment_cap+1)*sizeof(VA));
                 }
+                //added by lvhuiming
+                //date:2015-1-23
+                seg_write_counts++;
+                //added end
 
                 fog_io_queue->add_io_task(one_io_work);
                 if (one_io_work != NULL)
@@ -1058,6 +1107,11 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
 
                     one_io_work = new io_work(gen_config.attr_file_name.c_str(),
                             FILE_READ, read_buf, offset, read_size);
+                    //added by lvhuiming
+                    //date:2015-1-23
+                    seg_read_counts++;
+                    //added end
+
                     fog_io_queue->add_io_task(one_io_work);
                     fog_io_queue->wait_for_io_task(one_io_work);
                     fog_io_queue->del_io_task(one_io_work);
@@ -1072,6 +1126,11 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                 else 
                     PRINT_ERROR("return value is false!\n");
 
+                //added by lvhuimig
+                //date:2015-1-23
+                cal_update_sd(p_gather_param->strip_id);
+                //added end
+                
                 gather_cpu_work = new cpu_work<A, VA, U, T>(gather_fog_engine_state, (void *)p_gather_param);
                 pcpu_threads[0]->work_to_do = gather_cpu_work;
                 (*pcpu_threads[0])();
@@ -1101,6 +1160,10 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                                 (u64_t)i * seg_config->segment_cap*sizeof(VA),
                                 (u64_t)(gen_config.max_vert_id%seg_config->segment_cap+1)*sizeof(VA));
                     }
+                    //added by lvhuiming
+                    //date:2015-1-23
+                    seg_write_counts++;
+                    //added end
 
                     fog_io_queue->add_io_task(write_io_work);
                 }
@@ -1267,6 +1330,12 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                             size = (u64_t)(seg_config->segment_cap*sizeof(VA));
                         one_io_work = new io_work(gen_config.attr_file_name.c_str(), 
                                 FILE_READ, read_buf, offset, size);
+                        
+                        //added by lvhuiming
+                        //date:2015-1-23
+                        seg_read_counts++;
+                        //added end
+                        
                         fog_io_queue->add_io_task(one_io_work);
                         if (one_io_work != NULL)
                         {
@@ -1317,6 +1386,12 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                                 size = (u64_t)(seg_config->segment_cap*sizeof(VA));
                             one_io_work = new io_work(gen_config.attr_file_name.c_str(), 
                                     FILE_WRITE, write_buf, offset, size);
+                            
+                            //added by lvhuiming
+                            //date:2015-1-23
+                            seg_write_counts++;
+                            //added end
+                            
                             fog_io_queue->add_io_task(one_io_work);
                             if (one_io_work != NULL)
                             {
@@ -1348,6 +1423,10 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                                 size = (u64_t)(seg_config->segment_cap*sizeof(VA));
                             one_io_work = new io_work(gen_config.attr_file_name.c_str(), 
                                     FILE_READ, read_buf, offset, size);
+                            //added by lvhuiming
+                            //date:2015-1-23
+                            seg_read_counts++;
+                            //added end
                             fog_io_queue->add_io_task(one_io_work);
                             if (one_io_work != NULL)
                             {
@@ -1383,6 +1462,10 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                                 size = (u64_t)(seg_config->segment_cap*sizeof(VA));
                             one_io_work = new io_work(gen_config.attr_file_name.c_str(), 
                                     FILE_READ, read_buf, offset, size);
+                            //added by lvhuiming
+                            //date:2015-1-23
+                            seg_read_counts++;
+                            //added end
                             fog_io_queue->add_io_task(one_io_work);
                             if (one_io_work != NULL)
                             {
@@ -1441,6 +1524,10 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                                 size = (u64_t)(seg_config->segment_cap*sizeof(VA));
                             one_io_work = new io_work(gen_config.attr_file_name.c_str(), 
                                     FILE_READ, next_buffer, offset, size);
+                            //added by lvhuiming
+                            //date:2015-1-23
+                            seg_read_counts++;
+                            //added end
                             fog_io_queue->add_io_task(one_io_work);
                             if (one_io_work != NULL)
                             {
@@ -1485,6 +1572,10 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                                 size = (u64_t)(seg_config->segment_cap*sizeof(VA));
                             one_io_work = new io_work(gen_config.attr_file_name.c_str(), 
                                     FILE_WRITE, write_buf, offset, size);
+                            //added by lvhuiming
+                            //date:2015-1-23
+                            seg_write_counts++;
+                            //added end
                             fog_io_queue->add_io_task(one_io_work);
 
                             next_buffer = get_target_buf_addr(next_strip_id);
@@ -1503,6 +1594,10 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                                 size = (u64_t)(seg_config->segment_cap*sizeof(VA));
                             one_io_work = new io_work(gen_config.attr_file_name.c_str(), 
                                     FILE_READ, next_buffer, offset, size);
+                            //added by lvhuiming
+                            //date:2015-1-23
+                            seg_read_counts++;
+                            //added end
                             fog_io_queue->add_io_task(one_io_work);
                             if (one_io_work != NULL)
                             {
@@ -1517,6 +1612,11 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                 p_gather_param->threshold = 1;
                 p_gather_param->strip_id = tmp_strip_id;
 
+                //added by lvhuimig
+                //date:2015-1-23
+                cal_update_sd(p_gather_param->strip_id);
+                //added end
+                
                 gather_cpu_work = new cpu_work<A, VA, U, T>(gather_fog_engine_state, (void *)p_gather_param);
                 pcpu_threads[0]->work_to_do = gather_cpu_work;
                 (*pcpu_threads[0])();
@@ -1753,6 +1853,46 @@ void fog_engine<A, VA, U, T>::show_update_map(int processor_id, u32_t * map_head
     PRINT_SHORT( "--------------- update map of CPU%d end-----------------\n", processor_id );
 }
 
+//this function is added by lvhuiming
+//calculate the updates count in update_map
+//calculate the mean square error
+//date:2015-1-23
+template <typename A, typename VA, typename U, typename T>
+void fog_engine<A, VA, U, T>::cal_update_sd(int strip_id)
+{
+    update_map_manager * map_manager;
+    u32_t * map_head;
+    double average;
+    double stan_dev;
+    double temp = 0.0;
+
+    PRINT_DEBUG_TEST_LOG("strip_id = %d\n", strip_id);
+    for (u32_t i = 0; i < gen_config.num_processors; i++)
+    {
+        average = 0.0;
+        stan_dev = 0.0;
+        map_manager = seg_config->per_cpu_info_list[i]->update_manager;
+        map_head = map_manager->update_map_head;
+        map_head += strip_id * gen_config.num_processors;
+        for (u32_t j = 0; j < gen_config.num_processors; j++)
+        {
+        //    PRINT_DEBUG_TEST_LOG("j = %d\n",*(map_head+j));
+            average += *(map_head+j);
+        }
+        average /= (double)gen_config.num_processors;
+        //PRINT_DEBUG_TEST_LOG("average = %lf\n", average);
+        for (u32_t k = 0; k < gen_config.num_processors; k++)
+        {
+            temp = average - (double)(*(map_head+k));
+            stan_dev += pow(temp, 2);
+        }
+        stan_dev /= (double)gen_config.num_processors;
+        stan_dev = sqrt(stan_dev);
+
+        PRINT_DEBUG_TEST_LOG("update's standard deviation in CPU:%d is %.2lf\n", i, stan_dev);
+     }
+
+}
 //map the attribute file
 //return value:
 //0 means success

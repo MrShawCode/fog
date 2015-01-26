@@ -83,6 +83,12 @@ class fog_engine{
         time_t start_time;
         time_t end_time;
 
+        time_t iter_start_time;
+        time_t iter_end_time;
+
+        u32_t seg_read_counts;
+        u32_t seg_write_counts; 
+
     public:
         fog_engine(u32_t global_target);
 		~fog_engine();
@@ -122,6 +128,11 @@ class fog_engine{
         void add_sched_task_to_processor( u32_t processor_id, sched_task *task, u32_t task_len );
         void add_all_task_to_cpu( sched_task * task );
 		static void *map_anon_memory( u64_t size,bool mlocked,bool zero = false);
+
+        //added by lvhuiming
+        //date:2015-1-23
+        void cal_update_sd(int strip_id);
+        //added end
 };
 template <typename A, typename VA, typename U, typename T>
 index_vert_array<T> * fog_engine<A, VA, U, T>::vert_index;

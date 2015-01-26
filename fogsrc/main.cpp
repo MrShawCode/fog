@@ -40,6 +40,7 @@
 
 struct general_config gen_config;
 FILE * log_file;
+FILE * test_log_file;  
 
 template <typename T>
 void start_engine(std::string prog_name)
@@ -139,6 +140,7 @@ int main( int argc, const char**argv)
 	std::string	prog_name_app;
 	std::string desc_name;
     std::string log_file_name;
+    std::string test_log_file_name; 
 
     setup_options_fog( argc, argv );
 	prog_name_app = vm["application"].as<std::string>();
@@ -147,12 +149,13 @@ int main( int argc, const char**argv)
     time_t timep;
     time(&timep);
     struct tm *tm_p = localtime(&timep);
-    std::string start_time;
+    //std::string start_time;
     char temp[100];
     sprintf(temp, "%d.%d.%d-%d:%d:%d", tm_p->tm_year+1900, tm_p->tm_mon+1,
             tm_p->tm_mday, tm_p->tm_hour, tm_p->tm_min, tm_p->tm_sec);
 
     log_file_name = "print-" + prog_name_app + "-" + std::string(temp) + "-.log";
+    test_log_file_name = "test-" + prog_name_app + "-" + std::string(temp) + "-.LOG";
     
 	init_graph_desc( desc_name );
 
@@ -170,6 +173,12 @@ int main( int argc, const char**argv)
         printf("failed to open %s.\n", log_file_name.c_str());
         exit(666);
     }
+    if (!(test_log_file = fopen(test_log_file_name.c_str(), "w"))) //open file for mode
+    {
+        printf("failed to open %s.\n", test_log_file_name.c_str());
+        exit(666);
+    }
+    
     PRINT_DEBUG("Your command is: %s\n", user_command.c_str());
 
 	gen_config.min_vert_id = pt.get<u32_t>("description.min_vertex_id");

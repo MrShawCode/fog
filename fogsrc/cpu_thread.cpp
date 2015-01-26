@@ -1,9 +1,13 @@
 /**************************************************************************************************
  * Authors: 
- *   Zhiyuan Shao, Jian He
+ *   Zhiyuan Shao, Jian He, Huiming Lv
  *
  * Routines:
  *   CPU (computing) threads.
+ *
+ * Notes:
+ *   1.if vertex's attribute is in the attr_buf, we will use attr_buf instead of mmap
+ *     modified by Huiming Lv   2015/1/23
  *************************************************************************************************/
 
 #include "config.hpp"
@@ -163,6 +167,28 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
 
             for (u32_t i = min_vert; i <= max_vert; i = i + gen_config.num_processors)
             {
+                //modify by lvhuiming
+                //date:2015-1-23
+                //if i is in the attr_buf, use the attr_buf's value
+                //because attr_buf's value is newer than mmap's value
+                int seg_id = VID_TO_SEGMENT(i);
+                bool vertex_in_attrbuf = false;
+                if(seg_id == seg_config->buf0_holder)
+                {
+                    attr_array_head = (VA *)seg_config->attr_buf0;
+                    vertex_in_attrbuf = true;
+                }
+                else if(seg_id == seg_config->buf1_holder)
+                {
+                    attr_array_head = (VA *)seg_config->attr_buf1;
+                    vertex_in_attrbuf = true;
+                }
+                else
+                {
+                    attr_array_head = (VA *)p_scatter_param->attr_array_head;
+                }
+                //modify end
+                
                 if (current_bitmap->get_value(i) == 0)
                     continue;
                 
@@ -212,7 +238,20 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                             continue;
                         }
                         assert(t_edge);//Make sure this edge existd!
-                        t_update = A::scatter_one_edge((VA *)&attr_array_head[i], t_edge, i);
+
+                        //modify by lvhuiming
+                        //date:2015-1-23
+                        if (vertex_in_attrbuf)
+                        {
+                            u32_t id_in_buf = i % seg_config->segment_cap;
+                            t_update = A::scatter_one_edge((VA *)&attr_array_head[id_in_buf], t_edge, i);
+                        }
+                        else
+                        {
+                            t_update = A::scatter_one_edge((VA *)&attr_array_head[i], t_edge, i);
+                        }
+                        //modify end
+                        
                         assert(t_update);
                         delete t_edge;
                     }
@@ -226,7 +265,19 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                             continue;
                         }
                         assert(t_in_edge);//Make sure this edge existd!
-                        t_update = A::scatter_one_edge((VA *)&attr_array_head[i], NULL, t_in_edge->get_src_value());
+
+                        //modify by lvhuiming
+                        //date:2015-1-23
+                        if (vertex_in_attrbuf)
+                        {
+                            u32_t id_in_buf = i % seg_config->segment_cap;
+                            t_update = A::scatter_one_edge((VA *)&attr_array_head[id_in_buf], NULL, t_in_edge->get_src_value());
+                        }
+                        else
+                        {
+                            t_update = A::scatter_one_edge((VA *)&attr_array_head[i], NULL, t_in_edge->get_src_value());
+                        }
+                        //modify end
                         delete t_in_edge;
                     }
 
@@ -396,6 +447,27 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
             //for loop for every vertex in every cpu
             for (u32_t i = min_vert; i <= max_vert; i += gen_config.num_processors)
             {
+                //modify by lvhuiming
+                //date:2015-1-23
+                //if i is in the attr_buf, use the attr_buf's value
+                //because attr_buf's value is newer than mmap's value
+                int seg_id = VID_TO_SEGMENT(i);
+                bool vertex_in_attrbuf = false;
+                if(seg_id == seg_config->buf0_holder)
+                {
+                    attr_array_head = (VA *)seg_config->attr_buf0;
+                    vertex_in_attrbuf = true;
+                }
+                else if(seg_id == seg_config->buf1_holder)
+                {
+                    attr_array_head = (VA *)seg_config->attr_buf1;
+                    vertex_in_attrbuf = true;
+                }
+                else
+                {
+                    attr_array_head = (VA *)p_scatter_param->attr_array_head;
+                }
+                //modify end
                 
                 num_out_edges = vert_index->num_edges(i, OUT_EDGE);
 
@@ -428,7 +500,20 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                     t_edge = vert_index->get_out_edge(i, z);
                     //Make sure this edge existd!
                     assert(t_edge);
-                    t_update = A::scatter_one_edge((VA*)&attr_array_head[i], t_edge, num_out_edges);
+                        
+                    //modify by lvhuiming
+                    //date:2015-1-23
+                    if (vertex_in_attrbuf)
+                    {
+                        u32_t id_in_buf = i % seg_config->segment_cap;
+                        t_update = A::scatter_one_edge((VA *)&attr_array_head[id_in_buf], t_edge, num_out_edges);
+                    }
+                    else
+                    {
+                        t_update = A::scatter_one_edge((VA*)&attr_array_head[i], t_edge, num_out_edges);
+                    }
+                    //modify end
+                    
                     assert(t_update);
                     delete t_edge;
 
