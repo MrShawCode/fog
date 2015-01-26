@@ -143,6 +143,7 @@ void fog_engine<A, VA, U, T>::operator() ()
                 PRINT_DEBUG_TEST_LOG("segments READ counts: %d\n", seg_read_counts);
                 PRINT_DEBUG_TEST_LOG("segments WRITE counts: %d\n", seg_write_counts);
                 PRINT_DEBUG_TEST_LOG( "%d-iteration's runtime = %.f seconds\n", A::loop_counter, difftime(iter_end_time, iter_start_time));
+                PRINT_DEBUG_TEST_LOG("after %d-iteration, the accumulation time = %.f seconds\n", A::loop_counter, difftime(iter_end_time, start_time));
                 //added end
 
                 ret = A::after_iteration();
@@ -1860,6 +1861,7 @@ void fog_engine<A, VA, U, T>::show_update_map(int processor_id, u32_t * map_head
 template <typename A, typename VA, typename U, typename T>
 void fog_engine<A, VA, U, T>::cal_update_sd(int strip_id)
 {
+    /*
     update_map_manager * map_manager;
     u32_t * map_head;
     double average;
@@ -1891,6 +1893,7 @@ void fog_engine<A, VA, U, T>::cal_update_sd(int strip_id)
 
         PRINT_DEBUG_TEST_LOG("update's standard deviation in CPU:%d is %.2lf\n", i, stan_dev);
      }
+     */
 
 }
 //map the attribute file
