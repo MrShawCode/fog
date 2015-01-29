@@ -1890,8 +1890,12 @@ void fog_engine<A, VA, U, T>::cal_update_cv(int strip_id)
     double stan_dev = 0.0;
     double cv = 0.0;
     double temp = 0.0;
-    u32_t capability = 0;
-    u32_t * update_counts = new u32_t[gen_config.num_processors];
+    double capability = 0;
+    double * update_counts = new double[gen_config.num_processors];
+	for (u32_t s = 0; s < gen_config.num_processors; s++)
+	{
+	    update_counts[s] = 0.0;
+	}
 
     //PRINT_DEBUG_TEST_LOG("strip_id = %d\n", strip_id);
     for (u32_t i = 0; i < gen_config.num_processors; i++)
@@ -1903,8 +1907,9 @@ void fog_engine<A, VA, U, T>::cal_update_cv(int strip_id)
         for (u32_t j = 0; j < gen_config.num_processors; j++)
         {
             PRINT_DEBUG_TEST_LOG("CPU%d counts = %d\n",j, *(map_head+j));
-            update_counts[j] += *(map_head+j);
-            average += *(map_head+j);
+            update_counts[j] += (double)(*(map_head+j));
+	        PRINT_DEBUG_TEST_LOG("update_counts[%d] = %.lf\n", j, update_counts[j]);
+            average += (double)(*(map_head+j));
         }
     }
     /*
@@ -1913,29 +1918,31 @@ void fog_engine<A, VA, U, T>::cal_update_cv(int strip_id)
        return;
     }
     */
-    //PRINT_DEBUG_TEST_LOG("Cap is %d\n", capability);
+    PRINT_DEBUG_TEST_LOG("Cap is %.lf\n", capability);
+    PRINT_DEBUG_TEST_LOG("use rate is %.3lf\n", (average/(double)capability));
 
     if ( THRESHOLD > (average/(double)capability))
     {
-        //PRINT_DEBUG_TEST_LOG("use rate is %.3lf", (average/(double)capability));
         return; 
     }
 
     average /= (double)gen_config.num_processors;
-    //PRINT_DEBUG_TEST_LOG("average = %lf\n", average);
+    PRINT_DEBUG_TEST_LOG("average = %lf\n", average);
     for (u32_t k = 0; k < gen_config.num_processors; k++)
     {
+	    PRINT_DEBUG_TEST_LOG("update_counts[%d] = %.lf\n", k, update_counts[k]);
         temp = average - update_counts[k];
         stan_dev += pow(temp, 2);
     }
     stan_dev /= (double)gen_config.num_processors;
     stan_dev = sqrt(stan_dev);
+	PRINT_DEBUG_TEST_LOG("sd is %.5lf\n", stan_dev);
     cv = stan_dev/average;
     /*
     if ( stan_dev > max_stdev ) max_stdev = stan_dev;
     if ( stan_dev < min_stdev ) min_stdev = stan_dev;
     */
-    //PRINT_DEBUG_TEST_LOG("update's coefficient of variation is %.5lf\n", cv);
+    PRINT_DEBUG_TEST_LOG("update's coefficient of variation is %.5lf\n", cv);
     PRINT_DEBUG_CV_LOG("%.5lf\n", cv);
     delete []update_counts;
 }
