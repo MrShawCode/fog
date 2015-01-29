@@ -69,6 +69,7 @@ extern FILE *log_file;
 #elif __PRINT__DEBUG__ == 2
 extern FILE *log_file;
 extern FILE *test_log_file;
+extern FILE *cv_log_file;
 #define PRINT_DEBUG(format,...) do { \
     fprintf(log_file, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;\
     fprintf(stderr, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;\
@@ -97,6 +98,10 @@ extern FILE *test_log_file;
 
 #define PRINT_DEBUG_TEST_LOG(format,...) do { \
     fprintf(test_log_file, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;\
+}while(0)
+
+#define PRINT_DEBUG_CV_LOG(format,...) do { \
+    fprintf(cv_log_file, format, ##__VA_ARGS__) ;\
 }while(0)
 
 #else  

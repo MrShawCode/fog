@@ -89,6 +89,11 @@ class fog_engine{
         u32_t seg_read_counts;
         u32_t seg_write_counts; 
 
+        double min_stdev;
+        double max_stdev;
+
+        u32_t hit_counts;
+
     public:
         fog_engine(u32_t global_target);
 		~fog_engine();
@@ -131,7 +136,7 @@ class fog_engine{
 
         //added by lvhuiming
         //date:2015-1-23
-        void cal_update_sd(int strip_id);
+        void cal_update_cv(int strip_id);
         //added end
 };
 template <typename A, typename VA, typename U, typename T>

@@ -93,6 +93,8 @@ template <typename A, typename VA, typename U, typename T>
 void fog_engine<A, VA, U, T>::operator() ()
 {
      start_time = time(NULL);
+     min_stdev = 1000000.0;
+     max_stdev = 0.0;
 
      assert(A::CONTEXT_PHASE == 0);
      assert(A::loop_counter == 0);
@@ -130,6 +132,7 @@ void fog_engine<A, VA, U, T>::operator() ()
                 iter_start_time = time(NULL);
                 seg_read_counts = 0;
                 seg_write_counts = 0;
+                hit_counts = 0;
                 //added end
                 
                 scatter_updates(1-A::CONTEXT_PHASE);
@@ -142,6 +145,7 @@ void fog_engine<A, VA, U, T>::operator() ()
                 iter_end_time = time(NULL);
                 PRINT_DEBUG_TEST_LOG("segments READ counts: %d\n", seg_read_counts);
                 PRINT_DEBUG_TEST_LOG("segments WRITE counts: %d\n", seg_write_counts);
+                PRINT_DEBUG_TEST_LOG("segments hit counts: %d, hit rate: %.2lf\n", hit_counts,(double)(hit_counts)/((double)seg_read_counts));
                 PRINT_DEBUG_TEST_LOG( "%d-iteration's runtime = %.f seconds\n", A::loop_counter, difftime(iter_end_time, iter_start_time));
                 PRINT_DEBUG_TEST_LOG("after %d-iteration, the accumulation time = %.f seconds\n", A::loop_counter, difftime(iter_end_time, start_time));
                 //added end
@@ -173,6 +177,7 @@ void fog_engine<A, VA, U, T>::operator() ()
                 iter_start_time = time(NULL);
                 seg_read_counts = 0;
                 seg_write_counts = 0;
+                hit_counts = 0;
                 //added end
                 
                 scatter_updates(1-A::CONTEXT_PHASE);
@@ -187,6 +192,7 @@ void fog_engine<A, VA, U, T>::operator() ()
                 iter_end_time = time(NULL);
                 PRINT_DEBUG_TEST_LOG("segments READ counts: %d\n", seg_read_counts);
                 PRINT_DEBUG_TEST_LOG("segments WRITE counts: %d\n", seg_write_counts);
+                PRINT_DEBUG_TEST_LOG("segments hit counts: %d, hit rate: %.2lf\n", hit_counts,(double)(hit_counts)/((double)seg_read_counts));
                 PRINT_DEBUG_TEST_LOG( "%d-iteration's runtime = %.f seconds\n", A::loop_counter, difftime(iter_end_time, iter_start_time));
                 PRINT_DEBUG_TEST_LOG("after %d-iteration, the accumulation time = %.f seconds\n", A::loop_counter, difftime(iter_end_time, start_time));
                 //added end
@@ -225,6 +231,8 @@ void fog_engine<A, VA, U, T>::operator() ()
      }
 
      end_time = time(NULL);
+     PRINT_DEBUG_TEST_LOG("MIN standard deviation is %.2lf\n", min_stdev);
+     PRINT_DEBUG_TEST_LOG("MAX standard deviation is %.2lf\n", max_stdev);
      PRINT_DEBUG( "run time = %.f seconds\n", difftime(end_time, start_time));
      //print-result
      //print_attr_result();
@@ -937,7 +945,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
 
         //added by lvhuimig
         //date:2015-1-23
-        cal_update_sd(p_gather_param->strip_id);
+        cal_update_cv(p_gather_param->strip_id);
         //added end
         
         gather_cpu_work = new cpu_work<A, VA, U,T>(gather_fog_engine_state, (void *)p_gather_param);
@@ -975,7 +983,10 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                     if (seg_config->buf0_holder == -1)
                         continue;
                     else
-                    {
+                    {   
+                        //added by lvhuiming
+                        hit_counts++;
+                        //added end
                         read_buf = (char *)seg_config->attr_buf0;
                         tmp_strip_id = seg_config->buf0_holder;
                     }
@@ -986,6 +997,9 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                         continue;
                     else
                     {
+                        //added by lvhuiming
+                        hit_counts++;
+                        //added end
                         read_buf = (char *)seg_config->attr_buf1;
                         tmp_strip_id = seg_config->buf1_holder;
                     }
@@ -1001,7 +1015,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
 
                 //added by lvhuimig
                 //date:2015-1-23
-                cal_update_sd(p_gather_param->strip_id);
+                cal_update_cv(p_gather_param->strip_id);
                 //added end
                 
                 gather_cpu_work = new cpu_work<A, VA, U, T>(gather_fog_engine_state, (void *)p_gather_param);
@@ -1130,7 +1144,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
 
                 //added by lvhuimig
                 //date:2015-1-23
-                cal_update_sd(p_gather_param->strip_id);
+                cal_update_cv(p_gather_param->strip_id);
                 //added end
                 
                 gather_cpu_work = new cpu_work<A, VA, U, T>(gather_fog_engine_state, (void *)p_gather_param);
@@ -1233,6 +1247,9 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                         ret = lru_hit_target(tmp_strip_id);
                         if (ret == 1)
                         {
+                            //added by lvhuiming
+                            hit_counts++;
+                            //added end
                             if (num_hits == 0)
                             {
                                 tmp_id = partition_gather_array[0];
@@ -1277,7 +1294,12 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                     tmp_num++;
                     ret = lru_hit_target(tmp_strip_id);
                     if (ret == 1)
+                    {
+                        //added by lvhuiming
+                        hit_counts++;
+                        //added end
                         num_hits++;
+                    }
                 }
             }
             //for (u32_t i = 0; i < tmp_num; i++)
@@ -1616,7 +1638,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
 
                 //added by lvhuimig
                 //date:2015-1-23
-                cal_update_sd(p_gather_param->strip_id);
+                cal_update_cv(p_gather_param->strip_id);
                 //added end
                 
                 gather_cpu_work = new cpu_work<A, VA, U, T>(gather_fog_engine_state, (void *)p_gather_param);
@@ -1857,45 +1879,65 @@ void fog_engine<A, VA, U, T>::show_update_map(int processor_id, u32_t * map_head
 
 //this function is added by lvhuiming
 //calculate the updates count in update_map
-//calculate the mean square error
+//calculate the Coefficient of variation 
 //date:2015-1-23
 template <typename A, typename VA, typename U, typename T>
-void fog_engine<A, VA, U, T>::cal_update_sd(int strip_id)
+void fog_engine<A, VA, U, T>::cal_update_cv(int strip_id)
 {
-    /*
     update_map_manager * map_manager;
     u32_t * map_head;
-    double average;
-    double stan_dev;
+    double average = 0.0;
+    double stan_dev = 0.0;
+    double cv = 0.0;
     double temp = 0.0;
+    u32_t capability = 0;
+    u32_t * update_counts = new u32_t[gen_config.num_processors];
 
-    PRINT_DEBUG_TEST_LOG("strip_id = %d\n", strip_id);
+    //PRINT_DEBUG_TEST_LOG("strip_id = %d\n", strip_id);
     for (u32_t i = 0; i < gen_config.num_processors; i++)
     {
-        average = 0.0;
-        stan_dev = 0.0;
         map_manager = seg_config->per_cpu_info_list[i]->update_manager;
         map_head = map_manager->update_map_head;
         map_head += strip_id * gen_config.num_processors;
+        capability += seg_config->per_cpu_info_list[i]->strip_cap;
         for (u32_t j = 0; j < gen_config.num_processors; j++)
         {
-        //    PRINT_DEBUG_TEST_LOG("j = %d\n",*(map_head+j));
+            PRINT_DEBUG_TEST_LOG("CPU%d counts = %d\n",j, *(map_head+j));
+            update_counts[j] += *(map_head+j);
             average += *(map_head+j);
         }
-        average /= (double)gen_config.num_processors;
-        //PRINT_DEBUG_TEST_LOG("average = %lf\n", average);
-        for (u32_t k = 0; k < gen_config.num_processors; k++)
-        {
-            temp = average - (double)(*(map_head+k));
-            stan_dev += pow(temp, 2);
-        }
-        stan_dev /= (double)gen_config.num_processors;
-        stan_dev = sqrt(stan_dev);
+    }
+    /*
+    if (0.0 == average)
+    {
+       return;
+    }
+    */
+    //PRINT_DEBUG_TEST_LOG("Cap is %d\n", capability);
 
-        PRINT_DEBUG_TEST_LOG("update's standard deviation in CPU:%d is %.2lf\n", i, stan_dev);
-     }
-     */
+    if ( THRESHOLD > (average/(double)capability))
+    {
+        //PRINT_DEBUG_TEST_LOG("use rate is %.3lf", (average/(double)capability));
+        return; 
+    }
 
+    average /= (double)gen_config.num_processors;
+    //PRINT_DEBUG_TEST_LOG("average = %lf\n", average);
+    for (u32_t k = 0; k < gen_config.num_processors; k++)
+    {
+        temp = average - update_counts[k];
+        stan_dev += pow(temp, 2);
+    }
+    stan_dev /= (double)gen_config.num_processors;
+    stan_dev = sqrt(stan_dev);
+    cv = stan_dev/average;
+    /*
+    if ( stan_dev > max_stdev ) max_stdev = stan_dev;
+    if ( stan_dev < min_stdev ) min_stdev = stan_dev;
+    */
+    //PRINT_DEBUG_TEST_LOG("update's coefficient of variation is %.5lf\n", cv);
+    PRINT_DEBUG_CV_LOG("%.5lf\n", cv);
+    delete []update_counts;
 }
 //map the attribute file
 //return value:

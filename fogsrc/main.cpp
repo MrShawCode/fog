@@ -41,6 +41,7 @@
 struct general_config gen_config;
 FILE * log_file;
 FILE * test_log_file;  
+FILE * cv_log_file;
 
 template <typename T>
 void start_engine(std::string prog_name)
@@ -141,6 +142,7 @@ int main( int argc, const char**argv)
 	std::string desc_name;
     std::string log_file_name;
     std::string test_log_file_name; 
+    std::string cv_log_file_name;
 
     setup_options_fog( argc, argv );
 	prog_name_app = vm["application"].as<std::string>();
@@ -156,6 +158,7 @@ int main( int argc, const char**argv)
 
     log_file_name = "print-" + prog_name_app + "-" + std::string(temp) + "-.log";
     test_log_file_name = "test-" + prog_name_app + "-" + std::string(temp) + "-.LOG";
+    cv_log_file_name = "cv-" + prog_name_app + "-" + std::string(temp) + "-.LOG";
     
 	init_graph_desc( desc_name );
 
@@ -176,6 +179,11 @@ int main( int argc, const char**argv)
     if (!(test_log_file = fopen(test_log_file_name.c_str(), "w"))) //open file for mode
     {
         printf("failed to open %s.\n", test_log_file_name.c_str());
+        exit(666);
+    }
+    if (!(cv_log_file = fopen(cv_log_file_name.c_str(), "w"))) //open file for mode
+    {
+        printf("failed to open %s.\n", cv_log_file_name.c_str());
         exit(666);
     }
     
