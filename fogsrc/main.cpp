@@ -131,6 +131,24 @@ void start_engine(std::string prog_name)
 
 int main( int argc, const char**argv)
 {
+   /* 
+    if( opendir("./logs")==NULL )
+    {
+        std::cout<<"no"<<std::endl;
+        int ret = mkdir("./logs", 00777);
+        if( 0!=ret)
+        {
+            std::cout<<"fffff"<<std::endl;
+            exit(666);
+        }
+        if(NULL==opendir("./logs"))
+        {
+            std::cout<<"change fault"<<std::endl;
+            exit(666);
+        }
+    }
+    */
+
     std::string user_command;
     for(int i = 0; i < argc; i++)
     {
@@ -176,6 +194,7 @@ int main( int argc, const char**argv)
         printf("failed to open %s.\n", log_file_name.c_str());
         exit(666);
     }
+    /*
     if (!(test_log_file = fopen(test_log_file_name.c_str(), "w"))) //open file for mode
     {
         printf("failed to open %s.\n", test_log_file_name.c_str());
@@ -186,7 +205,7 @@ int main( int argc, const char**argv)
         printf("failed to open %s.\n", cv_log_file_name.c_str());
         exit(666);
     }
-    
+    */
     PRINT_DEBUG("Your command is: %s\n", user_command.c_str());
 
 	gen_config.min_vert_id = pt.get<u32_t>("description.min_vertex_id");

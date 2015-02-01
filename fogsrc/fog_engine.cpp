@@ -128,7 +128,7 @@ void fog_engine<A, VA, U, T>::operator() ()
                 
                 //added by lvhuimig
                 //date:2015-1-23
-                PRINT_DEBUG_TEST_LOG("%d-th iteration, there are %d tasks to schedule!\n", A::loop_counter, A::num_tasks_to_sched);
+                //PRINT_DEBUG_TEST_LOG("%d-th iteration, there are %d tasks to schedule!\n", A::loop_counter, A::num_tasks_to_sched);
                 iter_start_time = time(NULL);
                 seg_read_counts = 0;
                 seg_write_counts = 0;
@@ -143,11 +143,11 @@ void fog_engine<A, VA, U, T>::operator() ()
                 //added by lvhuiming
                 //date:2015-1-23
                 iter_end_time = time(NULL);
-                PRINT_DEBUG_TEST_LOG("segments READ counts: %d\n", seg_read_counts);
-                PRINT_DEBUG_TEST_LOG("segments WRITE counts: %d\n", seg_write_counts);
-                PRINT_DEBUG_TEST_LOG("segments hit counts: %d, hit rate: %.2lf\n", hit_counts,(double)(hit_counts)/((double)seg_read_counts));
-                PRINT_DEBUG_TEST_LOG( "%d-iteration's runtime = %.f seconds\n", A::loop_counter, difftime(iter_end_time, iter_start_time));
-                PRINT_DEBUG_TEST_LOG("after %d-iteration, the accumulation time = %.f seconds\n", A::loop_counter, difftime(iter_end_time, start_time));
+                //PRINT_DEBUG_TEST_LOG("segments READ counts: %d\n", seg_read_counts);
+                //PRINT_DEBUG_TEST_LOG("segments WRITE counts: %d\n", seg_write_counts);
+                //PRINT_DEBUG_TEST_LOG("segments hit counts: %d, hit rate: %.2lf\n", hit_counts,(double)(hit_counts)/((double)seg_read_counts));
+                //PRINT_DEBUG_TEST_LOG( "%d-iteration's runtime = %.f seconds\n", A::loop_counter, difftime(iter_end_time, iter_start_time));
+                //PRINT_DEBUG_TEST_LOG("after %d-iteration, the accumulation time = %.f seconds\n", A::loop_counter, difftime(iter_end_time, start_time));
                 //added end
 
                 ret = A::after_iteration();
@@ -173,7 +173,7 @@ void fog_engine<A, VA, U, T>::operator() ()
                 
                 //added by lvhuimig
                 //date:2015-1-23
-                PRINT_DEBUG_TEST_LOG("%d-th iteration, there are %d tasks to schedule!\n", A::loop_counter, A::num_tasks_to_sched);
+                //PRINT_DEBUG_TEST_LOG("%d-th iteration, there are %d tasks to schedule!\n", A::loop_counter, A::num_tasks_to_sched);
                 iter_start_time = time(NULL);
                 seg_read_counts = 0;
                 seg_write_counts = 0;
@@ -190,11 +190,12 @@ void fog_engine<A, VA, U, T>::operator() ()
                 //added by lvhuiming
                 //date:2015-1-23
                 iter_end_time = time(NULL);
-                PRINT_DEBUG_TEST_LOG("segments READ counts: %d\n", seg_read_counts);
+                /*PRINT_DEBUG_TEST_LOG("segments READ counts: %d\n", seg_read_counts);
                 PRINT_DEBUG_TEST_LOG("segments WRITE counts: %d\n", seg_write_counts);
                 PRINT_DEBUG_TEST_LOG("segments hit counts: %d, hit rate: %.2lf\n", hit_counts,(double)(hit_counts)/((double)seg_read_counts));
                 PRINT_DEBUG_TEST_LOG( "%d-iteration's runtime = %.f seconds\n", A::loop_counter, difftime(iter_end_time, iter_start_time));
                 PRINT_DEBUG_TEST_LOG("after %d-iteration, the accumulation time = %.f seconds\n", A::loop_counter, difftime(iter_end_time, start_time));
+                */
                 //added end
 
                 //after gather
@@ -231,8 +232,8 @@ void fog_engine<A, VA, U, T>::operator() ()
      }
 
      end_time = time(NULL);
-     PRINT_DEBUG_TEST_LOG("MIN standard deviation is %.2lf\n", min_stdev);
-     PRINT_DEBUG_TEST_LOG("MAX standard deviation is %.2lf\n", max_stdev);
+     //PRINT_DEBUG_TEST_LOG("MIN standard deviation is %.2lf\n", min_stdev);
+     //PRINT_DEBUG_TEST_LOG("MAX standard deviation is %.2lf\n", max_stdev);
      PRINT_DEBUG( "run time = %.f seconds\n", difftime(end_time, start_time));
      //print-result
      //print_attr_result();
@@ -1906,6 +1907,7 @@ void fog_engine<A, VA, U, T>::show_update_map(int processor_id, u32_t * map_head
 template <typename A, typename VA, typename U, typename T>
 void fog_engine<A, VA, U, T>::cal_update_cv(int strip_id)
 {
+    /*
     update_map_manager * map_manager;
     u32_t * map_head;
     double average = 0.0;
@@ -1928,20 +1930,14 @@ void fog_engine<A, VA, U, T>::cal_update_cv(int strip_id)
         capability += seg_config->per_cpu_info_list[i]->strip_cap;
         for (u32_t j = 0; j < gen_config.num_processors; j++)
         {
-            PRINT_DEBUG_TEST_LOG("CPU%d counts = %d\n",j, *(map_head+j));
+            //PRINT_DEBUG_TEST_LOG("CPU%d counts = %d\n",j, *(map_head+j));
             update_counts[j] += (double)(*(map_head+j));
-	        PRINT_DEBUG_TEST_LOG("update_counts[%d] = %.lf\n", j, update_counts[j]);
+	        //PRINT_DEBUG_TEST_LOG("update_counts[%d] = %.lf\n", j, update_counts[j]);
             average += (double)(*(map_head+j));
         }
     }
-    /*
-    if (0.0 == average)
-    {
-       return;
-    }
-    */
-    PRINT_DEBUG_TEST_LOG("Cap is %.lf\n", capability);
-    PRINT_DEBUG_TEST_LOG("use rate is %.3lf\n", (average/(double)capability));
+    //PRINT_DEBUG_TEST_LOG("Cap is %.lf\n", capability);
+    //PRINT_DEBUG_TEST_LOG("use rate is %.3lf\n", (average/(double)capability));
 
     if ( THRESHOLD > (average/(double)capability))
     {
@@ -1960,13 +1956,10 @@ void fog_engine<A, VA, U, T>::cal_update_cv(int strip_id)
     stan_dev = sqrt(stan_dev);
 	PRINT_DEBUG_TEST_LOG("sd is %.5lf\n", stan_dev);
     cv = stan_dev/average;
-    /*
-    if ( stan_dev > max_stdev ) max_stdev = stan_dev;
-    if ( stan_dev < min_stdev ) min_stdev = stan_dev;
-    */
     PRINT_DEBUG_TEST_LOG("update's coefficient of variation is %.5lf\n", cv);
     PRINT_DEBUG_CV_LOG("%.5lf\n", cv);
     delete []update_counts;
+    */
 }
 //map the attribute file
 //return value:
