@@ -100,6 +100,7 @@ class fog_engine{
         void operator() ();
         void print_attr_result();
         u32_t cal_true_bits_size(u32_t CONTEXT_PHASE);
+        void write_attr_back();
         void show_all_sched_tasks();
 		void init_phase(int global_loop);
         void set_signal_to_scatter(u32_t signal, u32_t processor_id, u32_t CONTEXT_PHASE);

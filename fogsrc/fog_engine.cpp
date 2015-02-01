@@ -236,6 +236,28 @@ void fog_engine<A, VA, U, T>::operator() ()
      PRINT_DEBUG( "run time = %.f seconds\n", difftime(end_time, start_time));
      //print-result
      //print_attr_result();
+
+     //write back
+    if (seg_config->num_attr_buf == 1)
+        write_attr_back();
+}
+
+template <typename A, typename VA, typename U, typename T>
+void fog_engine<A, VA, U, T>::write_attr_back()
+{
+    io_work * write_back_io_work = NULL;
+    char * buf_to_write = (char*)seg_config->attr_buf0;
+    write_back_io_work = new io_work( gen_config.attr_file_name.c_str(),
+        FILE_WRITE, 
+        buf_to_write, 
+        (u64_t)0*seg_config->segment_cap*sizeof(VA),
+        (u64_t)(gen_config.max_vert_id%seg_config->segment_cap+1)*sizeof(VA) );
+
+    //activate the disk thread
+    fog_io_queue->add_io_task( write_back_io_work );
+    fog_io_queue->wait_for_io_task( write_back_io_work );
+    fog_io_queue->del_io_task( write_back_io_work );
+    write_back_io_work = NULL;
 }
      
 template <typename A, typename VA, typename U, typename T>
