@@ -33,6 +33,8 @@
 #include "../application/spmv.hpp"
 #include "../application/cc.hpp"
 #include "../application/bfs.hpp"
+#include "../application/1-Nh.hpp"
+#include "../application/2-Nh.hpp"
 
 //boost::property_tree::ptree pt;
 //boost::program_options::options_description desc;
@@ -118,6 +120,34 @@ void start_engine(std::string prog_name)
         fog_engine<cc_program<T>, cc_vert_attr, cc_vert_attr, T> *eng;
         (*(eng = new fog_engine<cc_program<T>, cc_vert_attr, cc_vert_attr, T>(TARGET_ENGINE)))();
         delete eng;
+	}else if( prog_name == "1nh" ){
+        OneNh_program<T> * onenh = new OneNh_program<T>;
+        unsigned int query_id = vm["1nh::query-root"].as<unsigned long>();
+        if(0 == query_id)
+        {
+            std::cout<<"You didn't input the 1nh::query_root or you chose the default value:0, the program will start at query_root=0."<<std::endl;
+        }
+        onenh->run(query_id);
+        /*
+        OneNh_program<T>::query_root = vm["1nh::query-root"].as<unsigned long>();
+        unsigned int root_vid = OneNh_program<T>::query_root;
+        if(0 == root_vid)
+        {
+            std::cout<<"You didn't input the 1nh::query_root or you chose the default value:0, the program will start at query_root=0."<<std::endl;
+        }
+        PRINT_DEBUG( "OneNh_program query_root = %d\n", OneNh_program<T>::query_root);
+        fog_engine<OneNh_program<T>, one_nh_vert_attr, one_nh_vert_attr, T> *eng;
+        (*(eng = new fog_engine<OneNh_program<T>, one_nh_vert_attr, one_nh_vert_attr, T>(TARGET_ENGINE)))();
+        delete eng;
+        */
+	}else if( prog_name == "2nh" ){
+        TwoNh_program<T> * twonh = new TwoNh_program<T>;
+        unsigned int query_id = vm["2nh::query-root"].as<unsigned long>();
+        if(0 == query_id)
+        {
+            std::cout<<"You didn't input the 2nh::query_root or you chose the default value:0, the program will start at query_root=0."<<std::endl;
+        }
+        twonh->run(query_id);
     }else if (prog_name == "demo"){
         PRINT_DEBUG("demo starts!\n");
 
@@ -131,23 +161,6 @@ void start_engine(std::string prog_name)
 
 int main( int argc, const char**argv)
 {
-   /* 
-    if( opendir("./logs")==NULL )
-    {
-        std::cout<<"no"<<std::endl;
-        int ret = mkdir("./logs", 00777);
-        if( 0!=ret)
-        {
-            std::cout<<"fffff"<<std::endl;
-            exit(666);
-        }
-        if(NULL==opendir("./logs"))
-        {
-            std::cout<<"change fault"<<std::endl;
-            exit(666);
-        }
-    }
-    */
 
     std::string user_command;
     for(int i = 0; i < argc; i++)
@@ -194,7 +207,6 @@ int main( int argc, const char**argv)
         printf("failed to open %s.\n", log_file_name.c_str());
         exit(666);
     }
-    /*
     if (!(test_log_file = fopen(test_log_file_name.c_str(), "w"))) //open file for mode
     {
         printf("failed to open %s.\n", test_log_file_name.c_str());
@@ -205,7 +217,6 @@ int main( int argc, const char**argv)
         printf("failed to open %s.\n", cv_log_file_name.c_str());
         exit(666);
     }
-    */
     PRINT_DEBUG("Your command is: %s\n", user_command.c_str());
 
 	gen_config.min_vert_id = pt.get<u32_t>("description.min_vertex_id");

@@ -420,14 +420,14 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                 min_vert = my_sched_list_manager->context_vert_id;
                 max_vert = my_sched_list_manager->normal_sched_max_vert;
                 //PRINT_DEBUG("cpu %d context scatter, min_vert = %d, max_vert = %d\n",
-                  //      processor_id, min_vert, max_vert);
+                 //       processor_id, min_vert, max_vert);
             }
             else if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
             {
                 min_vert = my_sched_list_manager->context_steal_min_vert;
                 max_vert = my_sched_list_manager->context_steal_max_vert;
                 //PRINT_DEBUG("cpu %d steal scatter, min_vert = %d, max_vert = %d\n",
-                  //      processor_id, min_vert, max_vert);
+                 //       processor_id, min_vert, max_vert);
             }
 
             if (my_sched_list_manager->num_vert_to_scatter == 0 
@@ -445,7 +445,7 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
             }
 
             //for loop for every vertex in every cpu
-            for (u32_t i = min_vert; i <= max_vert; i += gen_config.num_processors)
+            for (u32_t i = min_vert; i <= max_vert; i = i + gen_config.num_processors)
             {
                 //modify by lvhuiming
                 //date:2015-1-23
@@ -488,7 +488,7 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                 {
                     old_edge_id = my_sched_list_manager->context_edge_id;
                 }
-                else if (signal_to_scatter == SPECIAL_STEAL_SCATTER)
+                else if ((signal_to_scatter == SPECIAL_STEAL_SCATTER) &&(i == my_sched_list_manager->context_steal_min_vert))
                     old_edge_id = my_sched_list_manager->context_steal_edge_id;
                 else
                     old_edge_id = 0;

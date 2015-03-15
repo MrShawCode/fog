@@ -97,7 +97,7 @@ extern FILE *cv_log_file;
 }while(0)
 
 #define PRINT_DEBUG_TEST_LOG(format,...) do { \
-    fprintf(test_log_file, "File: "__FILE__", Line: %05d: "format"", __LINE__, ##__VA_ARGS__) ;\
+    fprintf(test_log_file, format, ##__VA_ARGS__) ;\
 }while(0)
 
 #define PRINT_DEBUG_CV_LOG(format,...) do { \

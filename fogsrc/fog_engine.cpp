@@ -538,11 +538,13 @@ int fog_engine<A, VA, U, T>::scatter_updates(u32_t CONTEXT_PHASE)
         if (ret == 0 && unemployed == 1)
         {
             //PRINT_DEBUG("num_unfinished = %d\n", num_unfinished);
+            //PRINT_DEBUG("all finish\n");
             assert(num_unfinished == 0);
             signal_of_partition_gather = NORMAL_GATHER;
         }
         else if (ret == 1 && unemployed == 0)
         {
+            //PRINT_DEBUG("all buffer full\n");
             assert(num_unfinished == (int)gen_config.num_processors);
             signal_of_partition_gather = CONTEXT_GATHER;
             //cal_threshold();
@@ -668,6 +670,7 @@ int fog_engine<A, VA, U, T>::scatter_updates(u32_t CONTEXT_PHASE)
         }
         else if (global_or_target == GLOBAL_ENGINE && ret == 1 && unemployed == 1)
         {
+            //PRINT_DEBUG("some finish ,some buffer full\n");
             assert(num_unfinished > 0);
             assert((u32_t)num_unfinished < gen_config.num_processors);
             signal_of_partition_gather = STEAL_GATHER;
@@ -702,19 +705,19 @@ int fog_engine<A, VA, U, T>::scatter_updates(u32_t CONTEXT_PHASE)
 
                         context_data_unfinished->num_vert_to_scatter -= context_data_steal->context_steal_num_vert;
                         //PRINT_DEBUG("unfinished->num_vert_to_scatter = %d\n", 
-                            //    context_data_unfinished->num_vert_to_scatter);
+                         //       context_data_unfinished->num_vert_to_scatter);
                         //PRINT_DEBUG("context_data_steal->context_steal_num_vert = %d\n", 
-                             //   context_data_steal->context_steal_num_vert);
+                         //       context_data_steal->context_steal_num_vert);
                         context_data_steal->context_steal_num_vert = 0;
                         if ( pcpu_threads[i]->status != FINISHED_SCATTER )
                         {
-                            //PRINT_DEBUG("In steal-mode, processor:%d has not finished scatter, not very good!\n", i);
+                          //  PRINT_DEBUG("In steal-mode, processor:%d has not finished scatter, not very good!\n", i);
                             special_signal = 1;
                             set_signal_to_scatter(SPECIAL_STEAL_SCATTER, i, CONTEXT_PHASE);
                         }
                         if ( pcpu_threads[i]->status != UPDATE_BUF_FULL )
                         {
-                            //PRINT_DEBUG("Steal round %d. Processor %d has finished scatter!\n", k, i);
+                           // PRINT_DEBUG("Steal round %d. Processor %d has finished scatter!\n", k, i);
                             set_signal_to_scatter(STEAL_SCATTER, i, CONTEXT_PHASE);
                             context_data_steal->context_steal_min_vert = 
                                 context_data_steal->context_steal_max_vert = 0;
@@ -725,8 +728,8 @@ int fog_engine<A, VA, U, T>::scatter_updates(u32_t CONTEXT_PHASE)
                         signal_of_partition_gather = STEAL_GATHER;
                         //cal_threshold();
                         gather_updates(1-CONTEXT_PHASE, -1);
+                        //cal_threshold();
                     }
-   
                 }while(special_signal == 1);
             }
             //PRINT_DEBUG("After steal!\n");
@@ -902,6 +905,9 @@ u32_t fog_engine<A, VA, U, T>::rebalance_sched_bitmap(u32_t cpu_not_finished_id,
 template <typename A, typename VA, typename U, typename T>
 void fog_engine<A, VA, U, T>::rebalance_sched_tasks(u32_t cpu_unfinished_id, u32_t CONTEXT_PHASE)
 {
+
+    //author: Jian He
+    //stride
     sched_list_context_data * my_context_data = seg_config->per_cpu_info_list[cpu_unfinished_id]->global_sched_manager;
     u32_t min_vert = my_context_data->context_vert_id;
     u32_t max_vert = my_context_data->normal_sched_max_vert;
@@ -946,6 +952,62 @@ void fog_engine<A, VA, U, T>::rebalance_sched_tasks(u32_t cpu_unfinished_id, u32
                 //    seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert);
         }
     }
+
+
+    //author: Huiming Lv
+    //range
+    /*
+    sched_list_context_data * my_context_data = seg_config->per_cpu_info_list[cpu_unfinished_id]->global_sched_manager;
+    u32_t min_vert = my_context_data->context_vert_id;
+    u32_t max_vert = my_context_data->normal_sched_max_vert;
+    assert((max_vert-min_vert + 1) == 
+            my_context_data->num_vert_to_scatter);
+    if (my_context_data->num_vert_to_scatter < gen_config.num_processors)
+    {
+        PRINT_DEBUG_LOG("There are only %d vertices to scatter in processor %d\n", 
+                my_context_data->num_vert_to_scatter, cpu_unfinished_id);
+        for (u32_t i = 0; i < my_context_data->num_vert_to_scatter; i++)
+        {
+            set_signal_to_scatter(STEAL_SCATTER, i, CONTEXT_PHASE);
+            seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert = 
+                seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert = 
+                    min_vert + i;
+            //seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_num_vert = 1;
+
+            PRINT_DEBUG_LOG("Processor-%d's context_steal_min_vert = %d, max = %d\n",
+                    i, seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert,
+                    seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert);
+        }
+    }
+    else
+    {
+        //PRINT_DEBUG_LOG("There are %d vertices to scatter in processor %d\n", 
+                //my_context_data->num_vert_to_scatter, cpu_unfinished_id);
+        //PRINT_DEBUG_LOG("min_vert is %d,  max_vert is %d\n", min_vert, max_vert); 
+        u32_t average_num = my_context_data->num_vert_to_scatter/(gen_config.num_processors);
+
+        for (u32_t i = 0; i < gen_config.num_processors; i++)
+        {
+            set_signal_to_scatter(STEAL_SCATTER, i, CONTEXT_PHASE);
+            seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert = 
+                min_vert + i * average_num;
+            if (i == gen_config.num_processors - 1)
+            {
+                seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert = max_vert;
+            }
+            else 
+            {
+                seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert = 
+                    seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert + 
+                    average_num - 1;
+            }
+            //PRINT_DEBUG_LOG("Processor-%d's context_steal_min_vert = %d, max = %d\n",
+             //       i, seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert,
+              //      seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert);
+        }
+    }
+    */
+
 }
 
 //gather all updates in the update buffer.
@@ -1907,7 +1969,6 @@ void fog_engine<A, VA, U, T>::show_update_map(int processor_id, u32_t * map_head
 template <typename A, typename VA, typename U, typename T>
 void fog_engine<A, VA, U, T>::cal_update_cv(int strip_id)
 {
-    /*
     update_map_manager * map_manager;
     u32_t * map_head;
     double average = 0.0;
@@ -1936,30 +1997,33 @@ void fog_engine<A, VA, U, T>::cal_update_cv(int strip_id)
             average += (double)(*(map_head+j));
         }
     }
-    //PRINT_DEBUG_TEST_LOG("Cap is %.lf\n", capability);
-    //PRINT_DEBUG_TEST_LOG("use rate is %.3lf\n", (average/(double)capability));
+    //PRINT_DEBUG_LOG("strip %d, update counts is %.lf\n", strip_id, average);
 
+    //PRINT_DEBUG_TEST_LOG("Cap is %.lf\n", capability);
+    //PRINT_DEBUG_TEST_LOG("use rate is %.5lf\n", (average/(double)capability));
+    PRINT_DEBUG_TEST_LOG("%.5lf\n", (average/(double)capability));
+    /*
     if ( THRESHOLD > (average/(double)capability))
     {
         return; 
     }
+    */
 
     average /= (double)gen_config.num_processors;
-    PRINT_DEBUG_TEST_LOG("average = %lf\n", average);
+    //PRINT_DEBUG_TEST_LOG("average = %lf\n", average);
     for (u32_t k = 0; k < gen_config.num_processors; k++)
     {
-	    PRINT_DEBUG_TEST_LOG("update_counts[%d] = %.lf\n", k, update_counts[k]);
+	    //PRINT_DEBUG_TEST_LOG("update_counts[%d] = %.lf\n", k, update_counts[k]);
         temp = average - update_counts[k];
         stan_dev += pow(temp, 2);
     }
     stan_dev /= (double)gen_config.num_processors;
     stan_dev = sqrt(stan_dev);
-	PRINT_DEBUG_TEST_LOG("sd is %.5lf\n", stan_dev);
+	//PRINT_DEBUG_TEST_LOG("sd is %.5lf\n", stan_dev);
     cv = stan_dev/average;
-    PRINT_DEBUG_TEST_LOG("update's coefficient of variation is %.5lf\n", cv);
+    //PRINT_DEBUG_TEST_LOG("update's coefficient of variation is %.5lf\n", cv);
     PRINT_DEBUG_CV_LOG("%.5lf\n", cv);
     delete []update_counts;
-    */
 }
 //map the attribute file
 //return value:
@@ -2619,6 +2683,8 @@ void fog_engine<A, VA, U, T>::add_sched_task_to_processor( u32_t processor_id, s
 template <typename A, typename VA, typename U, typename T>
 void fog_engine<A, VA, U, T>::add_all_task_to_cpu( sched_task * task )
 {
+    //author:hejian
+    //stride
     //PRINT_DEBUG( "first adding all tasks to all cpu :task from %d to %d.\n", task->start, task->term );
     
     if( task->term == 0 ){
@@ -2661,6 +2727,49 @@ void fog_engine<A, VA, U, T>::add_all_task_to_cpu( sched_task * task )
     }
     delete task;
     return;
+
+
+    //author:lvhuiming 
+    //range
+    //PRINT_DEBUG( "first adding all tasks to all cpu :task from %d to %d.\n", task->start, task->term );
+    /* 
+    if( task->term == 0 ){
+        //PRINT_DEBUG("task->term == 0;\n");
+        assert( task->start <= gen_config.max_vert_id );
+        add_sched_task_to_processor( VID_TO_PARTITION(task->start), task, 1 );
+        return;
+    }
+    assert( task->start <= task->term );
+    assert( task->term <= gen_config.max_vert_id );
+
+    //PRINT_DEBUG("start_remain = %d, end_remain = %d\n", start_remain, end_remain);
+    sched_task* p_task;
+    u32_t p_task_len = (task->term - task->start + 1)/gen_config.num_processors;
+    //PRINT_DEBUG_LOG("per cpu's task counts is %d\n", p_task_len);
+    for (u32_t i = 0; i < gen_config.num_processors; i++)
+    {
+        p_task = new sched_task;
+        p_task->start = task->start + p_task_len * i;
+     //   PRINT_DEBUG_LOG("the start of processor %d is %d\n", i, p_task->start);
+
+        if ((i+1) == gen_config.num_processors)
+        {
+            p_task->term = task->term;
+        }
+        else
+        {
+            p_task->term = task->start + (i+1)*p_task_len - 1;
+        }
+        //PRINT_DEBUG_LOG("the term of processor %d is %d\n", i, p_task->term);
+
+        u32_t task_len = p_task->term - p_task->start + 1;
+        //PRINT_DEBUG_LOG("task length of processor %d is %d\n", i, task_len);
+        add_sched_task_to_processor( i, p_task, task_len );
+    }
+    delete task;
+    return;
+    */
+
 }
 
 template <typename A, typename VA, typename U, typename T>

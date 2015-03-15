@@ -68,7 +68,11 @@ static void setup_options_fog(int argc, const char* argv[])
     ("sssp::source", boost::program_options::value<unsigned long>()->default_value(0),
      "source vertex id for sssp")
     ("bfs::bfs-root", boost::program_options::value<unsigned long>()->default_value(0),
-     "bfs root for bfs");
+     "bfs root for bfs")
+    ("1nh::query-root", boost::program_options::value<unsigned long>()->default_value(0),
+     "query root for 1nh")
+    ("2nh::query-root", boost::program_options::value<unsigned long>()->default_value(0),
+     "query root for 2nh");
 	// belief propagation
     //("spmv::niters", boost::program_options::value<unsigned long>()->default_value(10),
     // "number of iterations for spmv");

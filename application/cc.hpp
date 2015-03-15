@@ -106,8 +106,18 @@ class cc_program{
         static int finalize(cc_vert_attr * va)
         {
             //Print the result 
-            for (unsigned int id = 0; id < 100; id++)
-                PRINT_DEBUG_LOG("CC:result[%d], component_root = %d\n",id, (va+id)->component_root);
+            u64_t cc_counts = 0;
+            for (unsigned int id = 0; id <= gen_config.max_vert_id; id++)
+            {
+                //PRINT_DEBUG_LOG("CC:result[%d], component_root = %d\n",id, (va+id)->component_root);
+                if (id == (va+id)->component_root)
+                {
+                    //PRINT_DEBUG_LOG("bingo\n");
+                    cc_counts++;
+                }
+
+            }
+            PRINT_DEBUG_LOG("find %lld cc components\n", cc_counts);
 
             PRINT_DEBUG("CC engine stops!\n");
             return ENGINE_STOP;
