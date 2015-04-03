@@ -36,12 +36,12 @@ COMPACT  | <4 byte dst, 4bytes weight>
  * This program has not deal with the disorder of edges (in edge list format) or lines (in adjlist format) yet.
  */
 
-#include "options_utils.h"
+#include "options_utils_convert.h"
 #include <cassert>
 #include <fstream>
 
 #include "convert.h"
-
+using namespace convert;
 //boost::program_options::options_description desc;
 //boost::program_options::variables_map vm;
 
@@ -152,5 +152,4 @@ int main( int argc, const char**argv)
     {
     }
 }
-
 

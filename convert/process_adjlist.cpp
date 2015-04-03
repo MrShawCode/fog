@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <limits.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +20,7 @@
 #include <unistd.h>
 
 #include "convert.h"
+using namespace convert;
 
 float produce_random_weight()
 {
@@ -39,7 +41,7 @@ void process_adjlist(const char * input_file_name,
     unsigned int vert_buffer_offset = 0;
     unsigned int edge_suffix = 0;
     unsigned int vert_suffix = 0;
-    unsigned int recent_src_vert = 0;
+    unsigned int recent_src_vert = UINT_MAX;
 
     srand((unsigned int)time(NULL));
 
@@ -96,9 +98,12 @@ void process_adjlist(const char * input_file_name,
                 if (origin_num_edges != 0)
                 {
                     if (src_vert < recent_src_vert){
-                        printf("Edge order is not correct at line:%lld.Edge processing terminated.\n", num_edges);
-                        fclose(in);
-                        exit(-1);
+                        if (num_edges > 1)
+                        {
+                            printf("Edge order is not correct at line:%lld.Edge processing terminated.\n", num_edges);
+                            fclose(in);
+                            exit(-1);
+                        }
                     }
                     if (src_vert < min_vertex_id) min_vertex_id = src_vert;
                     if (src_vert > max_vertex_id) max_vertex_id = src_vert;

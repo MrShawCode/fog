@@ -19,8 +19,10 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "convert.h"
+using namespace convert; 
 #include <vector>
 
 typedef unsigned int u32_t;
@@ -32,7 +34,7 @@ u32_t vert_buffer_offset = 0;
 u32_t edge_buffer_offset = 0;
 u32_t edge_suffix = 0;
 u32_t vert_suffix = 0;
-u32_t recent_src_vert = 0;
+u32_t recent_src_vert = UINT_MAX;
 u64_t tmp_num_edges = 0;
 
 template <typename T>

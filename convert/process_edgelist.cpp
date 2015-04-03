@@ -9,7 +9,7 @@
 
 #include <iostream>
 #include <cassert>
-#include <limits>
+#include <limits.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,7 +21,7 @@
 #include <time.h>
 
 #include "convert.h"
-
+using namespace convert;
 #define LINE_FORMAT		"%d\t%d\n"
 
 char line_buffer[MAX_LINE_LEN];
@@ -35,6 +35,7 @@ unsigned int src_vert, dst_vert;
 
 //when buffer is filled, write to the output index/edge file
 // and then, continue reading and populating.
+//struct edge edge_buffer[EDGE_BUFFER_LEN];
 struct edge edge_buffer[EDGE_BUFFER_LEN];
 struct vert_index vert_buffer[VERT_BUFFER_LEN];
 struct type2_edge type2_edge_buffer[EDGE_BUFFER_LEN];
@@ -58,7 +59,7 @@ void process_edgelist( const char* input_file_name,
         bool with_type1,
         bool with_in_edge)
 {
-	unsigned int recent_src_vert=0;
+	unsigned int recent_src_vert=UINT_MAX;
 	unsigned int vert_buffer_offset=0;
 	unsigned int edge_buffer_offset=0;
 	unsigned int edge_suffix=0;
@@ -116,9 +117,12 @@ void process_edgelist( const char* input_file_name,
 
 		//vertex id disorder.
 		if( src_vert < recent_src_vert ){
-			printf( "Edge order is not correct at line:%lld. Edge prcessing terminated.\n", line_no );
-			fclose( in );
-			exit(1);
+            if(num_edges > 1)
+            {
+                printf( "Edge order is not correct at line:%lld. Edge prcessing terminated.\n", line_no );
+                fclose( in );
+                exit(1);
+            }
 		}
 
 		//HANDLE THE EDGES

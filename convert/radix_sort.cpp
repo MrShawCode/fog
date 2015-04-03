@@ -21,6 +21,7 @@
 #include <unistd.h>
 
 #include "convert.h"
+using namespace convert;
 
 #define MAX_RADIX 8
 #define BUCKETS (1 << MAX_RADIX)

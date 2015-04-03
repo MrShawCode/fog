@@ -25,7 +25,7 @@ enum get_edge_state
 };
 template <typename T>
 class index_vert_array{
-	private:
+	public:
 		std::string mmapped_vert_file;
 		std::string mmapped_edge_file;
 		int vert_index_file_fd;
