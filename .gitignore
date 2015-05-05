@@ -28,3 +28,6 @@ lo
 
 # bin
 bin/*
+
+*.log
+*.LOG
