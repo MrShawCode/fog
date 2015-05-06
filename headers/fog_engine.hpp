@@ -83,8 +83,10 @@ class fog_engine{
         time_t start_time;
         time_t end_time;
 
-        time_t iter_start_time;
-        time_t iter_end_time;
+        time_t scatter_start_time;
+        time_t scatter_end_time;
+        time_t gather_start_time;
+        time_t gather_end_time;
 
         u32_t seg_read_counts;
         u32_t seg_write_counts; 

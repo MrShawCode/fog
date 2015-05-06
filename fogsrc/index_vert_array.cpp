@@ -19,16 +19,18 @@
 
 #include "config.hpp"
 #include "index_vert_array.hpp"
+#include <errno.h>
+extern int errno;
 template <typename T>
 index_vert_array<T>::index_vert_array()
 {
 	struct stat st;
-	char * memblock;
+	char * memblock = NULL;
 
 	mmapped_vert_file = gen_config.vert_file_name;
 	mmapped_edge_file = gen_config.edge_file_name;
 
-	vert_index_file_fd = open( mmapped_vert_file.c_str(), O_RDONLY );
+	vert_index_file_fd = open( mmapped_vert_file.c_str(), O_RDONLY, S_IRUSR | S_IRGRP | S_IROTH  );
 	if( vert_index_file_fd < 0 ){
 		std::cout << "Cannot open index file!\n";
 		exit( -1 );
@@ -43,6 +45,19 @@ index_vert_array<T>::index_vert_array()
 	//map index files to vertex_array_header
     fstat(vert_index_file_fd, &st);
     vert_index_file_length = (u64_t) st.st_size;
+
+    //in-memory
+    /*
+    memblock = (char *)malloc(vert_index_file_length);
+    u64_t read_in_byte = (u64_t)read(vert_index_file_fd, memblock, vert_index_file_length); 
+    if(read_in_byte != vert_index_file_length)
+    {
+        std::cout<<read_in_byte<<std::endl;
+        std::cout<<vert_index_file_length<<std::endl;
+        PRINT_ERROR("read vert_index fail!\n");
+    }
+    vert_array_header = (struct vert_index *) memblock;
+    */
 
     //PRINT_DEBUG( "vertex list file size:%lld(MBytes)\n", vert_index_file_length/(1024*1024) );
     memblock = (char*) mmap( NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, vert_index_file_fd, 0 );
@@ -62,6 +77,17 @@ index_vert_array<T>::index_vert_array()
     else
         gen_config.prev_update = true;
 
+    //in-memory
+    /*
+    memblock = (char *)malloc(edge_file_length);
+    read_in_byte = read(edge_file_fd, memblock, edge_file_length); 
+    if(read_in_byte != edge_file_length)
+    {
+        PRINT_ERROR("read edge fail!\n");
+    }
+    edge_array_header = (T *) memblock;
+    */
+
     //PRINT_DEBUG( "edge list file size:%lld(MBytes)\n", edge_file_length/(1024*1024) );
     memblock = (char*) mmap( NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, edge_file_fd, 0 );
     if( memblock == MAP_FAILED ){
@@ -71,6 +97,7 @@ index_vert_array<T>::index_vert_array()
     //PRINT_DEBUG( "edge array mmapped at virtual address:0x%llx\n", (u64_t)memblock );
     //edge_array_header = (struct T *) memblock;
     edge_array_header = (T *) memblock;
+    
 
     if (gen_config.with_in_edge)
     {
@@ -92,6 +119,17 @@ index_vert_array<T>::index_vert_array()
         fstat(in_vert_index_file_fd, &st);
         in_vert_index_file_length = (u64_t) st.st_size;
 
+        //in-memory
+        /*
+        memblock = (char *)malloc(in_vert_index_file_length);
+        u64_t read_in_byte = read(in_vert_index_file_fd, memblock, in_vert_index_file_length); 
+        if(read_in_byte != in_vert_index_file_length)
+        {
+            PRINT_ERROR("read in_vert_index fail!\n");
+        }
+        in_vert_array_header = (struct vert_index *) memblock;
+        */
+
         PRINT_DEBUG( "in-vertex list file size:%lld(MBytes)\n", in_vert_index_file_length/(1024*1024) );
         memblock = (char*) mmap( NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, in_vert_index_file_fd, 0 );
         if( memblock == MAP_FAILED ){
@@ -104,6 +142,17 @@ index_vert_array<T>::index_vert_array()
         //map edge files to edge_array_header
         fstat(in_edge_file_fd, &st);
         in_edge_file_length = (u64_t) st.st_size;
+        
+        //in-memory
+        /*
+        memblock = (char *)malloc(in_edge_file_length);
+        read_in_byte = read(in_edge_file_fd, memblock, in_edge_file_length); 
+        if(read_in_byte != in_edge_file_length)
+        {
+            PRINT_ERROR("read in_edge fail!\n");
+        }
+        in_edge_array_header = (struct in_edge *) memblock;
+        */
 
         PRINT_DEBUG( "in_edge list file size:%lld(MBytes)\n", in_edge_file_length/(1024*1024) );
         memblock = (char*) mmap( NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, in_edge_file_fd, 0 );

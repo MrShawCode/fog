@@ -129,10 +129,10 @@ void fog_engine<A, VA, U, T>::operator() ()
                 //added by lvhuimig
                 //date:2015-1-23
                 //PRINT_DEBUG_TEST_LOG("%d-th iteration, there are %d tasks to schedule!\n", A::loop_counter, A::num_tasks_to_sched);
-                iter_start_time = time(NULL);
-                seg_read_counts = 0;
-                seg_write_counts = 0;
-                hit_counts = 0;
+                //iter_start_time = time(NULL);
+                //seg_read_counts = 0;
+                //seg_write_counts = 0;
+                //hit_counts = 0;
                 //added end
                 
                 scatter_updates(1-A::CONTEXT_PHASE);
@@ -142,7 +142,7 @@ void fog_engine<A, VA, U, T>::operator() ()
                 
                 //added by lvhuiming
                 //date:2015-1-23
-                iter_end_time = time(NULL);
+                //iter_end_time = time(NULL);
                 //PRINT_DEBUG_TEST_LOG("segments READ counts: %d\n", seg_read_counts);
                 //PRINT_DEBUG_TEST_LOG("segments WRITE counts: %d\n", seg_write_counts);
                 //PRINT_DEBUG_TEST_LOG("segments hit counts: %d, hit rate: %.2lf\n", hit_counts,(double)(hit_counts)/((double)seg_read_counts));
@@ -174,10 +174,10 @@ void fog_engine<A, VA, U, T>::operator() ()
                 //added by lvhuimig
                 //date:2015-1-23
                 //PRINT_DEBUG_TEST_LOG("%d-th iteration, there are %d tasks to schedule!\n", A::loop_counter, A::num_tasks_to_sched);
-                iter_start_time = time(NULL);
-                seg_read_counts = 0;
-                seg_write_counts = 0;
-                hit_counts = 0;
+                //iter_start_time = time(NULL);
+                //seg_read_counts = 0;
+                //seg_write_counts = 0;
+                //hit_counts = 0;
                 //added end
                 
                 scatter_updates(1-A::CONTEXT_PHASE);
@@ -189,7 +189,7 @@ void fog_engine<A, VA, U, T>::operator() ()
                 
                 //added by lvhuiming
                 //date:2015-1-23
-                iter_end_time = time(NULL);
+                //iter_end_time = time(NULL);
                 /*PRINT_DEBUG_TEST_LOG("segments READ counts: %d\n", seg_read_counts);
                 PRINT_DEBUG_TEST_LOG("segments WRITE counts: %d\n", seg_write_counts);
                 PRINT_DEBUG_TEST_LOG("segments hit counts: %d, hit rate: %.2lf\n", hit_counts,(double)(hit_counts)/((double)seg_read_counts));
@@ -507,9 +507,12 @@ int fog_engine<A, VA, U, T>::scatter_updates(u32_t CONTEXT_PHASE)
         PRINT_DEBUG_LOG("sub-iteration:%d\n", phase);
         //if (global_or_target != GLOBAL_ENGINE && ret == 1)
             //PRINT_DEBUG("before context scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
+        scatter_start_time = time(NULL);
         scatter_cpu_work = new cpu_work<A, VA, U, T>(scatter_fog_engine_state, (void *)p_scatter_param);
         pcpu_threads[0]->work_to_do = scatter_cpu_work;
         (*pcpu_threads[0])();
+        scatter_end_time = time(NULL);
+        PRINT_DEBUG_TEST_LOG( "%d-iteration's scatter time = %.f seconds\n", A::loop_counter, difftime(scatter_end_time, scatter_start_time));
 
         delete scatter_cpu_work;
         scatter_cpu_work = NULL;
@@ -600,9 +603,13 @@ int fog_engine<A, VA, U, T>::scatter_updates(u32_t CONTEXT_PHASE)
                     do
                     {
                         special_signal = 0;
+                        scatter_start_time = time(NULL);
                         scatter_cpu_work = new cpu_work<A, VA, U, T>(scatter_fog_engine_state, (void *)p_scatter_param);
                         pcpu_threads[0]->work_to_do = scatter_cpu_work;
                         (*pcpu_threads[0])();
+                        scatter_end_time = time(NULL);
+                        PRINT_DEBUG_TEST_LOG( "%d-iteration's scatter time = %.f seconds\n", A::loop_counter, difftime(scatter_end_time, scatter_start_time));
+
 
                         delete scatter_cpu_work;
                         scatter_cpu_work = NULL;
@@ -685,10 +692,13 @@ int fog_engine<A, VA, U, T>::scatter_updates(u32_t CONTEXT_PHASE)
                 u32_t special_signal;
                 do{
                     special_signal = 0;
+                    scatter_start_time = time(NULL);
                     scatter_cpu_work = new cpu_work<A,VA, U, T>( scatter_fog_engine_state, (void*)p_scatter_param );
 
                     pcpu_threads[0]->work_to_do = scatter_cpu_work;
                     (*pcpu_threads[0])();
+                    scatter_end_time = time(NULL);
+                    PRINT_DEBUG_TEST_LOG( "%d-iteration's scatter time = %.f seconds\n", A::loop_counter, difftime(scatter_end_time, scatter_start_time));
 
                     //cpu threads return
                     delete scatter_cpu_work;
@@ -1014,6 +1024,7 @@ void fog_engine<A, VA, U, T>::rebalance_sched_tasks(u32_t cpu_unfinished_id, u32
 template <typename A, typename VA, typename U, typename T>
 void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
 {
+    gather_start_time = time(NULL);
     cpu_work<A,VA,U,T>* gather_cpu_work = NULL;
     io_work* one_io_work = NULL;
     char * next_buffer = NULL, *read_buf = NULL;
@@ -1030,7 +1041,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
 
         //added by lvhuimig
         //date:2015-1-23
-        cal_update_cv(p_gather_param->strip_id);
+        //cal_update_cv(p_gather_param->strip_id);
         //added end
         
         gather_cpu_work = new cpu_work<A, VA, U,T>(gather_fog_engine_state, (void *)p_gather_param);
@@ -1070,7 +1081,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                     else
                     {   
                         //added by lvhuiming
-                        hit_counts++;
+                        //hit_counts++;
                         //added end
                         read_buf = (char *)seg_config->attr_buf0;
                         tmp_strip_id = seg_config->buf0_holder;
@@ -1083,7 +1094,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                     else
                     {
                         //added by lvhuiming
-                        hit_counts++;
+                        //hit_counts++;
                         //added end
                         read_buf = (char *)seg_config->attr_buf1;
                         tmp_strip_id = seg_config->buf1_holder;
@@ -1100,7 +1111,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
 
                 //added by lvhuimig
                 //date:2015-1-23
-                cal_update_cv(p_gather_param->strip_id);
+                //cal_update_cv(p_gather_param->strip_id);
                 //added end
                 
                 gather_cpu_work = new cpu_work<A, VA, U, T>(gather_fog_engine_state, (void *)p_gather_param);
@@ -1132,7 +1143,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                 }
                 //added by lvhuiming
                 //date:2015-1-23
-                seg_write_counts++;
+                //seg_write_counts++;
                 //added end
 
                 fog_io_queue->add_io_task(one_io_work);
@@ -1210,7 +1221,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                             FILE_READ, read_buf, offset, read_size);
                     //added by lvhuiming
                     //date:2015-1-23
-                    seg_read_counts++;
+                    //seg_read_counts++;
                     //added end
 
                     fog_io_queue->add_io_task(one_io_work);
@@ -1229,7 +1240,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
 
                 //added by lvhuimig
                 //date:2015-1-23
-                cal_update_cv(p_gather_param->strip_id);
+                //cal_update_cv(p_gather_param->strip_id);
                 //added end
                 
                 gather_cpu_work = new cpu_work<A, VA, U, T>(gather_fog_engine_state, (void *)p_gather_param);
@@ -1263,7 +1274,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                     }
                     //added by lvhuiming
                     //date:2015-1-23
-                    seg_write_counts++;
+                    //seg_write_counts++;
                     //added end
 
                     fog_io_queue->add_io_task(write_io_work);
@@ -1333,7 +1344,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                         if (ret == 1)
                         {
                             //added by lvhuiming
-                            hit_counts++;
+                            //hit_counts++;
                             //added end
                             if (num_hits == 0)
                             {
@@ -1381,7 +1392,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                     if (ret == 1)
                     {
                         //added by lvhuiming
-                        hit_counts++;
+                        //hit_counts++;
                         //added end
                         num_hits++;
                     }
@@ -1442,7 +1453,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                         
                         //added by lvhuiming
                         //date:2015-1-23
-                        seg_read_counts++;
+                        //seg_read_counts++;
                         //added end
                         
                         fog_io_queue->add_io_task(one_io_work);
@@ -1498,7 +1509,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                             
                             //added by lvhuiming
                             //date:2015-1-23
-                            seg_write_counts++;
+                            //seg_write_counts++;
                             //added end
                             
                             fog_io_queue->add_io_task(one_io_work);
@@ -1534,7 +1545,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                                     FILE_READ, read_buf, offset, size);
                             //added by lvhuiming
                             //date:2015-1-23
-                            seg_read_counts++;
+                            //seg_read_counts++;
                             //added end
                             fog_io_queue->add_io_task(one_io_work);
                             if (one_io_work != NULL)
@@ -1573,7 +1584,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                                     FILE_READ, read_buf, offset, size);
                             //added by lvhuiming
                             //date:2015-1-23
-                            seg_read_counts++;
+                            //seg_read_counts++;
                             //added end
                             fog_io_queue->add_io_task(one_io_work);
                             if (one_io_work != NULL)
@@ -1635,7 +1646,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                                     FILE_READ, next_buffer, offset, size);
                             //added by lvhuiming
                             //date:2015-1-23
-                            seg_read_counts++;
+                            //seg_read_counts++;
                             //added end
                             fog_io_queue->add_io_task(one_io_work);
                             if (one_io_work != NULL)
@@ -1683,7 +1694,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                                     FILE_WRITE, write_buf, offset, size);
                             //added by lvhuiming
                             //date:2015-1-23
-                            seg_write_counts++;
+                            //seg_write_counts++;
                             //added end
                             fog_io_queue->add_io_task(one_io_work);
 
@@ -1705,7 +1716,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
                                     FILE_READ, next_buffer, offset, size);
                             //added by lvhuiming
                             //date:2015-1-23
-                            seg_read_counts++;
+                            //seg_read_counts++;
                             //added end
                             fog_io_queue->add_io_task(one_io_work);
                             if (one_io_work != NULL)
@@ -1723,7 +1734,7 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
 
                 //added by lvhuimig
                 //date:2015-1-23
-                cal_update_cv(p_gather_param->strip_id);
+                //cal_update_cv(p_gather_param->strip_id);
                 //added end
                 
                 gather_cpu_work = new cpu_work<A, VA, U, T>(gather_fog_engine_state, (void *)p_gather_param);
@@ -1736,6 +1747,9 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
         } 
     }
     //PRINT_DEBUG("After Gather!\n");
+    gather_end_time = time(NULL);
+    PRINT_DEBUG_TEST_LOG( "%d-iteration's gather time = %.f seconds\n", A::loop_counter, difftime(gather_end_time, gather_start_time));
+
 }
 
 template <typename A, typename VA, typename U, typename T>
