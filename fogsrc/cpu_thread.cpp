@@ -167,28 +167,6 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
 
             for (u32_t i = min_vert; i <= max_vert; i = i + gen_config.num_processors)
             {
-                //modify by lvhuiming
-                //date:2015-1-23
-                //if i is in the attr_buf, use the attr_buf's value
-                //because attr_buf's value is newer than mmap's value
-                int seg_id = VID_TO_SEGMENT(i);
-                bool vertex_in_attrbuf = false;
-                if(seg_id == seg_config->buf0_holder)
-                {
-                    attr_array_head = (VA *)seg_config->attr_buf0;
-                    vertex_in_attrbuf = true;
-                }
-                else if(seg_id == seg_config->buf1_holder)
-                {
-                    attr_array_head = (VA *)seg_config->attr_buf1;
-                    vertex_in_attrbuf = true;
-                }
-                else
-                {
-                    attr_array_head = (VA *)p_scatter_param->attr_array_head;
-                }
-                //modify end
-                
                 if (current_bitmap->get_value(i) == 0)
                     continue;
                 
@@ -224,6 +202,28 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                 else
                     old_edge_id = 0;
 
+                //modify by lvhuiming
+                //date:2015-1-23
+                //if i is in the attr_buf, use the attr_buf's value
+                //because attr_buf's value is newer than mmap's value
+                int seg_id = VID_TO_SEGMENT(i);
+                bool vertex_in_attrbuf = false;
+                if(seg_id == seg_config->buf0_holder)
+                {
+                    attr_array_head = (VA *)seg_config->attr_buf0;
+                    vertex_in_attrbuf = true;
+                }
+                else if(seg_id == seg_config->buf1_holder)
+                {
+                    attr_array_head = (VA *)seg_config->attr_buf1;
+                    vertex_in_attrbuf = true;
+                }
+                else
+                {
+                    attr_array_head = (VA *)p_scatter_param->attr_array_head;
+                }
+                //modify end
+                
                 //bool will_be_updated = false;
                 //if (engine_state == CC_SCATTER)
                 //    old_edge_id = 0;
@@ -445,29 +445,12 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
             }
 
             //for loop for every vertex in every cpu
+            //*********************************
+            //if use range scatter: 
+            //for (u32_t i =min_vert; i <= max_vert; i++)
+            //*********************************
             for (u32_t i = min_vert; i <= max_vert; i = i + gen_config.num_processors)
             {
-                //modify by lvhuiming
-                //date:2015-1-23
-                //if i is in the attr_buf, use the attr_buf's value
-                //because attr_buf's value is newer than mmap's value
-                int seg_id = VID_TO_SEGMENT(i);
-                bool vertex_in_attrbuf = false;
-                if(seg_id == seg_config->buf0_holder)
-                {
-                    attr_array_head = (VA *)seg_config->attr_buf0;
-                    vertex_in_attrbuf = true;
-                }
-                else if(seg_id == seg_config->buf1_holder)
-                {
-                    attr_array_head = (VA *)seg_config->attr_buf1;
-                    vertex_in_attrbuf = true;
-                }
-                else
-                {
-                    attr_array_head = (VA *)p_scatter_param->attr_array_head;
-                }
-                //modify end
                 
                 num_out_edges = vert_index->num_edges(i, OUT_EDGE);
 
@@ -493,6 +476,28 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                 else
                     old_edge_id = 0;
 
+                //modify by lvhuiming
+                //date:2015-1-23
+                //if i is in the attr_buf, use the attr_buf's value
+                //because attr_buf's value is newer than mmap's value
+                int seg_id = VID_TO_SEGMENT(i);
+                bool vertex_in_attrbuf = false;
+                if(seg_id == seg_config->buf0_holder)
+                {
+                    attr_array_head = (VA *)seg_config->attr_buf0;
+                    vertex_in_attrbuf = true;
+                }
+                else if(seg_id == seg_config->buf1_holder)
+                {
+                    attr_array_head = (VA *)seg_config->attr_buf1;
+                    vertex_in_attrbuf = true;
+                }
+                else
+                {
+                    attr_array_head = (VA *)p_scatter_param->attr_array_head;
+                }
+                //modify end
+                
                 //generating updates for each edge of this vertex
                 for (u32_t z = old_edge_id; z < num_out_edges; z++)
                 {

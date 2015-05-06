@@ -31,3 +31,7 @@ bin/*
 
 *.log
 *.LOG
+
+tags
+
+*.sh
