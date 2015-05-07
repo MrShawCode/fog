@@ -53,7 +53,9 @@ class index_vert_array{
         //mode: OUT_EDGE(1) or IN_EDGE(2)
         unsigned int num_edges(unsigned int vid, int mode);
 		//return the "which"-th out edge of vid
-		T * get_out_edge( unsigned int vid, unsigned int which );
-        in_edge * get_in_edge(unsigned int vid, unsigned int which);
+		//T * get_out_edge( unsigned int vid, unsigned int which );
+		void get_out_edge( unsigned int vid, unsigned int which, T &ret);
+        void get_in_edge(unsigned int vid, unsigned int which, in_edge &ret);
+        //in_edge * get_in_edge(unsigned int vid, unsigned int which);
 };
 #endif

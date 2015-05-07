@@ -51,6 +51,23 @@ class sssp_program{
          * 2.edge(type1, type2, in_edge)
          * 3.update_src
          */
+		static void scatter_one_edge(
+                sssp_vert_attr * this_vert,
+                T &this_edge,
+                u32_t update_src,
+                update<sssp_vert_attr> &this_update)
+        {
+            assert(forward_backward_phase == FORWARD_TRAVERSAL);
+            //update<sssp_vert_attr> *ret;
+            float scatter_weight = this_vert->value + this_edge.get_edge_value();
+            u32_t scatter_predecessor = update_src;
+            //ret = new update<sssp_vert_attr>; 
+            this_update.dest_vert = this_edge.get_dest_value();
+            this_update.vert_attr.value = scatter_weight;
+            this_update.vert_attr.predecessor = scatter_predecessor;
+            //return ret;
+		}
+        /*
 		static update<sssp_vert_attr> *scatter_one_edge(
                 sssp_vert_attr * this_vert,
                 T * this_edge,
@@ -66,6 +83,7 @@ class sssp_program{
             ret->vert_attr.predecessor = scatter_predecessor;
             return ret;
 		}
+        */
 
 		//gather one update "u" from outside
 		static void gather_one_update( u32_t vid, sssp_vert_attr* this_vert, 
