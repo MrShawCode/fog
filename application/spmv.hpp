@@ -44,6 +44,21 @@ class spmv_program{
             this_vert->spmv_value = (float)0.0;
 		}
 
+		static void scatter_one_edge(
+                spmv_vert_attr * this_vert,
+                T &this_edge,
+                u32_t something,
+                update<spmv_update> &this_update)
+        {
+            assert(forward_backward_phase == FORWARD_TRAVERSAL);
+        	//update<spmv_update> * ret;
+            float scatter_value = this_vert->origin_value * this_edge.get_edge_value();
+			//ret = new update<spmv_update>;
+			this_update.dest_vert = this_edge.get_dest_value();
+			this_update.vert_attr.spmv_value = scatter_value;
+			//return ret;
+		}
+        /*
 		static update<spmv_update> *scatter_one_edge(
                 spmv_vert_attr * this_vert,
                 T * this_edge,
@@ -57,6 +72,7 @@ class spmv_program{
 			ret->vert_attr.spmv_value = scatter_value;
 			return ret;
 		}
+        */
 
 		// Gather one update. Explain the parameters:
 		// vid: the vertex id of destination vertex;

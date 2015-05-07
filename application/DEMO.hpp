@@ -74,6 +74,21 @@ class demo_program{
 		//	In that case, this member function should return NULL.
 		// 3) This function should be "re-enterable", therefore, no global variables
 		//	should be visited, or visited very carefully.
+		static void scatter_one_edge(
+                    demo_vert_attr* this_vert, 
+					T &this_edge, // type1 or type2 , only available for FORWARD_TRAVERSAL
+					u32_t PARAMETER_BY_YOURSELF,
+                    update<demo_update> &this_update) 
+            //The PARAMETER_BY_YOURSELF can be set to everything all by youself
+		{
+			//update<demo_update> * ret;
+			//ret = new update<demo_update>;
+
+            //some operations to ret
+
+			//return ret;
+		}
+        /*
 		static update<demo_update>* scatter_one_edge(
                     demo_vert_attr* this_vert, 
 					T * this_edge, // type1 or type2 , only available for FORWARD_TRAVERSAL
@@ -87,6 +102,7 @@ class demo_program{
 
 			return ret;
 		}
+        */
 
 		// Gather one update. Explain the parameters:
 		// vid: the vertex id of destination vertex;

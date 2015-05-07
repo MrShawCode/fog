@@ -37,6 +37,25 @@ class cc_program{
                     );
 		}
 		//scatter updates at vid-th vertex 
+		static void scatter_one_edge(
+                cc_vert_attr * this_vert,
+                T &this_edge,
+                u32_t backward_update_dest,
+                update<cc_vert_attr> &this_update)//, bool forward_in_backward)
+        {
+            //update<cc_vert_attr> *ret;
+            //ret = new update<cc_vert_attr>;
+            if (forward_backward_phase == FORWARD_TRAVERSAL)
+                this_update.dest_vert = this_edge.get_dest_value();
+            else
+            {
+                assert(forward_backward_phase == BACKWARD_TRAVERSAL);
+                this_update.dest_vert = backward_update_dest;
+            }
+            this_update.vert_attr.component_root = this_vert->component_root;
+            //return ret;
+		}
+        /*
 		static update<cc_vert_attr> *scatter_one_edge(
                 cc_vert_attr * this_vert,
                 T * this_edge,
@@ -54,6 +73,7 @@ class cc_program{
             ret->vert_attr.component_root = this_vert->component_root;
             return ret;
 		}
+        */
 
 		//gather one update "u" from outside
 		static void gather_one_update( u32_t vid, cc_vert_attr* this_vert, 

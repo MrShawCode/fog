@@ -52,6 +52,23 @@ class pagerank_program{
 		//	In that case, this member function should return NULL.
 		// 3) This function should be "re-enterable", therefore, no global variables
 		//	should be visited, or visited very carefully.
+		static void scatter_one_edge(
+                    pagerank_vert_attr* this_vert, 
+					T &this_edge, // type1 or type2 , only available for FORWARD_TRAVERSAL
+					u32_t num_edges,
+                    update<pagerank_vert_attr> &this_update) 
+		{
+            if (forward_backward_phase == BACKWARD_TRAVERSAL)
+                PRINT_ERROR("forward_backward_phase must set to FORWARD_TRAVERSAL\n");
+			//update<pagerank_vert_attr> * ret;
+			//ret = new update<pagerank_vert_attr>;
+            this_update.dest_vert = this_edge.get_dest_value();
+
+            assert(forward_backward_phase == FORWARD_TRAVERSAL);
+            float scatter_weight = DAMPING_FACTOR *(this_vert->rank/num_edges) + (1- DAMPING_FACTOR);
+            this_update.vert_attr.rank = scatter_weight;
+		}
+        /*
 		static update<pagerank_vert_attr>* scatter_one_edge(
                     pagerank_vert_attr* this_vert, 
 					T * this_edge, // type1 or type2 , only available for FORWARD_TRAVERSAL
@@ -68,6 +85,8 @@ class pagerank_program{
             ret->vert_attr.rank = scatter_weight;
 			return ret;
 		}
+        */
+       
 
 		// Gather one update. Explain the parameters:
 		// vid: the vertex id of destination vertex;

@@ -115,7 +115,7 @@ struct cpu_work{
 	void* state_param;
 
 	cpu_work( u32_t state, void* state_param_in);
-	void operator() ( u32_t processor_id, barrier *sync, index_vert_array<T> *vert_index, segment_config<VA>* seg_config, int *status );
+	void operator() ( u32_t processor_id, barrier *sync, index_vert_array<T> *vert_index, segment_config<VA>* seg_config, int *status, T t_edge, in_edge t_in_edge, update<U> t_update );
     void show_update_map( int processor_id, segment_config<VA>* seg_config, u32_t* map_head );
 };
 
@@ -125,6 +125,9 @@ public:
     const unsigned long processor_id; 
 	index_vert_array<T>* vert_index;
 	segment_config<VA>* seg_config;
+    T t_edge;
+    in_edge t_in_edge;
+    update<U> t_update; 
 	int status;
 
 	//following members will be shared among all cpu threads

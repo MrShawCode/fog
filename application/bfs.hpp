@@ -51,6 +51,21 @@ class bfs_program{
          * 2.edge(type1, type2, in_edge)
          * 3.update_src
          */
+		static void scatter_one_edge(
+                bfs_vert_attr * this_vert,
+                T &this_edge,
+                u32_t update_src,
+                update<bfs_vert_attr> &this_update)
+        {
+            assert(forward_backward_phase == FORWARD_TRAVERSAL);
+            //update<bfs_vert_attr> *ret;
+            u32_t scatter_value = this_vert->bfs_level + 1;
+            //ret = new update<bfs_vert_attr>; 
+            this_update.dest_vert = this_edge.get_dest_value();
+            this_update.vert_attr.bfs_level = scatter_value;
+            //return ret;
+		}
+        /*
 		static update<bfs_vert_attr> *scatter_one_edge(
                 bfs_vert_attr * this_vert,
                 T * this_edge,
@@ -64,6 +79,7 @@ class bfs_program{
             ret->vert_attr.bfs_level = scatter_value;
             return ret;
 		}
+        */
 
 		//gather one update "u" from outside
 		static void gather_one_update( u32_t vid, bfs_vert_attr* this_vert, 
