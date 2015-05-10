@@ -1,15 +1,22 @@
 /**************************************************************************************************
  * Authors: 
- *   Jian He
+ *   Jian He, Zhiyuan Shao
  *
  * Routines:
- *   Implements a demo algorithm
+ *   This is an example graph algorithm
  *
  * Notes:
  *   This file will tell you how to use FOGP to write a demo algorithm, if you want to 
  *   write a new application, please copy this file to your applicaiton's name.
  *
- *   BUT after you finish this file, please add some code in fogsrc/main.cpp.
+ *   After you finish this header file, you need to implement the algorithm (i.e., place
+ *   your code) in cooresponding section of fogsrc/main.cpp.
+ *
+ *   IMPORTANT: The executions of the core functions (init, scatter_one_edge, 
+ *   gather_on_update) are in PARALLEL during execution. Updates made by these functions
+ *   to global variables (i.e., static variables, member variables of your algorithm 
+ *   class) will result in RACE CONDITION, and may produce unexpected results. 
+ *   Therefore, program with CARE!
  *************************************************************************************************/
 
 #ifndef __DEMO_HPP__

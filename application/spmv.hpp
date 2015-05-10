@@ -5,6 +5,11 @@
  * Routines:
  *   Implements  sparse matrix-vector multiplication algorithm
  *   
+ * IMPORTANT: The executions of the core functions (init, scatter_one_edge,  
+ *   gather_on_update) are in PARALLEL during execution. Updates made by these functions 
+ *   to global variables (i.e., static variables, member variables of your algorithm 
+ *   class) will result in RACE CONDITION, and may produce unexpected results. 
+ *   Therefore, program with CARE!
  *************************************************************************************************/
 
 #ifndef __SPMV_HPP__
@@ -48,14 +53,14 @@ class spmv_program{
                 spmv_vert_attr * this_vert,
                 T &this_edge,
                 u32_t something,
-                update<spmv_update> &this_update)
+                update<spmv_update> &result_update)
         {
             assert(forward_backward_phase == FORWARD_TRAVERSAL);
         	//update<spmv_update> * ret;
             float scatter_value = this_vert->origin_value * this_edge.get_edge_value();
 			//ret = new update<spmv_update>;
-			this_update.dest_vert = this_edge.get_dest_value();
-			this_update.vert_attr.spmv_value = scatter_value;
+			result_update.dest_vert = this_edge.get_dest_value();
+			result_update.vert_attr.spmv_value = scatter_value;
 			//return ret;
 		}
         /*
