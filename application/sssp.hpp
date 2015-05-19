@@ -4,6 +4,12 @@
  *
  * Routines:
  *   Implements the single source shortest path algorithm.
+ *
+ * IMPORTANT: The executions of the core functions (init, scatter_one_edge,  
+ *   gather_on_update) are in PARALLEL during execution. Updates made by these functions 
+ *   to global variables (i.e., static variables, member variables of your algorithm 
+ *   class) will result in RACE CONDITION, and may produce unexpected results. 
+ *   Therefore, program with CARE!
  *************************************************************************************************/
 
 #ifndef __SSSP_H__
@@ -55,16 +61,16 @@ class sssp_program{
                 sssp_vert_attr * this_vert,
                 T &this_edge,
                 u32_t update_src,
-                update<sssp_vert_attr> &this_update)
+                update<sssp_vert_attr> &result_update)
         {
             assert(forward_backward_phase == FORWARD_TRAVERSAL);
             //update<sssp_vert_attr> *ret;
             float scatter_weight = this_vert->value + this_edge.get_edge_value();
             u32_t scatter_predecessor = update_src;
             //ret = new update<sssp_vert_attr>; 
-            this_update.dest_vert = this_edge.get_dest_value();
-            this_update.vert_attr.value = scatter_weight;
-            this_update.vert_attr.predecessor = scatter_predecessor;
+            result_update.dest_vert = this_edge.get_dest_value();
+            result_update.vert_attr.value = scatter_weight;
+            result_update.vert_attr.predecessor = scatter_predecessor;
             //return ret;
 		}
         /*

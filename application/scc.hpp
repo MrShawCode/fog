@@ -5,6 +5,11 @@
  * Routines:
  *   Implements strongly connected component algorithm
  *   
+ * IMPORTANT: The executions of the core functions (init, scatter_one_edge,  
+ *   gather_on_update) are in PARALLEL during execution. Updates made by these functions 
+ *   to global variables (i.e., static variables, member variables of your algorithm 
+ *   class) will result in RACE CONDITION, and may produce unexpected results. 
+ *   Therefore, program with CARE!
  *************************************************************************************************/
 
 #ifndef __SCC_H__

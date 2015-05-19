@@ -5,6 +5,11 @@
  * Routines:
  *   Implements Breadth-First Search algorithm
  *   
+ * IMPORTANT: The executions of the core functions (init, scatter_one_edge,  
+ *   gather_on_update) are in PARALLEL during execution. Updates made by these functions 
+ *   to global variables (i.e., static variables, member variables of your algorithm 
+ *   class) will result in RACE CONDITION, and may produce unexpected results. 
+ *   Therefore, program with CARE!
  *************************************************************************************************/
 
 #ifndef __BFS_H__
@@ -50,19 +55,20 @@ class bfs_program{
          * 1.attribute
          * 2.edge(type1, type2, in_edge)
          * 3.update_src
+		 * result_update: the result update
          */
 		static void scatter_one_edge(
                 bfs_vert_attr * this_vert,
                 T &this_edge,
                 u32_t update_src,
-                update<bfs_vert_attr> &this_update)
+                update<bfs_vert_attr> &result_update)
         {
             assert(forward_backward_phase == FORWARD_TRAVERSAL);
             //update<bfs_vert_attr> *ret;
             u32_t scatter_value = this_vert->bfs_level + 1;
             //ret = new update<bfs_vert_attr>; 
-            this_update.dest_vert = this_edge.get_dest_value();
-            this_update.vert_attr.bfs_level = scatter_value;
+            result_update.dest_vert = this_edge.get_dest_value();
+            result_update.vert_attr.bfs_level = scatter_value;
             //return ret;
 		}
         /*
