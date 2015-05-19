@@ -226,7 +226,8 @@ unsigned int index_vert_array<T>::num_edges( unsigned int vid, int mode )
     {
         start_edge = vert_array_header[vid].offset;
 
-        if ( start_edge == 0L && vid != 0 ) return 0;
+        //if ( start_edge == 0L && vid != 0 ) return 0;
+        if ( start_edge == 0L) return 0;
 
         if ( vid > gen_config.max_vert_id ) return 0;
 
@@ -256,7 +257,8 @@ unsigned int index_vert_array<T>::num_edges( unsigned int vid, int mode )
         assert(mode == IN_EDGE);
         start_edge = in_vert_array_header[vid].offset;
 
-        if ( start_edge == 0L && vid != 0 ) return 0;
+        //if ( start_edge == 0L && vid != 0 ) return 0;
+        if ( start_edge == 0L) return 0;
 
         if ( vid > gen_config.max_vert_id ) return 0;
 

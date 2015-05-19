@@ -38,10 +38,15 @@
 //boost::program_options::options_description desc;
 //boost::program_options::variables_map vm; 
 
+
+
 struct general_config gen_config;
 FILE * log_file;
+
+#ifdef EXPERIMENT
 FILE * test_log_file;  
 FILE * cv_log_file;
+#endif
 
 template <typename T>
 void start_engine(std::string prog_name)
@@ -154,7 +159,7 @@ int main( int argc, const char**argv)
     struct tm *tm_p = localtime(&timep);
     //std::string start_time;
     char temp[100];
-    sprintf(temp, "%d.%d.%d-%d:%d:%d", tm_p->tm_year+1900, tm_p->tm_mon+1,
+    sprintf(temp, "%d.%d.%d-%dh%dm%ds", tm_p->tm_year+1900, tm_p->tm_mon+1,
             tm_p->tm_mday, tm_p->tm_hour, tm_p->tm_min, tm_p->tm_sec);
 
     log_file_name = "print-" + prog_name_app + "-" + std::string(temp) + "-.log";
@@ -177,16 +182,21 @@ int main( int argc, const char**argv)
         printf("failed to open %s.\n", log_file_name.c_str());
         exit(666);
     }
+#ifdef EXPERIMENT
     if (!(test_log_file = fopen(test_log_file_name.c_str(), "w"))) //open file for mode
     {
         printf("failed to open %s.\n", test_log_file_name.c_str());
         exit(666);
     }
+#endif
+    /*
     if (!(cv_log_file = fopen(cv_log_file_name.c_str(), "w"))) //open file for mode
     {
         printf("failed to open %s.\n", cv_log_file_name.c_str());
         exit(666);
     }
+    */
+
     PRINT_DEBUG("Your command is: %s\n", user_command.c_str());
 
 	gen_config.min_vert_id = pt.get<u32_t>("description.min_vertex_id");
