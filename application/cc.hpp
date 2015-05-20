@@ -32,9 +32,12 @@ class cc_program{
         {
             va->component_root = vid;
             //add schedule for cc work
-            fog_engine<cc_program<T>, cc_vert_attr, cc_vert_attr, T>::add_schedule( vid, 
-                    CONTEXT_PHASE /*phase:decide which buf to read and write */
-                    );
+            if (vert_index->num_edges(vid, OUT_EDGE)!=0 || vert_index->num_edges(vid, IN_EDGE)!=0)
+            {
+                fog_engine<cc_program<T>, cc_vert_attr, cc_vert_attr, T>::add_schedule( vid, 
+                        CONTEXT_PHASE /*phase:decide which buf to read and write */
+                        );
+            }
 		}
 		//scatter updates at vid-th vertex 
 		static void scatter_one_edge(

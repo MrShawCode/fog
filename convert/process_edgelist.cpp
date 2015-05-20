@@ -132,6 +132,8 @@ void process_edgelist( const char* input_file_name,
         {
             edge_buffer[edge_suffix].dest_vert = dst_vert;
             edge_buffer[edge_suffix].edge_weight = produce_random_weight();
+            //just for unit weight, needed by special sssp
+            //edge_buffer[edge_suffix].edge_weight = 1.0;
         }
         else
         {
