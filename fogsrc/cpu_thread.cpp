@@ -385,6 +385,7 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
         }
         case GLOBAL_SCATTER:
         {
+            //u64_t scatter_counts = 0;
             *status = FINISHED_SCATTER;
             scatter_param* p_scatter_param = (scatter_param*) state_param;
             sched_list_context_data* my_sched_list_manager;
@@ -546,7 +547,7 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
 
                     if (map_value < (per_cpu_strip_cap - 1))
                     {
-
+                        //scatter_counts++;
                         update_buf_offset = strip_num * my_strip_cap + map_value * gen_config.num_processors + cpu_offset;
                         *(my_update_buf_head + update_buf_offset) = t_update;
                         //*(my_update_buf_head + update_buf_offset) = *t_update;
@@ -555,6 +556,7 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                     }
                     else
                     {
+                        //PRINT_DEBUG("processor %d buf_full\n", processor_id);
                         //There is no space for this update, need to store the context data
                         if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
                         {
@@ -619,6 +621,7 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                 }
                 *status = FINISHED_SCATTER;
             }
+            //PRINT_DEBUG("processor %d, scatter_counts = %lld\n", processor_id, scatter_counts);
             break;
         }
         case GLOBAL_GATHER:

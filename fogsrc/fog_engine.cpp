@@ -30,7 +30,6 @@
 #include "cpu_thread.hpp"
 #include "print_debug.hpp"
 #include "fog_engine.hpp"
-
 //impletation of fog_engine
 template <typename A, typename VA, typename U, typename T>
 fog_engine<A, VA, U, T>::fog_engine(u32_t global_target)
@@ -507,12 +506,16 @@ int fog_engine<A, VA, U, T>::scatter_updates(u32_t CONTEXT_PHASE)
         PRINT_DEBUG_LOG("sub-iteration:%d\n", phase);
         //if (global_or_target != GLOBAL_ENGINE && ret == 1)
             //PRINT_DEBUG("before context scatter, num_vert_of_next_phase = %d\n", cal_true_bits_size(CONTEXT_PHASE));
+#ifdef EXPERIMENT
         scatter_start_time = time(NULL);
+#endif
         scatter_cpu_work = new cpu_work<A, VA, U, T>(scatter_fog_engine_state, (void *)p_scatter_param);
         pcpu_threads[0]->work_to_do = scatter_cpu_work;
         (*pcpu_threads[0])();
+#ifdef EXPERIMENT
         scatter_end_time = time(NULL);
         PRINT_DEBUG_TEST_LOG( "%d-iteration's scatter time = %.f seconds\n", A::loop_counter, difftime(scatter_end_time, scatter_start_time));
+#endif
 
         delete scatter_cpu_work;
         scatter_cpu_work = NULL;
@@ -603,12 +606,16 @@ int fog_engine<A, VA, U, T>::scatter_updates(u32_t CONTEXT_PHASE)
                     do
                     {
                         special_signal = 0;
+#ifdef EXPERIMENT
                         scatter_start_time = time(NULL);
+#endif
                         scatter_cpu_work = new cpu_work<A, VA, U, T>(scatter_fog_engine_state, (void *)p_scatter_param);
                         pcpu_threads[0]->work_to_do = scatter_cpu_work;
                         (*pcpu_threads[0])();
+#ifdef EXPERIMENT
                         scatter_end_time = time(NULL);
                         PRINT_DEBUG_TEST_LOG( "%d-iteration's scatter time = %.f seconds\n", A::loop_counter, difftime(scatter_end_time, scatter_start_time));
+#endif
 
 
                         delete scatter_cpu_work;
@@ -692,13 +699,17 @@ int fog_engine<A, VA, U, T>::scatter_updates(u32_t CONTEXT_PHASE)
                 u32_t special_signal;
                 do{
                     special_signal = 0;
+#ifdef EXPERIMENT
                     scatter_start_time = time(NULL);
+#endif
                     scatter_cpu_work = new cpu_work<A,VA, U, T>( scatter_fog_engine_state, (void*)p_scatter_param );
 
                     pcpu_threads[0]->work_to_do = scatter_cpu_work;
                     (*pcpu_threads[0])();
+#ifdef EXPERIMENT
                     scatter_end_time = time(NULL);
                     PRINT_DEBUG_TEST_LOG( "%d-iteration's scatter time = %.f seconds\n", A::loop_counter, difftime(scatter_end_time, scatter_start_time));
+#endif
 
                     //cpu threads return
                     delete scatter_cpu_work;
@@ -967,6 +978,7 @@ void fog_engine<A, VA, U, T>::rebalance_sched_tasks(u32_t cpu_unfinished_id, u32
     //author: Huiming Lv
     //range
     /*
+    PRINT_DEBUG("unfinished cpu %d\n",cpu_unfinished_id);
     sched_list_context_data * my_context_data = seg_config->per_cpu_info_list[cpu_unfinished_id]->global_sched_manager;
     u32_t min_vert = my_context_data->context_vert_id;
     u32_t max_vert = my_context_data->normal_sched_max_vert;
@@ -1024,7 +1036,9 @@ void fog_engine<A, VA, U, T>::rebalance_sched_tasks(u32_t cpu_unfinished_id, u32
 template <typename A, typename VA, typename U, typename T>
 void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
 {
+#ifdef EXPERIMENT
     gather_start_time = time(NULL);
+#endif 
     cpu_work<A,VA,U,T>* gather_cpu_work = NULL;
     io_work* one_io_work = NULL;
     char * next_buffer = NULL, *read_buf = NULL;
@@ -1747,8 +1761,10 @@ void fog_engine<A, VA, U, T>::gather_updates(u32_t CONTEXT_PHASE, int phase)
         } 
     }
     //PRINT_DEBUG("After Gather!\n");
+#ifdef EXPERIMENT 
     gather_end_time = time(NULL);
     PRINT_DEBUG_TEST_LOG( "%d-iteration's gather time = %.f seconds\n", A::loop_counter, difftime(gather_end_time, gather_start_time));
+#endif
 
 }
 
@@ -2700,7 +2716,6 @@ void fog_engine<A, VA, U, T>::add_all_task_to_cpu( sched_task * task )
     //author:hejian
     //stride
     //PRINT_DEBUG( "first adding all tasks to all cpu :task from %d to %d.\n", task->start, task->term );
-    
     if( task->term == 0 ){
         //PRINT_DEBUG("task->term == 0;\n");
         assert( task->start <= gen_config.max_vert_id );
@@ -2741,6 +2756,77 @@ void fog_engine<A, VA, U, T>::add_all_task_to_cpu( sched_task * task )
     }
     delete task;
     return;
+    
+    
+    //author:lvhuiming 
+    //range(based on out_degree)
+    //PRINT_DEBUG( "first adding all tasks to all cpu :task from %d to %d.\n", task->start, task->term );
+    /*
+    if( task->term == 0 ){
+        //PRINT_DEBUG("task->term == 0;\n");
+        assert( task->start <= gen_config.max_vert_id );
+        add_sched_task_to_processor( VID_TO_PARTITION(task->start), task, 1 );
+        return;
+    }
+    assert( task->start <= task->term );
+    assert( task->term <= gen_config.max_vert_id );
+
+    //PRINT_DEBUG("start_remain = %d, end_remain = %d\n", start_remain, end_remain);
+    sched_task* p_task;
+    u64_t p_task_len = gen_config.num_edges/gen_config.num_processors;
+    PRINT_DEBUG_LOG("per cpu's task counts is %lld\n", p_task_len);
+    u32_t start_id = task->start;
+    u32_t end_id = task->term;
+    for (u32_t i = 0; i < gen_config.num_processors; i++)
+    {
+        p_task = new sched_task;
+        p_task->start = task->start + p_task_len * i;
+     //   PRINT_DEBUG_LOG("the start of processor %d is %d\n", i, p_task->start);
+       
+        if(0==i)
+        {
+            p_task->start = task->start;
+        }
+        else
+        {
+            p_task->start = start_id;
+        }
+        if ((i+1) == gen_config.num_processors)
+        {
+            p_task->term = task->term;
+        }
+        else
+        {
+            for(u32_t id = start_id; id < end_id; id++)
+            {
+                if(vert_index->vert_array_header[id].offset > (i+1)*p_task_len)
+                {
+                    //PRINT_DEBUG_LOG("vid = %d, offset %lld\n", id, vert_index->vert_array_header[id].offset);
+                    p_task->term = id - 1;
+                    start_id = id;
+                    break;
+                }
+            }
+        }
+
+        //
+        //if((i+1)!=gen_config.num_processors)
+        //{
+         //   PRINT_DEBUG_LOG("processor %d:vertex[%d , %d], edges = %lld\n", i, p_task->start, p_task->term,
+          //          vert_index->vert_array_header[p_task->term+1].offset-vert_index->vert_array_header[p_task->start].offset - 1);
+        //}
+        //else
+        //{
+         //   PRINT_DEBUG_LOG("processor %d:vertex[%d , %d], edges = %lld\n", i, p_task->start, p_task->term, 
+          //          gen_config.num_edges - vert_index->vert_array_header[p_task->start].offset);
+        //}
+
+        assert(p_task->term >= p_task->start);
+        add_sched_task_to_processor( i, p_task, (p_task->term - p_task->start + 1));
+    }
+    delete task;
+    return;
+    */
 
 
     //author:lvhuiming 

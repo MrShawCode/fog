@@ -5,6 +5,11 @@
  * Routines:
  *   Implements weakly connected component algorithm
  *   
+ * IMPORTANT: The executions of the core functions (init, scatter_one_edge,  
+ *   gather_on_update) are in PARALLEL during execution. Updates made by these functions 
+ *   to global variables (i.e., static variables, member variables of your algorithm 
+ *   class) will result in RACE CONDITION, and may produce unexpected results. 
+ *   Therefore, program with CARE!
  *************************************************************************************************/
 
 #ifndef __CC_H__
@@ -44,18 +49,18 @@ class cc_program{
                 cc_vert_attr * this_vert,
                 T &this_edge,
                 u32_t backward_update_dest,
-                update<cc_vert_attr> &this_update)//, bool forward_in_backward)
+                update<cc_vert_attr> &result_update)//, bool forward_in_backward)
         {
             //update<cc_vert_attr> *ret;
             //ret = new update<cc_vert_attr>;
             if (forward_backward_phase == FORWARD_TRAVERSAL)
-                this_update.dest_vert = this_edge.get_dest_value();
+                result_update.dest_vert = this_edge.get_dest_value();
             else
             {
                 assert(forward_backward_phase == BACKWARD_TRAVERSAL);
-                this_update.dest_vert = backward_update_dest;
+                result_update.dest_vert = backward_update_dest;
             }
-            this_update.vert_attr.component_root = this_vert->component_root;
+            result_update.vert_attr.component_root = this_vert->component_root;
             //return ret;
 		}
         /*

@@ -70,6 +70,11 @@ extern general_config gen_config;
 #define ROUND_DOWN(x, y)	((x/y)*y)
 #define ROUND_UP(x, y)		(((x+(y-1))/y)*y)
 
+/*
+ *if define EXPERIMENT, fog_engine will print more detail
+ */
+//#define EXPERIMENT 
+
 //per-cpu data, arranged by address-increasing order
 template <typename VA>
 struct per_cpu_data{

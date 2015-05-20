@@ -4,6 +4,12 @@
  *
  * Routines:
  *   Implements PageRank algorithm
+ *
+ * IMPORTANT: The executions of the core functions (init, scatter_one_edge, 
+ *   gather_on_update) are in PARALLEL during execution. Updates made by these functions
+ *   to global variables (i.e., static variables, member variables of your algorithm 
+ *   class) will result in RACE CONDITION, and may produce unexpected results. 
+ *   Therefore, program with CARE!
  *************************************************************************************************/
 
 #ifndef __PAGERANK_HPP__
@@ -45,6 +51,7 @@ class pagerank_program{
 		// this_vert: point to the attribute of vertex to be scattered.
 		// num_edge: the number of out edges of the vertex to be scattered.
 		// this_edge: the edge to be scattered this time. 
+		// result_update: the result update
 		//Notes: 
 		// 1) this member fuction will be used to scatter ONE edge of a vertex.
 		// 2) the return value will be a pointer to the generated update.
@@ -56,17 +63,17 @@ class pagerank_program{
                     pagerank_vert_attr* this_vert, 
 					T &this_edge, // type1 or type2 , only available for FORWARD_TRAVERSAL
 					u32_t num_edges,
-                    update<pagerank_vert_attr> &this_update) 
+                    update<pagerank_vert_attr> &result_update) 
 		{
             if (forward_backward_phase == BACKWARD_TRAVERSAL)
                 PRINT_ERROR("forward_backward_phase must set to FORWARD_TRAVERSAL\n");
 			//update<pagerank_vert_attr> * ret;
 			//ret = new update<pagerank_vert_attr>;
-            this_update.dest_vert = this_edge.get_dest_value();
+            result_update.dest_vert = this_edge.get_dest_value();
 
             assert(forward_backward_phase == FORWARD_TRAVERSAL);
             float scatter_weight = DAMPING_FACTOR *(this_vert->rank/num_edges) + (1- DAMPING_FACTOR);
-            this_update.vert_attr.rank = scatter_weight;
+            result_update.vert_attr.rank = scatter_weight;
 		}
         /*
 		static update<pagerank_vert_attr>* scatter_one_edge(
