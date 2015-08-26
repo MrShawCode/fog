@@ -15,9 +15,9 @@
  *	where Index_Map is the address that the Index file mmapped into memory.
  * 3) Edge file (binary, .edge suffix), which stores all the outgoing edges according to the sequence of 
  *	index of vertices (i.e., the source vertex ID of the edges). Entries are tuples of the form:
---------------------------------------------------------------------------------
-COMPACT  | <4 byte dst, 4bytes weight>
---------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
+ COMPACT  | <4 byte dst, 4bytes weight>
+ --------------------------------------------------------------------------------
  * Note:
  * 1) The first element of Edge file (array) is INTENTIONALLY left UNUSED! 
  *	This prevents the situation that the offset of some vertex is zero,
@@ -39,7 +39,7 @@ COMPACT  | <4 byte dst, 4bytes weight>
 #include "options_utils_convert.h"
 #include <cassert>
 #include <fstream>
-
+#include <sys/mman.h>
 #include "convert.h"
 using namespace convert;
 //boost::program_options::options_description desc;
@@ -61,9 +61,11 @@ int main( int argc, const char**argv)
 	std::string out_dir, out_edge_file_name,
 		out_index_file_name, out_desc_file_name, 
 		out_desc_file1_name;
-    //hejian-debug
+	//hejian-debug
 	std::string snap_type;
-    std::string out_txt_file_name;
+	std::string out_txt_file_name;
+	
+	char* buffer;
 
 	//setup options
 	setup_options_convert( argc, argv );
@@ -79,36 +81,38 @@ int main( int argc, const char**argv)
 	out_index_file_name = out_dir+ input_file_name +".index";
 	out_desc_file_name = out_dir+ input_file_name +".desc";
 
-    out_txt_file_name = out_dir + input_file_name + "-type1.txt";
-    
+	out_txt_file_name = out_dir + input_file_name + "-type1.txt";
 
-    std::string type1_or_type2 = vm["out-type"].as<std::string>();
-    std::string tmp_type1("type1"); 
-    std::cout << type1_or_type2 << std::endl;
-    bool with_type1 = false;
-    unsigned int type1_type2 = 2;
-    //bool value 1 means type2, 0 means type1
-    if (type1_or_type2.compare(tmp_type1) == 0)
-    {
-        std::cout << "type1 out edge will be generated!" << std::endl;
-        //this is type1, so need to add edge value
-        with_type1 = true;
-        type1_type2 = 1;
-    }
-        
-    bool with_in_edge = (bool)(vm["in-edge"].as<bool>());
-    std::cout << with_in_edge << std::endl;
 
-    if (with_in_edge)
-    {
-        std::cout << "in-edge will be generated!" <<std::endl;
-        mem_size = (unsigned long long)4096*1024*1024;
-        std::cout << "Pre-allocation memory size is " << mem_size/(1024*1024) << "(MB)" << std::endl;
-        process_in_edge(mem_size, input_file_name.c_str(), out_dir.c_str());
-    }
-    //exit(-1);
-    //need to complete
-    //exit(-1);
+	std::string type1_or_type2 = vm["out-type"].as<std::string>();
+	std::string tmp_type1("type1"); 
+	std::cout << type1_or_type2 << std::endl;
+	bool with_type1 = false;
+	unsigned int type1_type2 = 2;
+	//bool value 1 means type2, 0 means type1
+	if (type1_or_type2.compare(tmp_type1) == 0)
+	{
+		std::cout << "type1 out edge will be generated!" << std::endl;
+		//this is type1, so need to add edge value
+		with_type1 = true;
+		type1_type2 = 1;
+	}
+
+	bool with_in_edge = (bool)(vm["in-edge"].as<bool>());
+	std::cout << with_in_edge << std::endl;
+	
+	//code changed for the need of sorting the disorder file 
+	if (with_in_edge)
+	{
+		std::cout << "in-edge will be generated!" <<std::endl;
+	}
+	mem_size = (unsigned long long)4096*1024*1024;
+	std::cout << "Pre-allocation memory size is " << mem_size/(1024*1024) << "(MB)" << std::endl;
+        buffer = process_in_edge(mem_size, input_file_name.c_str(), out_dir.c_str());
+
+	//exit(-1);
+	//need to complete
+	//exit(-1);
 
 	snap_type = vm["type"].as<std::string>();
 
@@ -123,14 +127,15 @@ int main( int argc, const char**argv)
 		process_edgelist( input_graph_name.c_str(), 
 				out_edge_file_name.c_str(), 
 				out_index_file_name.c_str() ,
-                out_txt_file_name.c_str(),
-                with_type1, with_in_edge);
+				out_txt_file_name.c_str(),
+				out_dir.c_str(), input_file_name.c_str(),
+				with_type1, with_in_edge);
 	else if (snap_type == "adjlist" )
 		process_adjlist( input_graph_name.c_str(), 
 				out_edge_file_name.c_str(), 
 				out_index_file_name.c_str(),
-                out_txt_file_name.c_str(),
-                with_type1, with_in_edge);
+				out_txt_file_name.c_str(),
+				with_type1, with_in_edge);
 	else{
 		std::cout << "input parameter (type) error!\n";
 		exit( -1 );
@@ -143,13 +148,16 @@ int main( int argc, const char**argv)
 	desc_file << "max_vertex_id = " << max_vertex_id << "\n";
 	desc_file << "num_of_edges = " << num_edges << "\n";
 	desc_file << "max_out_edges = " << max_out_edges << "\n";
-    desc_file << "edge_type = " << type1_type2 << "\n";
-    desc_file << "with_in_edge = " << with_in_edge << "\n";
-    desc_file.close();
+	desc_file << "edge_type = " << type1_type2 << "\n";
+	desc_file << "with_in_edge = " << with_in_edge << "\n";
+	desc_file.close();
 
-    //process in-edge
-    if (with_in_edge == true)
-    {
-    }
+	//process in-edge
+	if (with_in_edge == true)
+	{
+	}
+
+	munlock( buffer, mem_size);
+	munmap( buffer, mem_size);
 }
 

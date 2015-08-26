@@ -73,13 +73,15 @@ namespace convert
 char *get_adjline();
 int flush_buffer_to_file( int fd, char* buffer, unsigned int size );
 void process_adjlist(const char*, const char *, const char *, const char *, bool, bool);
-void process_edgelist(const char*, const char *, const char *, const char *, bool, bool);
-void radix_sort(struct convert::tmp_in_edge * , struct convert::tmp_in_edge * , unsigned long long, unsigned int);
-void process_in_edge(unsigned long long, const char *, const char *);
+void process_edgelist(const char*, const char *, const char *, const char *, const char *, const char *,bool, bool);
+void radix_sort(struct convert::tmp_in_edge * , struct convert::tmp_in_edge * , unsigned long long, unsigned int, bool);
+char *process_in_edge(unsigned long long, const char *, const char *);
 void insert_sort_for_buf(unsigned int, unsigned int);
 void wake_up_sort(unsigned int, unsigned long long, bool);
+void wake_up_sort_src(unsigned int, unsigned long long, bool);
 void hook_for_merge();
 void do_merge();
+void do_src_merge(char *, char *);
 int read_one_edge( void );
 float produce_random_weight();
 
@@ -102,6 +104,7 @@ extern struct convert::vert_index in_vert_buffer[VERT_BUFFER_LEN];
 
 //global vars for in_edge
 extern struct convert::tmp_in_edge * buf1;
+extern struct convert::tmp_in_edge * buf2;
 extern unsigned long long each_buf_len;
 extern unsigned long long each_buf_size;
 extern unsigned long long current_buf_size; //used in process_edgelist(adjlist)
