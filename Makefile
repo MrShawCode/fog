@@ -9,7 +9,7 @@ SYSLIBS = -L/usr/local/lib -L/usr/lib  -lboost_system -lboost_program_options -l
 CXX?= g++
 #CXXFLAGS?= -O3 -DNDEBUG -Wall -Wno-unused-function -I./$(HEADERS_PATH)
 CXXFLAGS?= -O3 -DDEBUG -Wall -Wno-unused-function -I./$(HEADERS_PATH)
-CXXFLAGS+= -Wfatal-errors
+CXXFLAGS+= -Wfatal-errors -fpermissive
 
 # make selections
 CONVERT_SRC = convert.o process_edgelist.o process_adjlist.o radix_sort.o process_in_edge.o k_way_merge.o
