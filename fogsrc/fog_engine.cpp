@@ -950,6 +950,11 @@ void fog_engine<A, VA, U, T>::rebalance_sched_tasks(u32_t cpu_unfinished_id, u32
               //      i, seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert,
                 //    seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert);
         }
+        //use the same state in all threads
+        for (u32_t i = 0; i < gen_config.num_processors; i++)
+        {
+            set_signal_to_scatter(STEAL_SCATTER, i, CONTEXT_PHASE);
+        }
     }
     else
     {
@@ -999,6 +1004,11 @@ void fog_engine<A, VA, U, T>::rebalance_sched_tasks(u32_t cpu_unfinished_id, u32
             PRINT_DEBUG_LOG("Processor-%d's context_steal_min_vert = %d, max = %d\n",
                     i, seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_min_vert,
                     seg_config->per_cpu_info_list[i]->global_sched_manager->context_steal_max_vert);
+        }
+        //use the same state in all threads
+        for (u32_t i = 0; i < gen_config.num_processors; i++)
+        {
+            set_signal_to_scatter(STEAL_SCATTER, i, CONTEXT_PHASE);
         }
     }
     else
