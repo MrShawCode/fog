@@ -34,6 +34,11 @@
 #include "../application/cc.hpp"
 #include "../application/bfs.hpp"
 
+#include "./lpa.cpp"
+#include "./lpa_async.cpp"
+#include "./greedy_coloring.cpp"
+#include "./pagerank_simple.cpp"
+#include "./pagerank_matrix.cpp"
 //boost::property_tree::ptree pt;
 //boost::program_options::options_description desc;
 //boost::program_options::variables_map vm; 
@@ -123,6 +128,70 @@ void start_engine(std::string prog_name)
         fog_engine<cc_program<T>, cc_vert_attr, cc_vert_attr, T> *eng;
         (*(eng = new fog_engine<cc_program<T>, cc_vert_attr, cc_vert_attr, T>(TARGET_ENGINE)))();
         delete eng;
+    }else if (prog_name == "lpa"){
+        PRINT_DEBUG("lpa starts!\n");
+        int check = access(gen_config.in_edge_file_name.c_str(), F_OK);
+        if(-1 ==check )
+        {
+            PRINT_ERROR("in_edge file doesn't exit or '-i' is false!\n");
+        }
+       
+        LPA_program<T> * lpa = new LPA_program<T>;
+        lpa->run();
+    }else if (prog_name == "lpa_async"){
+        PRINT_DEBUG("lpa_async starts!\n");
+        int check = access(gen_config.in_edge_file_name.c_str(), F_OK);
+        if(-1 ==check )
+        {
+            PRINT_ERROR("in_edge file doesn't exit or '-i' is false!\n");
+        }
+       
+        LPA_async_program<T> * lpa_async = new LPA_async_program<T>;
+        lpa_async->run();
+    }else if (prog_name == "greedy_coloring"){
+        PRINT_DEBUG("greedy coloring starts!\n");
+        int check = access(gen_config.in_edge_file_name.c_str(), F_OK);
+        if(-1 ==check )
+        {
+            PRINT_ERROR("in_edge file doesn't exit or '-i' is false!\n");
+        }
+       
+        Greedy_coloring<T> * g_c = new Greedy_coloring<T>;
+        g_c->run();
+    }else if (prog_name == "pagerank_s"){
+        PRINT_DEBUG("pagerank_simple starts!\n");
+		Pagerank_simple<T>::iteration_times = vm["pagerank_s::niters"].as<unsigned long>();
+        unsigned int iteration_times = Pagerank_simple<T>::iteration_times;
+        if(10 == iteration_times)
+        {
+            std::cout<<"You didn't input the pagerank_s::niters or you chose the default value:10, the algorithm will run 10 iterations."<<std::endl;
+        }
+        
+        int check = access(gen_config.in_edge_file_name.c_str(), F_OK);
+        if(-1 ==check )
+        {
+            PRINT_ERROR("in_edge file doesn't exit or '-i' is false!\n");
+        }
+       
+        Pagerank_simple<T> * p_s = new Pagerank_simple<T>;
+        p_s->run();
+    }else if (prog_name == "pagerank_m"){
+        PRINT_DEBUG("pagerank_matrix starts!\n");
+		Pagerank_matrix<T>::iteration_times = vm["pagerank_m::niters"].as<unsigned long>();
+        unsigned int iteration_times = Pagerank_matrix<T>::iteration_times;
+        if(10 == iteration_times)
+        {
+            std::cout<<"You didn't input the pagerank_m::niters or you chose the default value:10, the algorithm will run 10 iterations."<<std::endl;
+        }
+        
+        int check = access(gen_config.in_edge_file_name.c_str(), F_OK);
+        if(-1 ==check )
+        {
+            PRINT_ERROR("in_edge file doesn't exit or '-i' is false!\n");
+        }
+       
+        Pagerank_matrix<T> * p_m = new Pagerank_matrix<T>;
+        p_m->run();
     }else if (prog_name == "demo"){
         PRINT_DEBUG("demo starts!\n");
 
