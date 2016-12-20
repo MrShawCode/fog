@@ -54,5 +54,8 @@ class bitmap
         void memset_buffer();
         void print_binary(u32_t start, u32_t stop);
 
+        void set_value(u32_t index, u32_t cpu_id); 
+        u32_t get_value(u32_t index, u32_t cpu_id);
+        void clear_value(u32_t index, u32_t cpu_id);
 };
 #endif

@@ -43,10 +43,22 @@
 struct general_config gen_config;
 FILE * log_file;
 
+FILE * perf_meta_file;
+
+
 #ifdef EXPERIMENT
 FILE * test_log_file;  
 FILE * cv_log_file;
 #endif
+
+FILE ** trace_file_array;
+
+u64_t out_index_array_head = 0;
+u64_t out_edge_array_head  = 0;
+u64_t in_index_array_head  = 0;
+u64_t in_edge_array_head   = 0;
+u64_t attr_array_head      = 0;
+u64_t meta_data_head       = 0;
 
 template <typename T>
 void start_engine(std::string prog_name)
@@ -182,6 +194,12 @@ int main( int argc, const char**argv)
         printf("failed to open %s.\n", log_file_name.c_str());
         exit(666);
     }
+    std::string perf_meta_file_name = "perf_meta-" + prog_name_app + "-" + std::string(temp) + "-.log";
+    if (!(perf_meta_file = fopen(perf_meta_file_name.c_str(), "w"))) //open file for mode
+    {
+        printf("failed to open %s.\n", perf_meta_file_name.c_str());
+        exit(666);
+    }
 #ifdef EXPERIMENT
     if (!(test_log_file = fopen(test_log_file_name.c_str(), "w"))) //open file for mode
     {
@@ -236,6 +254,21 @@ int main( int argc, const char**argv)
 	PRINT_DEBUG( "gen_config.vert_file_name = %s\n", gen_config.vert_file_name.c_str() );
 	PRINT_DEBUG( "gen_config.edge_file_name = %s\n", gen_config.edge_file_name.c_str() );
 	PRINT_DEBUG( "gen_config.attr_file_name(WRITE ONLY) = %s\n", gen_config.attr_file_name.c_str() );
+
+
+    //add by Lv Huiming, trace for performance optimize 
+    trace_file_array = new FILE*[gen_config.num_processors];
+    std::string trace_file_name;
+    char cpu_id[4];
+    for(unsigned int i = 0 ; i < gen_config.num_processors; ++i){
+        sprintf(cpu_id, "%d", i);
+        trace_file_name = prog_name_app + "-CPU" + std::string(cpu_id) + "-" + std::string(temp) + "-.trace";
+        if (!(trace_file_array[i] = fopen(trace_file_name.c_str(), "w"))) //open file for mode
+        {
+            printf("failed to open %s.\n", trace_file_name.c_str());
+            exit(666);
+        }
+    }
 
     if (type1_or_type2 == 1)
     {

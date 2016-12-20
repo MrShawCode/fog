@@ -1,0 +1,37 @@
+#!/usr/bin/python
+
+import sys
+
+if __name__=="__main__":
+    perf_meta_file_name = sys.argv[1]
+    trace_file_name     = sys.argv[2]
+    target_area         = trace_file_name[0:trace_file_name.find('.')]
+    fd = open(perf_meta_file_name)
+    target_block_num = 0
+    for line in fd:
+        if line.find(target_area) != -1:
+            total_size = int(line[line.rfind(' '):-1])
+            target_block_num = (total_size / 64) + 1
+            break
+
+    R_count = [0 for i in range(0,target_block_num)]
+    W_count = [0 for i in range(0,target_block_num)]
+
+    fd = open(trace_file_name)
+    for line in fd:
+        line = line.split()
+        if line[2] == "R":
+            R_count[int(line[3])] += 1
+        elif line[2] == "W":
+            W_count[int(line[3])] += 1
+
+    output_file_name = target_area + "_statistics.result"
+    fd = open(output_file_name,"w")
+    for i in range(len(R_count)):
+        strline = str(i)
+        strline += "\t"
+        strline += str(R_count[i])
+        strline += "\t"
+        strline += str(W_count[i])
+        strline += "\n"
+        fd.write(strline)

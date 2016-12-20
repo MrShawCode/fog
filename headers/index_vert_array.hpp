@@ -57,5 +57,11 @@ class index_vert_array{
 		void get_out_edge( unsigned int vid, unsigned int which, T &ret);
         void get_in_edge(unsigned int vid, unsigned int which, in_edge &ret);
         //in_edge * get_in_edge(unsigned int vid, unsigned int which);
+
+
+        unsigned int num_edges(unsigned int vid, int mode, unsigned int cpu_id);
+		void get_out_edge( unsigned int vid, unsigned int which, T &ret, unsigned int cpu_id);
+        void get_in_edge(unsigned int vid, unsigned int which, in_edge &ret, unsigned int cpu_id);
+
 };
 #endif

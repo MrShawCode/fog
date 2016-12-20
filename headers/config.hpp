@@ -16,6 +16,8 @@
 #include "types.hpp"
 #include "print_debug.hpp"
 
+extern u64_t attr_array_head;
+extern u64_t meta_data_head;
 
 //general config stores the general configuration information, such as number of processors,
 // description of the original graph.
@@ -209,6 +211,9 @@ class segment_config{
 				attr_buf_len = graph_attr_size;
 				//attr_buf0 = (char*)((u64_t)buf_head + (gen_config.memory_size - graph_attr_size ) );
 				attr_buf0 = (char*)((u64_t)buf_head + (gen_config.memory_size - graph_attr_size ) );
+                
+                attr_array_head = (u64_t)attr_buf0;
+                PRINT_PERF_META_LOG("vert_attr buffer is allocated at address: %lld, the size is: %lld\n", attr_array_head, graph_attr_size);
 
 				num_segments = 1;
 				segment_cap = graph_attr_size / sizeof(VA);
@@ -250,6 +255,10 @@ class segment_config{
 
 			//sched_udate buffer, its length should be the same as the size of remaining buffer
 			sched_update_buf = (char*)buf_head;
+
+            meta_data_head = (u64_t)buf_head;
+            PRINT_PERF_META_LOG("the meta_data is allocated at address: %lld, the size is: %lld", meta_data_head, gen_config.memory_size - graph_attr_size);
+
 			sched_update_buf_len = gen_config.memory_size - segment_cap*sizeof(VA)*num_attr_buf;
 
 			//divide sched_update to each processor

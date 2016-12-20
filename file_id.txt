@@ -1,0 +1,6 @@
+0   arrt_array(in_mem: attr_buf)
+1   index_array
+2   edge_array
+3   in_index_array
+4   in_edge_array
+5   meta_buffer

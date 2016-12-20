@@ -27,6 +27,8 @@
 
 #include "cpu_thread.hpp"
 
+#include "perf_opt_tools.h"
+
 template <typename A, typename VA, typename U, typename T>
 cpu_work<A, VA, U, T>::cpu_work( u32_t state, void* state_param_in)
     :engine_state(state), state_param(state_param_in)
@@ -58,8 +60,10 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                     local_term_vert_off = local_start_vert_off + seg_config->partition_cap - 1;
 
                 //Note: for A::init, the vertex id and VA* address does not mean the same offset!
-                for (u32_t i=local_start_vert_off; i<=local_term_vert_off; i++ )
+                for (u32_t i=local_start_vert_off; i<=local_term_vert_off; i++ ){
                     A::init( p_init_param->start_vert_id + i, (VA*)(p_init_param->attr_buf_head) + i, vert_index);
+                    print_trace_log(processor_id, get_rdtsc(), 0, 'W', (u64_t)((VA*)(p_init_param->attr_buf_head) + i));
+                }
                 break;
             }
             else
@@ -83,6 +87,7 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
 
                     assert(index <= seg_config->segment_cap);
                     A::init( i, (VA*)(p_init_param->attr_buf_head) + index, vert_index); 
+                    print_trace_log(processor_id, get_rdtsc(), 0, 'W', (u64_t)((VA*)(p_init_param->attr_buf_head) + index));
                 }
                 break;
 
@@ -167,15 +172,18 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
 
             for (u32_t i = min_vert; i <= max_vert; i = i + gen_config.num_processors)
             {
-                if (current_bitmap->get_value(i) == 0)
+                //if (current_bitmap->get_value(i) == 0)
+                if (current_bitmap->get_value(i, processor_id) == 0)
                     continue;
                 
                 if (A::forward_backward_phase == FORWARD_TRAVERSAL)
-                    num_edges = vert_index->num_edges(i, OUT_EDGE);
+                    //num_edges = vert_index->num_edges(i, OUT_EDGE);
+                    num_edges = vert_index->num_edges(i, OUT_EDGE, processor_id);
                 else
                 {
                     assert(A::forward_backward_phase == BACKWARD_TRAVERSAL);
-                    num_edges = vert_index->num_edges(i, IN_EDGE);
+                    //num_edges = vert_index->num_edges(i, IN_EDGE);
+                    num_edges = vert_index->num_edges(i, IN_EDGE, processor_id);
                 }
                 ///num_out_edges = vert_index->num_out_edges(i);
                 //if (num_out_edges == 0 )
@@ -186,21 +194,31 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                     //    A::set_finish_to_vert(i, (VA*)&attr_array_head[i]);
                     if ((A::set_forward_backward == true && A::forward_backward_phase == BACKWARD_TRAVERSAL) 
                            || A::set_forward_backward == false)
-                        current_bitmap->clear_value(i);
+                        current_bitmap->clear_value(i, processor_id);
+                        //current_bitmap->clear_value(i);
 
-                    if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
+                    if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER){
                         my_context_data->steal_bits_true_size++;
-                    else 
+                        print_trace_log(processor_id, get_rdtsc(), 5, 'W', (u64_t)&my_context_data->steal_bits_true_size);
+                    }
+                    else{
                         my_context_data->per_bits_true_size--;
+                        print_trace_log(processor_id, get_rdtsc(), 5, 'W', (u64_t)&my_context_data->per_bits_true_size);
+                    }
                     continue;
                 }
 
-                if ((signal_to_scatter == CONTEXT_SCATTER) && (i == my_context_data->per_min_vert_id))
+                if ((signal_to_scatter == CONTEXT_SCATTER) && (i == my_context_data->per_min_vert_id)){
                     old_edge_id = my_context_data->per_num_edges;
-                else if ((signal_to_scatter == SPECIAL_STEAL_SCATTER) && (my_context_data->steal_min_vert_id == i))
+                    print_trace_log(processor_id, get_rdtsc(), 5, 'R', (u64_t)&my_context_data->per_num_edges);
+                }
+                else if ((signal_to_scatter == SPECIAL_STEAL_SCATTER) && (my_context_data->steal_min_vert_id == i)){
                     old_edge_id = my_context_data->steal_context_edge_id;
-                else
+                    print_trace_log(processor_id, get_rdtsc(), 5, 'R', (u64_t)&my_context_data->steal_context_edge_id);
+                }
+                else{
                     old_edge_id = 0;
+                }
 
                 //modify by lvhuiming
                 //date:2015-1-23
@@ -232,7 +250,8 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                     if (A::forward_backward_phase == FORWARD_TRAVERSAL)
                     {
                         //t_edge = vert_index->get_out_edge(i, z);
-                        vert_index->get_out_edge(i, z, t_edge);
+                        //vert_index->get_out_edge(i, z, t_edge);
+                        vert_index->get_out_edge(i, z, t_edge, processor_id);
                         if (t_edge.get_dest_value() == i)
                         {
                             //delete t_edge;
@@ -246,11 +265,13 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                         {
                             u32_t id_in_buf = i % seg_config->segment_cap;
                             A::scatter_one_edge((VA *)&attr_array_head[id_in_buf], t_edge, i, t_update);
+                            print_trace_log(processor_id, get_rdtsc(), 0, 'R', (u64_t)&attr_array_head[id_in_buf]);
                             //t_update = A::scatter_one_edge((VA *)&attr_array_head[id_in_buf], t_edge, i);
                         }
                         else
                         {
                             A::scatter_one_edge((VA *)&attr_array_head[i], t_edge, i, t_update);
+                            print_trace_log(processor_id, get_rdtsc(), 0, 'R', (u64_t)&attr_array_head[i]);
                             //t_update = A::scatter_one_edge((VA *)&attr_array_head[i], t_edge, i);
                         }
                         //modify end
@@ -261,7 +282,8 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                     else
                     {
                         assert(A::forward_backward_phase == BACKWARD_TRAVERSAL);
-                        vert_index->get_in_edge(i, z, t_in_edge);
+                        //vert_index->get_in_edge(i, z, t_in_edge);
+                        vert_index->get_in_edge(i, z, t_in_edge, processor_id);
                         //t_in_edge = vert_index->get_in_edge(i, z);
                         if (t_in_edge.get_src_value() == i)
                         {
@@ -276,11 +298,13 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                         {
                             u32_t id_in_buf = i % seg_config->segment_cap;
                             A::scatter_one_edge((VA *)&attr_array_head[id_in_buf], t_edge, t_in_edge.get_src_value(), t_update);
+                            print_trace_log(processor_id, get_rdtsc(), 0, 'R', (u64_t)&attr_array_head[id_in_buf]);
                             //t_update = A::scatter_one_edge((VA *)&attr_array_head[id_in_buf], NULL, t_in_edge.get_src_value());
                         }
                         else
                         {
                             A::scatter_one_edge((VA *)&attr_array_head[i], t_edge, t_in_edge.get_src_value(), t_update);
+                            print_trace_log(processor_id, get_rdtsc(), 0, 'R', (u64_t)&attr_array_head[i]);
                             //t_update = A::scatter_one_edge((VA *)&attr_array_head[i], NULL, t_in_edge.get_src_value());
                         }
                         //modify end
@@ -293,6 +317,7 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                     assert(cpu_offset < gen_config.num_processors);
 
                     map_value = *(my_update_map_head + strip_num * gen_config.num_processors + cpu_offset);
+                    print_trace_log(processor_id, get_rdtsc(), 5, 'R', (u64_t)(my_update_map_head + strip_num * gen_config.num_processors + cpu_offset));
                     
                     if (map_value < per_cpu_strip_cap)
                     {
@@ -301,24 +326,32 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                             map_value * gen_config.num_processors + cpu_offset;
 
                         *(my_update_buf_head + update_buf_offset) = t_update;
+                        print_trace_log(processor_id, get_rdtsc(), 5, 'W', (u64_t)(my_update_buf_head + update_buf_offset));
                         map_value++;
                         *(my_update_map_head + strip_num * gen_config.num_processors + cpu_offset) = map_value;
+                        print_trace_log(processor_id, get_rdtsc(), 5, 'W', (u64_t)(my_update_map_head + strip_num * gen_config.num_processors + cpu_offset));
                     }
                     else
                     {          
                         if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
                         {
                             my_context_data->steal_min_vert_id = i;
+                            print_trace_log(processor_id, get_rdtsc(), 5, 'W', (u64_t)&my_context_data->steal_min_vert_id);
                             my_context_data->steal_context_edge_id = z;
+                            print_trace_log(processor_id, get_rdtsc(), 5, 'W', (u64_t)&my_context_data->steal_context_edge_id);
                             //PRINT_DEBUG("In steal-scatter, update_buffer is fulled, need to store the context data!\n");
                         }
                         else
                         {
                             //PRINT_DEBUG("Update_buffer is fulled, need to store the context data!\n");
                             my_context_data->per_min_vert_id = i;
+                            print_trace_log(processor_id, get_rdtsc(), 5, 'W', (u64_t)&my_context_data->per_min_vert_id);
                             my_context_data->per_num_edges = z;
+                            print_trace_log(processor_id, get_rdtsc(), 5, 'W', (u64_t)&my_context_data->per_num_edges);
                             my_context_data->partition_gather_signal = processor_id;//just be different from origin status
+                            print_trace_log(processor_id, get_rdtsc(), 5, 'W', (u64_t)&my_context_data->partition_gather_signal);
                             my_context_data->partition_gather_strip_id = (int)strip_num;//record the strip_id to gather
+                            print_trace_log(processor_id, get_rdtsc(), 5, 'W', (u64_t)&my_context_data->partition_gather_strip_id);
                         }
                         *status = UPDATE_BUF_FULL;
                         //delete t_update;
@@ -332,17 +365,21 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                 {
                     assert(*status == FINISHED_SCATTER);
                     if ((A::set_forward_backward == true && A::forward_backward_phase == BACKWARD_TRAVERSAL) 
-                            || A::set_forward_backward == false)
-                        current_bitmap->clear_value(i);
+                            || A::set_forward_backward == false){
+                        //current_bitmap->clear_value(i);
+                        current_bitmap->clear_value(i, processor_id);
+                    }
                     if (signal_to_scatter == 1 && my_context_data->per_bits_true_size == 0)
                         PRINT_ERROR("i = %d\n", i);
                     if (signal_to_scatter == STEAL_SCATTER || signal_to_scatter == SPECIAL_STEAL_SCATTER)
                     {
                         my_context_data->steal_bits_true_size++;
+                        print_trace_log(processor_id, get_rdtsc(), 5, 'W', (u64_t)&my_context_data->steal_bits_true_size);
                     }
                     else 
                     {                            
                         my_context_data->per_bits_true_size--;
+                        print_trace_log(processor_id, get_rdtsc(), 5, 'W', (u64_t)&my_context_data->per_bits_true_size);
                     }
                     
                 }
@@ -377,7 +414,9 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                         my_context_data->per_bits_true_size = 0;
                     }
                     my_context_data->per_max_vert_id = current_bitmap->get_start_vert();
+                    print_trace_log(processor_id, get_rdtsc(), 5, 'W', (u64_t)&my_context_data->per_max_vert_id);
                     my_context_data->per_min_vert_id = current_bitmap->get_term_vert();
+                    print_trace_log(processor_id, get_rdtsc(), 5, 'W', (u64_t)&my_context_data->per_min_vert_id);
                 }
                 *status = FINISHED_SCATTER;
             }
@@ -663,6 +702,7 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                     t_update_gather = (my_update_buf_head + update_buf_offset);
                     assert(t_update_gather);
                     dest_vert = t_update_gather->dest_vert;
+                    print_trace_log(processor_id, get_rdtsc(), 5, 'R', (u64_t)(t_update_gather));
                     if (threshold == 1) 
                         vert_index = dest_vert%seg_config->segment_cap;
                     else
@@ -672,6 +712,7 @@ void cpu_work<A, VA, U, T>::operator() ( u32_t processor_id, barrier *sync, inde
                 }
                 map_value = 0;
                 *(my_update_map_head + strip_id * gen_config.num_processors + processor_id) = 0;
+                print_trace_log(processor_id, get_rdtsc(), 5, 'W', (u64_t)(my_update_map_head + strip_id * gen_config.num_processors + processor_id));
             }
             break;
         }

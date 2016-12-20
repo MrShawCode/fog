@@ -35,3 +35,10 @@ bin/*
 tags
 
 *.sh
+
+*.trace
+*.pdf
+*.png
+*.eps
+*.jpeg
+*.result

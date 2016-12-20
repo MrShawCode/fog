@@ -14,6 +14,8 @@
 #include "print_debug.hpp"
 #include "bitmap.hpp"
 
+#include "perf_opt_tools.h"
+
 bitmap::bitmap(char * bitmap_buf_head_in, u32_t buf_len_bytes_in, u32_t buf_num_bits_in, 
         u32_t start_vert_in, u32_t term_vert_in, u32_t processor_id_in, u32_t num_processors_in)
     :bitmap_buf_head(bitmap_buf_head_in),
@@ -110,4 +112,39 @@ void bitmap::print_binary(u32_t start, u32_t stop)
         }
     } 
     PRINT_SHORT("\n");
+}
+
+
+
+void bitmap::set_value(u32_t value, u32_t cpu_id)
+{
+    u32_t index = ch_vid_to_bitmap_index(value);
+
+    bits_array[index >> BITS_SHIFT] |= 1 << (index & BITS_MASK);
+    print_trace_log(cpu_id, get_rdtsc(), 5, 'W', (u64_t)&bits_array[index >> BITS_SHIFT]);
+    /*
+     * This code may equal the bellow:
+     * int byte_index = index/bit_num_bytes // find the target BYTE
+     * int value = 1 << (index%bit_num_bytes) // find the INDEX of the BYTE
+     * bits_array[byte_index] = bits_array[byte_index]|value; //store the value
+     */
+}
+
+u32_t bitmap::get_value(u32_t value, u32_t cpu_id)
+{
+    u32_t index = ch_vid_to_bitmap_index(value);
+    print_trace_log(cpu_id, get_rdtsc(), 5, 'R', (u64_t)&bits_array[index >> BITS_SHIFT]);
+    return bits_array[index >> BITS_SHIFT] & (1 << (index & BITS_MASK));
+}
+
+void bitmap::clear_value(u32_t value, u32_t cpu_id)
+{
+    assert(value <= term_vert);
+    assert(value >= start_vert);
+    u32_t index = ch_vid_to_bitmap_index(value);
+    print_trace_log(cpu_id, get_rdtsc(), 5, 'R', (u64_t)&bits_array[index >> BITS_SHIFT]);
+    if (bits_array[index >> BITS_SHIFT] == 0 )
+        PRINT_ERROR("This vert is 0!, clear a non-exist value???\n");
+    bits_array[index >> BITS_SHIFT] &= ~(1 << (index & BITS_MASK));
+    print_trace_log(cpu_id, get_rdtsc(), 5, 'W', (u64_t)&bits_array[index >> BITS_SHIFT]);
 }

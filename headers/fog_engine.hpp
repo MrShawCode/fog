@@ -141,6 +141,8 @@ class fog_engine{
         //date:2015-1-23
         void cal_update_cv(int strip_id);
         //added end
+
+       static  u32_t get_num_processors();
 };
 template <typename A, typename VA, typename U, typename T>
 index_vert_array<T> * fog_engine<A, VA, U, T>::vert_index;

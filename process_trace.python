@@ -1,0 +1,160 @@
+#!/usr/bin/python
+
+import sys
+
+fd = []
+trace_file_perfix = "CPU"
+trace_file_suffix = ".trace"
+
+class HeapElement:
+    def __init__(self, source_id, value):
+        self.sid  = source_id
+        self.value = value
+
+class MinHeap:
+    def __init__(self, max_s):
+        self.curr_size = 0
+        self.max_size  = max_s
+        self.nodes     = []
+
+    def parent(self, i):
+        return (i+1)/2-1
+
+    def left(self, i):
+        return 2*i+1
+
+    def right(self, i):
+        return 2*i+2
+
+    def insert(self, element):
+        self.curr_size += 1
+        pos = self.curr_size - 1
+        while pos>0 and  element.value[0]<self.nodes[self.parent(pos)].value[0]:
+            if pos>=len(self.nodes):
+                self.nodes.append(self.nodes[self.parent(pos)])
+            else:
+                self.nodes[pos] = self.nodes[self.parent(pos)]
+            pos = self.parent(pos)
+
+        if pos>=len(self.nodes):
+            self.nodes.append(element)
+        else:
+            self.nodes[pos] = element
+
+    def get_min(self):
+        return self.nodes[0]
+
+    def pop_min(self):
+        self.nodes[0] = self.nodes[self.curr_size - 1]
+        self.curr_size -= 1
+        self.modify(0)
+
+    def modify(self,i):
+        l = self.left(i)
+        r = self.right(i)
+        small_pos = i
+        if l<self.curr_size and self.nodes[l].value[0] < self.nodes[i].value[0]:
+            small_pos = l;
+        if r<self.curr_size and self.nodes[r].value[0] < self.nodes[small_pos].value[0]:
+            small_pos = r;
+        if small_pos != i:
+            temp                  = self.nodes[i]
+            self.nodes[i]         = self.nodes[small_pos]
+            self.nodes[small_pos] = temp
+            self.modify(small_pos)
+
+    def isempty(self):
+        if self.curr_size == 0:
+            return True
+        else:
+            return False
+
+class MergeSource:
+    def __init__(self, file_id):
+        self.fd  = open(trace_file_perfix + str(file_id) + trace_file_suffix)
+        self.fid = file_id
+    def get_next(self):
+        line = self.fd.readline()
+        if line!="":
+            return line.split()
+        else:
+            return []
+
+class MergeSink:
+    def __init__(self, file_name):
+        self.fd = open(file_name,"w")
+    def write_line(self, line):
+        strline = ""
+        for item in line:
+            strline += item + "\t"
+        strline += "\n"
+        self.fd.write(strline)
+        #self.fd.write(str(line))
+
+class kwayMerge:
+    def __init__(self):
+        self.merge_source = []
+        self.merge_sink   = []
+    def add_source(self, source):
+        self.merge_source.append(source)
+    def add_sink(self, sink):
+        self.merge_sink.append(sink)
+    def merge(self):
+        active_source_cnt = len(self.merge_source)
+        self.minHeap = MinHeap(active_source_cnt)
+        for i in range(active_source_cnt):
+            data_list = self.merge_source[i].get_next()
+            if data_list:
+                self.minHeap.insert(HeapElement(i, data_list))
+        
+        while active_source_cnt > 0 or (not self.minHeap.isempty()):
+            min_one = self.minHeap.get_min()
+            self.minHeap.pop_min()
+            data_list = self.merge_source[min_one.sid].get_next()
+            if data_list:
+                self.minHeap.insert(HeapElement(min_one.sid, data_list))
+            else:
+                active_source_cnt -= 1
+            '''
+            add min_one to sink file
+            '''
+            self.merge_sink[int(min_one.value[1])].write_line(min_one.value)
+            #print min_one.value
+
+if __name__=="__main__":
+    trace_num = int(sys.argv[1])
+    k_merge = kwayMerge()
+    for i in range(trace_num):
+        k_merge.add_source(MergeSource(i))
+
+    vert_attr_trace = MergeSink("vert_attr.trace") #0
+    out_index_trace = MergeSink("out_index.trace") #1
+    out_edge_trace  = MergeSink("out_edge.trace")  #2
+    in_index_trace  = MergeSink("in_index.trace")  #3
+    in_edge_trace   = MergeSink("in_edge.trace")   #4
+    meta_data_trace = MergeSink("meta_data.trace") #5
+    k_merge.add_sink(vert_attr_trace)
+    k_merge.add_sink(out_index_trace)
+    k_merge.add_sink(out_edge_trace)
+    k_merge.add_sink(in_index_trace)
+    k_merge.add_sink(in_edge_trace)
+    k_merge.add_sink(meta_data_trace)
+
+    k_merge.merge()
+    '''
+    lines = []
+    for i in range(trace_num):
+        fd.append(open(trace_file_perfix + str(i) + trace_file_suffix))
+        lines.append(fd[i].readline().split())
+        print str(lines)
+
+    print lines
+    print len(lines)
+    print lines[0][0]
+    print lines[1][0]
+    print lines[2][0]
+    lines[2] = lines[1]
+
+    print lines[2][0]
+    '''
+

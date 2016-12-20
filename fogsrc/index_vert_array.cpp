@@ -20,6 +20,14 @@
 #include "config.hpp"
 #include "index_vert_array.hpp"
 #include <errno.h>
+
+#include "perf_opt_tools.h"
+
+extern u64_t out_index_array_head;
+extern u64_t out_edge_array_head;
+extern u64_t in_index_array_head;
+extern u64_t in_edge_array_head;
+
 extern int errno;
 template <typename T>
 index_vert_array<T>::index_vert_array()
@@ -68,6 +76,10 @@ index_vert_array<T>::index_vert_array()
     //PRINT_DEBUG( "index array mmapped at virtual address:0x%llx\n", (u64_t)memblock );
     vert_array_header = (struct vert_index *) memblock;
 
+
+    out_index_array_head = (u64_t)memblock;
+    PRINT_PERF_META_LOG( "out_index array mmapped at virtual address:%lld, the size is: %ld\n", out_index_array_head, st.st_size);
+
 	//map edge files to edge_array_header
     fstat(edge_file_fd, &st);
     edge_file_length = (u64_t) st.st_size;
@@ -97,7 +109,9 @@ index_vert_array<T>::index_vert_array()
     //PRINT_DEBUG( "edge array mmapped at virtual address:0x%llx\n", (u64_t)memblock );
     //edge_array_header = (struct T *) memblock;
     edge_array_header = (T *) memblock;
-    
+
+    out_edge_array_head = (u64_t)memblock;
+    PRINT_PERF_META_LOG( "out_edge array mmapped at virtual address:%lld, the size is: %ld\n", out_edge_array_head, st.st_size);
 
     if (gen_config.with_in_edge)
     {
@@ -137,6 +151,8 @@ index_vert_array<T>::index_vert_array()
             exit( -1 );
         }
         PRINT_DEBUG( "in-index array mmapped at virtual address:0x%llx\n", (u64_t)memblock );
+        in_index_array_head = (u64_t)memblock;
+        PRINT_PERF_META_LOG( "in_index array mmapped at virtual address:%lld, the size is: %ld\n", in_index_array_head, st.st_size);
         in_vert_array_header = (struct vert_index *) memblock;
 
         //map edge files to edge_array_header
@@ -161,6 +177,8 @@ index_vert_array<T>::index_vert_array()
             exit( -1 );
         }
         PRINT_DEBUG( "in_edge array mmapped at virtual address:0x%llx\n", (u64_t)memblock );
+        in_edge_array_head = (u64_t)memblock;
+        PRINT_PERF_META_LOG( "in_edge array mmapped at virtual address:%lld, the size is: %ld\n", in_edge_array_head, st.st_size);
         in_edge_array_header = (struct in_edge *) memblock;
     }
 
@@ -190,6 +208,7 @@ unsigned int index_vert_array<T>::num_out_edges( unsigned int vid )
 	unsigned long long start_edge=0L, end_edge=0L;
 	
 	start_edge = vert_array_header[vid].offset;
+
     //if (vid == 152)
     //    PRINT_DEBUG("start_edge = %lld\n", start_edge);
     //if (vid == 152)
@@ -225,7 +244,7 @@ unsigned int index_vert_array<T>::num_edges( unsigned int vid, int mode )
     if (mode == OUT_EDGE)
     {
         start_edge = vert_array_header[vid].offset;
-
+        
         //if ( start_edge == 0L && vid != 0 ) return 0;
         if ( start_edge == 0L) return 0;
 
@@ -338,3 +357,124 @@ in_edge * index_vert_array<T>::get_in_edge( unsigned int vid, unsigned int which
 //the explicit instantiation part
 //template class index_vert_array<type1_edge>;
 //template class index_vert_array<type2_edge>;
+
+
+template <typename T>
+unsigned int index_vert_array<T>::num_edges( unsigned int vid, int mode, unsigned int cpu_id )
+{
+	unsigned long long start_edge=0L, end_edge=0L;
+	
+    if (mode == OUT_EDGE)
+    {
+        //***perf_opt
+        print_trace_log(cpu_id, get_rdtsc(), 1, 'R', (unsigned long long)&vert_array_header[vid]);
+        //***perf_opt
+        start_edge = vert_array_header[vid].offset;
+        
+        //if ( start_edge == 0L && vid != 0 ) return 0;
+        if ( start_edge == 0L) return 0;
+
+        if ( vid > gen_config.max_vert_id ) return 0;
+
+        if ( vid == gen_config.max_vert_id )
+            end_edge = gen_config.num_edges;
+        else{
+            for( u32_t i=vid+1; i<=gen_config.max_vert_id; i++ ){
+                //***perf_opt
+                print_trace_log(cpu_id, get_rdtsc(), 1, 'R', (unsigned long long)&vert_array_header[i]);
+                //***perf_opt
+                if( vert_array_header[i].offset != 0L ){
+                    //***perf_opt
+                    print_trace_log(cpu_id, get_rdtsc(), 1, 'R', (unsigned long long)&vert_array_header[i]);
+                    //***perf_opt
+                    end_edge = vert_array_header[i].offset -1;
+                    break;
+                }
+                if (i == gen_config.max_vert_id)    //means this vertex is the last vertex which has out_edge 
+                {
+                    end_edge = gen_config.num_edges;
+                    break;
+                }
+            }
+        }
+        if( end_edge < start_edge ){
+            PRINT_ERROR( "edge disorder detected!\n" );
+            return 0;
+        }
+        return (end_edge - start_edge + 1);
+    }
+    else
+    {
+        assert(mode == IN_EDGE);
+        //***perf_opt
+        print_trace_log(cpu_id, get_rdtsc(), 3, 'R', (unsigned long long)&in_vert_array_header[vid]);
+        //***perf_opt
+        start_edge = in_vert_array_header[vid].offset;
+
+        //if ( start_edge == 0L && vid != 0 ) return 0;
+        if ( start_edge == 0L) return 0;
+
+        if ( vid > gen_config.max_vert_id ) return 0;
+
+        if ( vid == gen_config.max_vert_id )
+            end_edge = gen_config.num_edges;
+        else{
+            for( u32_t i=vid+1; i<=gen_config.max_vert_id; i++ ){
+                //***perf_opt
+                print_trace_log(cpu_id, get_rdtsc(), 3, 'R', (unsigned long long)&in_vert_array_header[i]);
+                //***perf_opt
+                if( in_vert_array_header[i].offset != 0L ){
+                    //***perf_opt
+                    print_trace_log(cpu_id, get_rdtsc(), 3, 'R', (unsigned long long)&in_vert_array_header[i]);
+                    //***perf_opt
+                    end_edge = in_vert_array_header[i].offset -1;
+                    break;
+                }
+                if (i == gen_config.max_vert_id)     //means this vertex is the last vertex which has in_edge 
+                {
+                    end_edge = gen_config.num_edges;
+                    break;
+                }
+            }
+        }
+        if( end_edge < start_edge ){
+            PRINT_ERROR( "in_edge disorder detected!\n" );
+            return 0;
+        }
+        return (end_edge - start_edge + 1);
+
+    }
+}
+
+template <typename T>
+void index_vert_array<T>::get_out_edge( unsigned int vid, unsigned int which, T &ret, unsigned int cpu_id)
+{
+    if( which > index_vert_array<T>::num_edges( vid, OUT_EDGE, cpu_id) )
+    {
+        //return NULL;
+        PRINT_ERROR("vertex %d get_out_edge out of range.\n", vid);
+    }
+    //***perf_opt
+    print_trace_log(cpu_id, get_rdtsc(), 1, 'R', (unsigned long long)&vert_array_header[vid]);
+    print_trace_log(cpu_id, get_rdtsc(), 2, 'R', (unsigned long long)&edge_array_header[vert_array_header[vid].offset+which]);
+    //***perf_opt
+    ret = (T)edge_array_header[ vert_array_header[vid].offset + which ];
+}
+
+template <typename T>
+void index_vert_array<T>::get_in_edge( unsigned int vid, unsigned int which, in_edge &ret, unsigned int cpu_id)
+{
+	//in_edge * ret = new in_edge;
+	if( which > index_vert_array<T>::num_edges( vid, IN_EDGE, cpu_id) )
+    {
+        //return NULL;
+        PRINT_ERROR("vertex %d get_in_edge out of range.\n", vid);
+    }
+    //***perf_opt
+    print_trace_log(cpu_id, get_rdtsc(), 3, 'R', (unsigned long long)&in_vert_array_header[vid]);
+    print_trace_log(cpu_id, get_rdtsc(), 4, 'R', (unsigned long long)&in_edge_array_header[in_vert_array_header[vid].offset+which]);
+    //***perf_opt
+	ret = (in_edge)in_edge_array_header[ in_vert_array_header[vid].offset + which ];
+
+	//return ret;
+}

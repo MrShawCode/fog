@@ -91,9 +91,12 @@ class bfs_program{
 		static void gather_one_update( u32_t vid, bfs_vert_attr* this_vert, 
                 struct update<bfs_vert_attr>* this_update)
         {
+            static u32_t num_processors = fog_engine<bfs_program<T>, bfs_vert_attr, bfs_vert_attr, T>::get_num_processors();
 			//compare the value of u, if it is smaller, absorb the update
+            print_trace_log(vid%num_processors, get_rdtsc(), 0, 'R', (u64_t)(this_vert));
 			if( this_update->vert_attr.bfs_level < this_vert->bfs_level){
 				*this_vert = this_update->vert_attr;
+                print_trace_log(vid%num_processors, get_rdtsc(), 0, 'W', (u64_t)(this_vert));
 				//should add schedule of {vid,0}, need api from engine
 				fog_engine<bfs_program<T>, bfs_vert_attr, bfs_vert_attr, T>::add_schedule( vid, CONTEXT_PHASE);
 			}

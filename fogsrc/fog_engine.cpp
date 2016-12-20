@@ -30,6 +30,9 @@
 #include "cpu_thread.hpp"
 #include "print_debug.hpp"
 #include "fog_engine.hpp"
+
+#include "perf_opt_tools.h"
+
 //impletation of fog_engine
 template <typename A, typename VA, typename U, typename T>
 fog_engine<A, VA, U, T>::fog_engine(u32_t global_target)
@@ -2188,27 +2191,33 @@ void fog_engine<A, VA, U, T>::add_schedule(u32_t task_vid, u32_t CONTEXT_PHASE)
         assert(old_context_data->per_bits_true_size > 0);
         old_bitmap = old_context_data->p_bitmap;
         //if (old_bitmap->get_value(task_vid) == 1 && task_vid != (old_context_data->per_min_vert_id))
-        if (old_bitmap->get_value(task_vid) != 0 && task_vid != (old_context_data->per_min_vert_id))
+        if (old_bitmap->get_value(task_vid, partition_id) != 0 && task_vid != (old_context_data->per_min_vert_id))
             schedule_signal = 1;
     }
 
     max_vert = my_context_data->per_max_vert_id;
     min_vert = my_context_data->per_min_vert_id;
     current_bitmap = my_context_data->p_bitmap;
+    print_trace_log(partition_id, get_rdtsc(), 5, 'R', (u64_t)&my_context_data->per_max_vert_id);
+    print_trace_log(partition_id, get_rdtsc(), 5, 'R', (u64_t)&my_context_data->per_min_vert_id);
+    print_trace_log(partition_id, get_rdtsc(), 5, 'R', (u64_t)&my_context_data->p_bitmap);
 
-    if (current_bitmap->get_value(task_vid) == 0 && schedule_signal == 0)
+    if (current_bitmap->get_value(task_vid, partition_id) == 0 && schedule_signal == 0)
     {
         my_context_data->per_bits_true_size++;
-        current_bitmap->set_value(task_vid);
+        print_trace_log(partition_id, get_rdtsc(), 5, 'W', (u64_t)&my_context_data->per_bits_true_size);
+        current_bitmap->set_value(task_vid, partition_id);
         if (task_vid <= min_vert)
         {
             min_vert = task_vid;
             my_context_data->per_min_vert_id = min_vert;
+            print_trace_log(partition_id, get_rdtsc(), 5, 'W', (u64_t)&my_context_data->per_min_vert_id);
         }
         if (task_vid >= max_vert)
         {
             max_vert = task_vid;
             my_context_data->per_max_vert_id = max_vert;
+            print_trace_log(partition_id, get_rdtsc(), 5, 'W', (u64_t)&my_context_data->per_max_vert_id);
         }
     }
 }
@@ -2906,6 +2915,11 @@ void * fog_engine<A, VA, U, T>::map_anon_memory( u64_t size,
         memset(space, 0, size);
     }
     return space;
+}
+
+template <typename A, typename VA, typename U, typename T>
+u32_t fog_engine<A, VA, U, T>::get_num_processors(){
+    return gen_config.num_processors;
 }
 
 //the explicit instantiation part

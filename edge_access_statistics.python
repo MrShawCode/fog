@@ -1,0 +1,60 @@
+#!/usr/bin/python
+
+import sys
+
+if __name__=="__main__":
+    perf_meta_file_name = sys.argv[1]
+    trace_file_name     = sys.argv[2]
+    target_area         = trace_file_name[0:trace_file_name.find('.')]
+    fd = open(perf_meta_file_name)
+    #target_block_num = 0
+    target_4K_page_num = 0
+    target_2M_page_num = 0
+    for line in fd:
+        if line.find(target_area) != -1:
+            total_size = int(line[line.rfind(' '):-1])
+            #target_block_num = (total_size / 64) + 1
+            target_4K_page_num = (total_size / 4096) + 1
+            target_2M_page_num = (total_size / (2*1024*1024)) + 1
+            break
+
+    R_count_4K = [0 for i in range(0,target_4K_page_num)]
+    W_count_4K = [0 for i in range(0,target_4K_page_num)]
+    R_count_2M = [0 for i in range(0,target_2M_page_num)]
+    W_count_2M = [0 for i in range(0,target_2M_page_num)]
+
+    block_to_4K = 4096/64
+    block_to_2M = 2*1024*1024/64
+
+    fd = open(trace_file_name)
+    for line in fd:
+        line = line.split()
+        if line[2] == "R":
+            R_count_4K[int(line[3])/block_to_4K] += 1
+            R_count_2M[int(line[3])/block_to_2M] += 1
+        elif line[2] == "W":
+            W_count_4K[int(line[3])/block_to_4K] += 1
+            W_count_2M[int(line[3])/block_to_2M] += 1
+
+    output_file_name = target_area + "_statistics_4K.result"
+    fd = open(output_file_name,"w")
+    for i in range(len(R_count_4K)):
+        strline = str(i)
+        strline += "\t"
+        strline += str(R_count_4K[i])
+        strline += "\t"
+        strline += str(W_count_4K[i])
+        strline += "\n"
+        fd.write(strline)
+
+    output_file_name = target_area + "_statistics_2M.result"
+    fd = open(output_file_name,"w")
+    for i in range(len(R_count_2M)):
+        strline = str(i)
+        strline += "\t"
+        strline += str(R_count_2M[i])
+        strline += "\t"
+        strline += str(W_count_2M[i])
+        strline += "\n"
+        fd.write(strline)
+
